@@ -74,7 +74,6 @@
             <div class="fan-list-head">
               <span>순위</span>
               <span>닉네임</span>
-              <span class="r">선물횟수</span>
               <span class="r">별풍선</span>
             </div>
             <div v-for="fan in fans" :key="fan.rank" class="fan-row" :class="'fr'+fan.rank">
@@ -85,7 +84,6 @@
                 <span v-else class="fan-rank-num">{{ fan.rank }}</span>
               </div>
               <div class="fan-name">{{ fan.name }}</div>
-              <div class="fan-count r">{{ fan.count.toLocaleString('ko-KR') }}회</div>
               <div class="fan-balloons r">{{ fan.balloons.toLocaleString('ko-KR') }}</div>
             </div>
             <div v-if="fans.length === 0" class="fan-empty">후원자 데이터가 없어요</div>
@@ -342,7 +340,7 @@ function onImgError(e, soopId) {
 .fan-error { padding: 12px; color: #ff4d4d; font-size: 12px; }
 
 .fan-list-head {
-  display: grid; grid-template-columns: 28px 1fr 54px 70px;
+  grid-template-columns: 28px 1fr 70px;
   padding: 0 12px 4px;
   font-size: 9px; font-weight: 600; color: var(--text4);
   text-transform: uppercase; letter-spacing: 0.3px;
@@ -350,7 +348,7 @@ function onImgError(e, soopId) {
   margin-bottom: 2px;
 }
 .fan-row {
-  display: grid; grid-template-columns: 28px 1fr 54px 70px;
+  display: grid; grid-template-columns: 28px 1fr 70px;
   align-items: center; padding: 5px 12px;
   gap: 4px; transition: background 0.1s;
 }
@@ -361,7 +359,7 @@ function onImgError(e, soopId) {
 
 .fan-rank { display: flex; align-items: center; justify-content: center; font-size: 13px; }
 .fan-rank-num { font-size: 10px; font-weight: 700; color: var(--text4); }
-.fan-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fan-name { font-size: 11px; font-weight: 600; color: var(--text); word-break: break-all; }
 .fan-count { font-size: 10px; color: var(--text3); text-align: right; }
 .fan-balloons { font-size: 11px; font-weight: 700; color: #f5a623; text-align: right; letter-spacing: -0.3px; }
 .r { text-align: right; }
