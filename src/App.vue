@@ -427,6 +427,30 @@ onMounted(async () => {
     gap: 8px;
     padding: 10px;
   }
+  
+  /* 모바일: 3버튼 한 줄로 */
+  .mode-tabs {
+    gap: 6px;
+    padding: 12px 10px 0;
+  }
+  .mode-tab {
+    padding: 7px 14px;
+    font-size: 12px;
+  }
+  .contact-btn {
+    position: static;
+    transform: none;
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+  .contact-btn:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* 모바일에선 설명 숨김 */
+  .contact-hint {
+    display: none;
+  }
 }
 
 .mode-tabs {
