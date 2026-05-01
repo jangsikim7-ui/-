@@ -3,15 +3,15 @@
     <header class="header">
       <div class="hl">
         <div class="logo">⚡ 엑셀크루 시너지표</div>
-        <div class="source">출처: poong.today · 5분마다 자동 갱신</div>
+        <div class="source">출처: poong.today · 1시간마다 자동 갱신</div>
       </div>
 
       <div class="hc">
-        <button class="mbtn" @click="prevMonth">‹</button>
+        <button class="mbtn" @click="prevMonth" :disabled="!canGoPrev" :title="canGoPrev ? '이전달' : '3개월 전까지만 볼 수 있어요'">‹</button>
         <div class="mdisp">
           <span class="my">{{ year }}</span><span class="md">.</span><span class="mm">{{ String(month).padStart(2,'0') }}</span>
         </div>
-        <button class="mbtn" @click="nextMonth">›</button>
+        <button class="mbtn" @click="nextMonth" :disabled="!canGoNext" title="다음달">›</button>
       </div>
 
       <div class="hr">
@@ -151,6 +151,33 @@ const collectingPrev = ref(false)
 const syncing = ref(false)
 const updatingProfiles = ref(false)
 
+// 최대 3개월 전까지만 허용 (현재월 포함 3개월: 5월이면 3,4,5월)
+const MIN_MONTHS_BACK = 2 // 현재월 기준 2개월 전까지
+
+function getOldestAllowed() {
+  const n = new Date()
+  const m = n.getMonth() + 1 - MIN_MONTHS_BACK
+  let y = n.getFullYear()
+  let mm = m
+  if (mm <= 0) { mm += 12; y-- }
+  return { year: y, month: mm }
+}
+
+const canGoPrev = computed(() => {
+  const oldest = getOldestAllowed()
+  // 현재 보고 있는 달이 가장 오래된 달보다 더 뒤(미래)면 이전으로 갈 수 있음
+  if (year.value > oldest.year) return true
+  if (year.value === oldest.year && month.value > oldest.month) return true
+  return false
+})
+
+const canGoNext = computed(() => {
+  const n = new Date()
+  if (year.value < n.getFullYear()) return true
+  if (year.value === n.getFullYear() && month.value < n.getMonth() + 1) return true
+  return false
+})
+
 async function triggerUpdateProfiles() {
   updatingProfiles.value = true
   await api.updateProfiles()
@@ -193,13 +220,13 @@ function setMode(m) {
 }
 
 function prevMonth() {
+  if (!canGoPrev.value) return
   if (month.value === 1) { month.value = 12; year.value-- }
   else month.value--
   loadStats()
 }
 function nextMonth() {
-  const n = new Date()
-  if (year.value >= n.getFullYear() && month.value >= n.getMonth() + 1) return
+  if (!canGoNext.value) return
   if (month.value === 12) { month.value = 1; year.value++ }
   else month.value++
   loadStats()
@@ -280,7 +307,8 @@ onMounted(async () => {
   if (getAdminToken()) isAdmin.value = true
 
   loadStats()
-  setInterval(loadStats, 5 * 60 * 1000)
+  // 1시간마다 화면 자동 새로고침
+  setInterval(loadStats, 60 * 60 * 1000)
 
   // 자동 임포트 제거 - 수동으로만 (낙수동기화 버튼)
 })
@@ -309,7 +337,8 @@ onMounted(async () => {
   display: flex; align-items: center; justify-content: center;
   transition: background 0.15s; font-family: inherit;
 }
-.mbtn:hover { background: var(--input-border); }
+.mbtn:hover:not(:disabled) { background: var(--input-border); }
+.mbtn:disabled { opacity: 0.3; cursor: not-allowed; }
 .mdisp { display: flex; align-items: baseline; gap: 1px; }
 .my, .mm { font-size: 20px; font-weight: 900; color: var(--text); }
 .md { font-size: 16px; color: var(--text3); }
@@ -499,4 +528,3 @@ onMounted(async () => {
   100% { box-shadow: 0 0 0 0 rgba(74,158,255,0); }
 }
 </style>
-
