@@ -3,7 +3,6 @@
 
     <!-- 헤더 -->
     <div class="card-header">
-      <!-- 크루 순위: 로고 왼쪽 상단 리본 -->
       <div class="rank-ribbon">{{ rank }}</div>
 
       <div class="logo-area">
@@ -13,63 +12,86 @@
 
       <div class="crew-info">
         <div class="crew-name">{{ crew.name }}</div>
-        <!-- 평균: 라벨 작게, 숫자 크게 분리 -->
         <div class="avg-block">
           <span class="avg-label">{{ mode === "viewer" ? "평균 시청자" : "평균 별풍선" }}</span>
           <span class="avg-val">{{ fmt(crew.avg) }}</span>
         </div>
-
       </div>
     </div>
 
     <!-- 멤버 리스트 -->
     <div class="member-list">
-      <div
-        v-for="(m, i) in crew.members"
-        :key="m.id"
-        class="member-row"
-        :class="{ 'top1': i === 0 }"
-        @click="(e) => { selectedMember = m; clickPos = { x: e.currentTarget.getBoundingClientRect().left, y: e.currentTarget.getBoundingClientRect().bottom } }"
-        style="cursor:pointer"
-      >
-        <!-- 순위 먼저 -->
-        <div class="rank-badge" :class="'r'+(i<3?i+1:'x')">
-          <span v-if="i===0" class="top1-crown">👑</span>
-          <span v-else>{{ i+1 }}</span>
-        </div>
-
-        <!-- 프사: DB저장값 우선, 없으면 CDN URL, 둘다 실패시 플레이스홀더 -->
-        <div class="profile-wrap">
-          <img
-            :src="m.profile_img || cdnUrl(m.soop_id)"
-            class="profile-img"
-            @error="onImgError($event, m.soop_id)"
-          />
-          <div class="profile-placeholder" style="display:none">{{ m.name.charAt(0) }}</div>
-        </div>
-
-        <!-- 이름 + 지난달 + 증감 -->
-        <div class="minfo">
-          <div class="mname-row">
-            <span class="mname">{{ m.name }}</span>
-            <span v-if="m.is_new" class="new-badge">NEW</span>
+      <template v-for="(m, i) in crew.members" :key="m.id">
+        <div
+          class="member-row"
+          :class="{ 'top1': i === 0, 'expanded': selectedMember?.id === m.id }"
+          @click="toggleMember(m)"
+          style="cursor:pointer"
+        >
+          <div class="rank-badge" :class="'r'+(i<3?i+1:'x')">
+            <span v-if="i===0" class="top1-crown">👑</span>
+            <span v-else>{{ i+1 }}</span>
           </div>
 
-        </div>
+          <div class="profile-wrap">
+            <img
+              :src="m.profile_img || cdnUrl(m.soop_id)"
+              class="profile-img"
+              @error="onImgError($event, m.soop_id)"
+            />
+            <div class="profile-placeholder" style="display:none">{{ m.name.charAt(0) }}</div>
+          </div>
 
-        <!-- 풍선 수 + 일일 -->
-        <div class="mright">
-          <span class="mval" :class="tierClass(m.balloons)">{{ fmt(m.balloons) }}</span>
-          <div class="mdaily-badge" v-if="m.daily_balloons > 0 && mode === 'balloon'">
-(<span class="mdaily-plus">+</span>{{ fmt(m.daily_balloons) }})
+          <div class="minfo">
+            <div class="mname-row">
+              <span class="mname">{{ m.name }}</span>
+              <span v-if="m.is_new" class="new-badge">NEW</span>
+            </div>
+          </div>
+
+          <div class="mright">
+            <span class="mval" :class="tierClass(m.balloons)">{{ fmt(m.balloons) }}</span>
+            <div class="mdaily-badge" v-if="m.daily_balloons > 0 && mode === 'balloon'">
+              (<span class="mdaily-plus">+</span>{{ fmt(m.daily_balloons) }})
+            </div>
+          </div>
+
+          <div class="expand-arrow" :class="{ open: selectedMember?.id === m.id }">▾</div>
+
+          <div class="bar-absolute">
+            <div class="bar-fill" :style="{ width: pct(m.balloons)+'%', background: tierColor(m.balloons) }" />
           </div>
         </div>
 
-        <!-- 게이지바 -->
-        <div class="bar-absolute">
-          <div class="bar-fill" :style="{ width: pct(m.balloons)+'%', background: tierColor(m.balloons) }" />
+        <!-- 후원자 패널 (아코디언) -->
+        <div v-if="selectedMember?.id === m.id" class="fan-panel">
+          <div v-if="fanLoading" class="fan-loading">
+            <span class="spin">⟳</span> 불러오는 중...
+          </div>
+          <div v-else-if="fanError" class="fan-error">{{ fanError }}</div>
+          <div v-else>
+            <div class="fan-title">이달의 후원자 TOP 10</div>
+            <div class="fan-list-head">
+              <span>순위</span>
+              <span>닉네임</span>
+              <span class="r">선물횟수</span>
+              <span class="r">별풍선</span>
+            </div>
+            <div v-for="fan in fans" :key="fan.rank" class="fan-row" :class="'fr'+fan.rank">
+              <div class="fan-rank">
+                <span v-if="fan.rank === 1">🥇</span>
+                <span v-else-if="fan.rank === 2">🥈</span>
+                <span v-else-if="fan.rank === 3">🥉</span>
+                <span v-else class="fan-rank-num">{{ fan.rank }}</span>
+              </div>
+              <div class="fan-name">{{ fan.name }}</div>
+              <div class="fan-count r">{{ fan.count.toLocaleString('ko-KR') }}회</div>
+              <div class="fan-balloons r">{{ fan.balloons.toLocaleString('ko-KR') }}</div>
+            </div>
+            <div v-if="fans.length === 0" class="fan-empty">후원자 데이터가 없어요</div>
+          </div>
         </div>
-      </div>
+      </template>
     </div>
 
     <!-- 푸터 -->
@@ -83,32 +105,39 @@
         <span class="foot-label">합계</span>
         <span class="foot-val" :class="tierClass(crew.avg)">{{ fmt(crew.total) }}</span>
       </div>
-
     </div>
   </div>
-
-  <!-- 팬랭킹 모달 -->
-  <FanRankingModal
-  v-if="selectedMember"
-  :member="selectedMember"
-  :year="year"
-  :month="month"
-  :pos="clickPos"
-  @close="selectedMember = null"
-/>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import FanRankingModal from './FanRankingModal.vue'
+import { api } from '../composables/useApi.js'
 
 const props = defineProps({ crew: Object, maxBalloons: Number, rank: Number, mode: { type: String, default: 'balloon' }, year: Number, month: Number })
 
 const selectedMember = ref(null)
-const clickPos = ref({ x: 0, y: 0 })
+const fanLoading = ref(false)
+const fanError = ref('')
+const fans = ref([])
 
-// sooplive CDN URL 생성 - 첫 두글자가 폴더명
-// 예: jaeha010 → /LOGO/ja/jaeha010/jaeha010.jpg
+async function toggleMember(m) {
+  if (selectedMember.value?.id === m.id) {
+    selectedMember.value = null
+    return
+  }
+  selectedMember.value = m
+  fanLoading.value = true
+  fanError.value = ''
+  fans.value = []
+  try {
+    const data = await api.getFanRanking(m.soop_id, props.year, props.month)
+    fans.value = data.fans || []
+  } catch(e) {
+    fanError.value = '불러오기 실패: ' + e.message
+  }
+  fanLoading.value = false
+}
+
 function cdnUrl(soopId) {
   const prefix = soopId.slice(0, 2).toLowerCase()
   return `https://profile.img.sooplive.co.kr/LOGO/${prefix}/${soopId}/${soopId}.jpg`
@@ -145,13 +174,11 @@ function tierColor(n) {
   return '#666680'
 }
 function onImgError(e, soopId) {
-  // DB값 실패 → CDN URL로 재시도
   const prefix = soopId.slice(0, 2).toLowerCase()
   const cdn = `https://profile.img.sooplive.co.kr/LOGO/${prefix}/${soopId}/${soopId}.jpg`
   if (e.target.src !== cdn) {
     e.target.src = cdn
   } else {
-    // CDN도 실패 → 이니셜 플레이스홀더
     e.target.style.display = 'none'
     const ph = e.target.nextElementSibling
     if (ph) ph.style.display = 'flex'
@@ -176,7 +203,6 @@ function onImgError(e, soopId) {
   transform: translateY(-4px);
   box-shadow: 0 16px 40px rgba(0,0,0,0.25), 0 0 20px color-mix(in srgb, var(--c) 12%, transparent);
 }
-
 
 .card-header {
   display: flex; align-items: center; gap: 8px;
@@ -215,7 +241,6 @@ function onImgError(e, soopId) {
 .avg-val { font-size: 22px; font-weight: 900; color: var(--c); letter-spacing: -0.8px; line-height: 1; text-shadow: 0 1px 3px rgba(0,0,0,0.45); }
 [data-theme="light"] .avg-val { color: color-mix(in srgb, var(--c) 55%, #000); text-shadow: none; }
 
-/* 크루 순위 리본 */
 .rank-ribbon {
   position: absolute; top: 0; left: 0;
   width: 32px; height: 32px;
@@ -226,11 +251,6 @@ function onImgError(e, soopId) {
   box-shadow: 2px 2px 8px rgba(0,0,0,0.3);
   z-index: 3;
 }
-.crew-diff { display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-.diff-label { font-size: 9px; color: var(--text3); }
-.diff-val { font-size: 11px; font-weight: 700; }
-.diff-val.up { color: #4cd964; }
-.diff-val.down { color: #ff4d4d; }
 
 .member-list { flex: 1; background: var(--member-bg); }
 .member-list::before {
@@ -246,6 +266,7 @@ function onImgError(e, soopId) {
 }
 .member-row:first-child { border-top: none; }
 .member-row:hover { background: var(--member-hover); }
+.member-row.expanded { background: color-mix(in srgb, var(--c) 8%, var(--member-bg)); }
 
 .member-row.top1 {
   background: color-mix(in srgb, var(--c) 14%, var(--member-bg));
@@ -254,6 +275,7 @@ function onImgError(e, soopId) {
   flex-wrap: wrap;
   gap: 0;
 }
+.member-row.top1.expanded { background: color-mix(in srgb, var(--c) 20%, var(--member-bg)); }
 .member-row.top1 .rank-badge { display: none; }
 .member-row.top1 .profile-wrap { width: 38px; height: 38px; }
 .member-row.top1 .profile-img { width: 38px; height: 38px; border: 2px solid var(--c); }
@@ -262,6 +284,13 @@ function onImgError(e, soopId) {
 .member-row.top1 .mname { font-size: 15px; font-weight: 800; color: var(--text); }
 .member-row.top1 .mval { font-size: 17px; font-weight: 900; }
 .top1-crown { font-size: 11px; margin-right: 2px; }
+
+.expand-arrow {
+  font-size: 14px; color: var(--text4);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.expand-arrow.open { transform: rotate(180deg); color: var(--c); }
 
 .rank-badge { width: 17px; height: 17px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; flex-shrink: 0; }
 .r1 { background: rgba(255,200,50,0.2); color: #ffc832; }
@@ -278,12 +307,6 @@ function onImgError(e, soopId) {
 .mname { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .new-badge { font-size: 8px; font-weight: 800; color: #fff; background: #ff4d7d; padding: 1px 4px; border-radius: 4px; flex-shrink: 0; }
 
-.mprev-row { display: flex; align-items: center; gap: 4px; margin-top: 2px; flex-wrap: wrap; }
-.mprev { font-size: 9px; color: var(--text3); }
-.mdiff { font-size: 9px; font-weight: 700; }
-.mdiff.up { color: #4cd964; }
-.mdiff.down { color: #ff4d4d; }
-
 .mright { display: flex; flex-direction: column; align-items: flex-end; gap: 0; flex-shrink: 0; }
 .mval { font-size: 13px; font-weight: 800; letter-spacing: -0.4px; line-height: 1; }
 .mdaily-badge {
@@ -293,18 +316,56 @@ function onImgError(e, soopId) {
   letter-spacing: -0.2px; line-height: 1.4;
   color: #ff3b3b;
 }
-.mdaily-badge.up {
-  color: #34c759;
-  background: rgba(52,199,89,0.10);
-  border: 1px solid rgba(52,199,89,0.2);
-  padding: 1px 5px; border-radius: 4px;
+
+/* 후원자 패널 */
+.fan-panel {
+  background: color-mix(in srgb, var(--c) 5%, var(--bg3));
+  border-top: 1px solid color-mix(in srgb, var(--c) 20%, var(--border));
+  border-bottom: 1px solid color-mix(in srgb, var(--c) 20%, var(--border));
+  padding: 8px 0 10px;
+  animation: fanSlide 0.2s ease;
 }
-.mdaily-badge.down {
-  color: #ff3b3b;
-  background: rgba(255,59,59,0.10);
-  border: 1px solid rgba(255,59,59,0.2);
-  padding: 1px 5px; border-radius: 4px;
+@keyframes fanSlide { from { opacity: 0; transform: translateY(-6px) } to { opacity: 1; transform: translateY(0) } }
+
+.fan-title {
+  font-size: 10px; font-weight: 700; color: var(--c);
+  padding: 0 12px 6px;
+  text-transform: uppercase; letter-spacing: 0.5px;
 }
+.fan-loading {
+  display: flex; align-items: center; gap: 6px;
+  padding: 16px 12px; font-size: 12px; color: var(--text3);
+}
+.spin { animation: spin 1s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg) } }
+
+.fan-error { padding: 12px; color: #ff4d4d; font-size: 12px; }
+
+.fan-list-head {
+  display: grid; grid-template-columns: 28px 1fr 54px 70px;
+  padding: 0 12px 4px;
+  font-size: 9px; font-weight: 600; color: var(--text4);
+  text-transform: uppercase; letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border2);
+  margin-bottom: 2px;
+}
+.fan-row {
+  display: grid; grid-template-columns: 28px 1fr 54px 70px;
+  align-items: center; padding: 5px 12px;
+  gap: 4px; transition: background 0.1s;
+}
+.fan-row:hover { background: var(--member-hover); }
+.fan-row.fr1 { background: rgba(255,200,50,0.05); }
+.fan-row.fr2 { background: rgba(180,180,200,0.03); }
+.fan-row.fr3 { background: rgba(180,120,60,0.03); }
+
+.fan-rank { display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.fan-rank-num { font-size: 10px; font-weight: 700; color: var(--text4); }
+.fan-name { font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fan-count { font-size: 10px; color: var(--text3); text-align: right; }
+.fan-balloons { font-size: 11px; font-weight: 700; color: #f5a623; text-align: right; letter-spacing: -0.3px; }
+.r { text-align: right; }
+.fan-empty { text-align: center; color: var(--text4); padding: 16px; font-size: 12px; }
 
 .t1{color:#ff4d7d}.t2{color:#f5a623}.t3{color:#4cd964}.t4{color:#4a9eff}.t5{color:#9b9bbf}
 [data-theme="light"] .t1{color:#d6004a}
@@ -326,7 +387,6 @@ function onImgError(e, soopId) {
 .foot-label { font-size: 10px; color: var(--text2); letter-spacing: 0; font-weight: 600; }
 .foot-val { font-size: 13px; font-weight: 900; color: var(--text); letter-spacing: -0.3px; }
 [data-theme="light"] .foot-val { color: #0f0f1a; }
-/* 합계: 티어 클래스 무력화 - 완전 기본 텍스트 스타일로 */
 .card-foot .foot-val.t1,
 .card-foot .foot-val.t2,
 .card-foot .foot-val.t3,
@@ -337,15 +397,11 @@ function onImgError(e, soopId) {
 [data-theme="light"] .card-foot .foot-val.t3,
 [data-theme="light"] .card-foot .foot-val.t4,
 [data-theme="light"] .card-foot .foot-val.t5 { color: #0f0f1a; }
-.foot-prev { font-size: 11px; color: var(--text2); font-weight: 600; }
+
 @media (max-width: 600px) {
   .card { max-width: 100%; }
-  
-  /* 프사 숨기기 */
   .profile-wrap { display: none; }
   .member-row.top1 .profile-wrap { display: none; }
-  
-  /* 글씨 크기 줄이기 */
   .crew-name { font-size: 16px; }
   .avg-val { font-size: 16px; }
   .logo-img { width: 52px; height: 52px; }
