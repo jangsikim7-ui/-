@@ -36,7 +36,7 @@
       </div>
     </header>
 
-    <!-- 모드 탭 -->
+<!-- 모드 탭 -->
     <div class="mode-tabs">
       <button class="mode-tab" :class="{ active: mode === 'balloon' }" @click="setMode('balloon')">
         🎈 별풍선
@@ -44,6 +44,18 @@
       <button class="mode-tab" :class="{ active: mode === 'viewer' }" @click="setMode('viewer')">
         👁️ 뷰어십
       </button>
+      
+      <div class="contact-area">
+        <a 
+          href="https://ygosu.com/msg/?m2=write&member=703386"
+          target="_blank"
+          rel="noopener"
+          class="contact-btn"
+        >
+          📩 문의하기
+        </a>
+        <span class="contact-hint">데이터 수정 및 오류 제보는 문의하기 눌러주세요</span>
+      </div>
     </div>
 
     <!-- 범례 -->
@@ -416,4 +428,59 @@ onMounted(async () => {
     padding: 10px;
   }
 }
+
+.mode-tabs {
+  position: relative;
+}
+.contact-area {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.contact-hint {
+  font-size: 10px;
+  color: var(--text3);
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+.contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #4a9eff, #6b5fff);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(74,158,255,0.3);
+  white-space: nowrap;
+  position: relative;
+  transition: all 0.2s;
+}
+.contact-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(74,158,255,0.5);
+}
+.contact-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  animation: contactPulse 2s infinite;
+  pointer-events: none;
+}
+@keyframes contactPulse {
+  0% { box-shadow: 0 0 0 0 rgba(74,158,255,0.6); }
+  70% { box-shadow: 0 0 0 10px rgba(74,158,255,0); }
+  100% { box-shadow: 0 0 0 0 rgba(74,158,255,0); }
+}
 </style>
+
