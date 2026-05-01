@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const dbPath = join(__dirname, '../data.db')
+const dbPath = join('/app/data', 'data.db')
 const schemaPath = join(__dirname, 'schema.sql')
 
 const db = new DatabaseSync(dbPath)
