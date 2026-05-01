@@ -68,6 +68,7 @@ export async function collectAll() {
       viewerMonthMap[item.i] = item.v || 0
     }
   }
+
   const dayMap = {}
   const viewerDayMap = {}
   if (dayList) {
@@ -79,7 +80,6 @@ export async function collectAll() {
     }
   }
 
-  // 트랜잭션으로 묶어서 한번에 처리 (메모리 효율 향상)
   const upsertBalloon = db.prepare(`
     INSERT INTO balloon_snapshots (soop_id, year, month, day, total_balloons, daily_balloons)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -98,7 +98,7 @@ export async function collectAll() {
       fetched_at = datetime('now')
   `)
 
-for (const member of members) {
+  for (const member of members) {
     const total = monthMap[member.soop_id] ?? 0
     const daily = dayMap[member.soop_id] ?? 0
     const totalViewers = viewerMonthMap[member.soop_id] ?? 0
