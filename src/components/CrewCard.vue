@@ -145,10 +145,10 @@ function fmt(n) { return (n||0).toLocaleString('ko-KR') }
 function pct(n) { return props.maxBalloons ? Math.min(100, Math.round(n/props.maxBalloons*100)) : 0 }
 function tierClass(n) {
   if (props.mode === 'viewer') {
-    if (n>=1000000) return 't1'
-    if (n>=700000)  return 't2'
-    if (n>=500000)  return 't3'
-    if (n>=300000)  return 't4'
+    if (n>=500000)  return 't1'
+    if (n>=400000)  return 't2'
+    if (n>=300000)  return 't3'
+    if (n>=150000)  return 't4'
     return 't5'
   }
   if (n>=1300000) return 't1'
@@ -159,10 +159,10 @@ function tierClass(n) {
 }
 function tierColor(n) {
   if (props.mode === 'viewer') {
-    if (n>=1000000) return '#ff4d7d'
-    if (n>=700000)  return '#f5a623'
-    if (n>=500000)  return '#4cd964'
-    if (n>=300000)  return '#4a9eff'
+    if (n>=500000)  return '#ff4d7d'
+    if (n>=400000)  return '#f5a623'
+    if (n>=300000)  return '#4cd964'
+    if (n>=150000)  return '#4a9eff'
     return '#666680'
   }
   if (n>=1300000) return '#ff4d7d'
@@ -434,12 +434,12 @@ function onImgError(e, soopId) {
 .r { text-align: right; }
 .fan-empty { text-align: center; color: var(--text4); padding: 16px; font-size: 12px; }
 
-.t1{color:#ff4d7d}.t2{color:#f5a623}.t3{color:#4cd964}.t4{color:#4a9eff}.t5{color:#9b9bbf}
+.t1{color:#ff4d7d}.t2{color:#f5a623}.t3{color:#4cd964}.t4{color:#4a9eff}.t5{color:#d8d8e8}
 [data-theme="light"] .t1{color:#d6004a}
 [data-theme="light"] .t2{color:#b87000}
 [data-theme="light"] .t3{color:#1e9e3a}
 [data-theme="light"] .t4{color:#1565c0}
-[data-theme="light"] .t5{color:#44445a}
+[data-theme="light"] .t5{color:#1a1a2e}
 
 .bar-absolute { position: absolute; bottom: 0; left: 0; right: 0; height: 4px; background: var(--bar-bg); }
 .bar-fill { height: 100%; border-radius: 0 2px 2px 0; transition: width 0.6s ease; }

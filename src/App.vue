@@ -65,11 +65,11 @@
       <span class="contact-hint">데이터 수정 및 오류 제보는 문의하기 눌러주세요</span>
     </div>
     <div class="legend" v-if="mode === 'viewer'">
-      <span class="li"><i style="background:#ff4d7d"/>100만+</span>
-      <span class="li"><i style="background:#f5a623"/>70만+</span>
-      <span class="li"><i style="background:#4cd964"/>50만+</span>
-      <span class="li"><i style="background:#4a9eff"/>30만+</span>
-      <span class="li"><i style="background:#666680"/>30만↓</span>
+<span class="li"><i style="background:#ff4d7d"/>50만+</span>
+      <span class="li"><i style="background:#f5a623"/>40만+</span>
+      <span class="li"><i style="background:#4cd964"/>30만+</span>
+      <span class="li"><i style="background:#4a9eff"/>15만+</span>
+      <span class="li"><i style="background:#666680"/>15만↓</span>
       <span class="contact-hint">데이터 수정 및 오류 제보는 문의하기 눌러주세요</span>
     </div>
 
