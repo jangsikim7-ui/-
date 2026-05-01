@@ -98,20 +98,17 @@ export async function collectAll() {
       fetched_at = datetime('now')
   `)
 
-  const runAll = db.transaction((members) => {
-    for (const member of members) {
-      const total = monthMap[member.soop_id] ?? 0
-      const daily = dayMap[member.soop_id] ?? 0
-      const totalViewers = viewerMonthMap[member.soop_id] ?? 0
-      const dailyViewers = viewerDayMap[member.soop_id] ?? 0
+for (const member of members) {
+    const total = monthMap[member.soop_id] ?? 0
+    const daily = dayMap[member.soop_id] ?? 0
+    const totalViewers = viewerMonthMap[member.soop_id] ?? 0
+    const dailyViewers = viewerDayMap[member.soop_id] ?? 0
 
-      upsertBalloon.run(member.soop_id, year, month, day, total, daily)
-      upsertViewer.run(member.soop_id, year, month, totalViewers, dailyViewers)
+    upsertBalloon.run(member.soop_id, year, month, day, total, daily)
+    upsertViewer.run(member.soop_id, year, month, totalViewers, dailyViewers)
 
-      console.log(`[collect] ${member.name}: 풍선 ${total.toLocaleString()} / 시청자 ${totalViewers.toLocaleString()}`)
-    }
-  })
+    console.log(`[collect] ${member.name}: 풍선 ${total.toLocaleString()} / 시청자 ${totalViewers.toLocaleString()}`)
+  }
 
-  runAll(members)
   console.log('[collect] 완료')
 }
