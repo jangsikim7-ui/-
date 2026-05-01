@@ -267,21 +267,90 @@ function onImgError(e, soopId) {
 .member-row.expanded { background: color-mix(in srgb, var(--c) 8%, var(--member-bg)); }
 
 .member-row.top1 {
-  background: color-mix(in srgb, var(--c) 14%, var(--member-bg));
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--c) 25%, var(--member-bg)) 0%, 
+    color-mix(in srgb, var(--c) 12%, var(--member-bg)) 50%, 
+    color-mix(in srgb, var(--c) 25%, var(--member-bg)) 100%);
+  background-size: 200% 100%;
+  animation: top1Shimmer 4s linear infinite;
   border-left: 4px solid var(--c);
-  padding: 10px 12px 14px 10px;
+  padding: 16px 12px 14px 10px;
   flex-wrap: wrap;
   gap: 0;
+  margin-top: 8px;
+  position: relative;
 }
-.member-row.top1.expanded { background: color-mix(in srgb, var(--c) 20%, var(--member-bg)); }
+.member-row.top1::after {
+  content: '👑 1ST';
+  position: absolute;
+  top: -9px; left: 12px;
+  background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 70%, #fff));
+  color: #fff;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 3px 9px;
+  border-radius: 10px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--c) 50%, transparent);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  z-index: 2;
+}
+@keyframes top1Shimmer {
+  0% { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+
+[data-theme="light"] .member-row.top1 {
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--c) 22%, #fff) 0%, 
+    color-mix(in srgb, var(--c) 8%, #fff) 50%, 
+    color-mix(in srgb, var(--c) 22%, #fff) 100%);
+  background-size: 200% 100%;
+  animation: top1Shimmer 4s linear infinite;
+}
+[data-theme="light"] .member-row.top1::after {
+  background: linear-gradient(135deg, var(--c), color-mix(in srgb, var(--c) 75%, #000));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--c) 30%, transparent);
+}
+.member-row.top1.expanded { 
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--c) 32%, var(--member-bg)) 0%, 
+    color-mix(in srgb, var(--c) 18%, var(--member-bg)) 50%, 
+    color-mix(in srgb, var(--c) 32%, var(--member-bg)) 100%);
+  background-size: 200% 100%;
+  animation: top1Shimmer 4s linear infinite;
+}
+[data-theme="light"] .member-row.top1.expanded { 
+  background: linear-gradient(135deg, 
+    color-mix(in srgb, var(--c) 28%, #fff) 0%, 
+    color-mix(in srgb, var(--c) 14%, #fff) 50%, 
+    color-mix(in srgb, var(--c) 28%, #fff) 100%);
+  background-size: 200% 100%;
+  animation: top1Shimmer 4s linear infinite;
+}
 .member-row.top1 .rank-badge { display: none; }
 .member-row.top1 .profile-wrap { width: 38px; height: 38px; }
-.member-row.top1 .profile-img { width: 38px; height: 38px; border: 2px solid var(--c); }
+.member-row.top1 .profile-img { 
+  width: 38px; 
+  height: 38px; 
+  border: 2px solid var(--c); 
+  box-shadow: 0 0 12px color-mix(in srgb, var(--c) 60%, transparent);
+}
+[data-theme="light"] .member-row.top1 .profile-img {
+  box-shadow: 0 0 8px color-mix(in srgb, var(--c) 35%, transparent);
+}
 .member-row.top1 .profile-placeholder { width: 38px; height: 38px; font-size: 14px; }
 .member-row.top1 .minfo { flex: 1; padding-left: 2px; }
 .member-row.top1 .mname { font-size: 15px; font-weight: 800; color: var(--text); }
-.member-row.top1 .mval { font-size: 17px; font-weight: 900; }
-.top1-crown { font-size: 11px; margin-right: 2px; }
+.member-row.top1 .mval { 
+  font-size: 17px; 
+  font-weight: 900;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--c) 30%, transparent);
+}
+[data-theme="light"] .member-row.top1 .mval {
+  text-shadow: none;
+}
+.top1-crown { display: none; }
 
 .expand-arrow {
   font-size: 14px; color: var(--text4);
