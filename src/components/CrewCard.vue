@@ -29,7 +29,7 @@
         :key="m.id"
         class="member-row"
         :class="{ 'top1': i === 0 }"
-        @click="(e) => { selectedMember = m; clickPos = { x: e.clientX, y: e.clientY } }"
+        @click="(e) => { selectedMember = m; clickPos = { x: e.currentTarget.getBoundingClientRect().left, y: e.currentTarget.getBoundingClientRect().bottom } }"
         style="cursor:pointer"
       >
         <!-- 순위 먼저 -->
