@@ -45,26 +45,24 @@
         👁️ 뷰어십
       </button>
       
-      <div class="contact-area">
-        <a 
-          href="https://ygosu.com/msg/?m2=write&member=703386"
-          target="_blank"
-          rel="noopener"
-          class="contact-btn"
-        >
-          📩 문의하기
-        </a>
-        <span class="contact-hint">데이터 수정 및 오류 제보는 문의하기 눌러주세요</span>
-      </div>
+<a 
+        href="https://ygosu.com/msg/?m2=write&member=703386"
+        target="_blank"
+        rel="noopener"
+        class="contact-btn"
+      >
+        📩 문의하기
+      </a>
     </div>
 
-    <!-- 범례 -->
+<!-- 범례 -->
     <div class="legend" v-if="mode === 'balloon'">
       <span class="li"><i style="background:#ff4d7d"/>130만+</span>
       <span class="li"><i style="background:#f5a623"/>100만+</span>
       <span class="li"><i style="background:#4cd964"/>70만+</span>
       <span class="li"><i style="background:#4a9eff"/>40만+</span>
       <span class="li"><i style="background:#666680"/>40만↓</span>
+      <span class="contact-hint">데이터 수정 및 오류 제보는 문의하기 눌러주세요</span>
     </div>
     <div class="legend" v-if="mode === 'viewer'">
       <span class="li"><i style="background:#ff4d7d"/>100만+</span>
@@ -72,6 +70,7 @@
       <span class="li"><i style="background:#4cd964"/>50만+</span>
       <span class="li"><i style="background:#4a9eff"/>30만+</span>
       <span class="li"><i style="background:#666680"/>30만↓</span>
+      <span class="contact-hint">데이터 수정 및 오류 제보는 문의하기 눌러주세요</span>
     </div>
 
     <!-- 로딩 -->
@@ -361,6 +360,7 @@ onMounted(async () => {
   gap: 8px;
   padding: 12px 20px 0;
   justify-content: center;
+  background: var(--bg2);
 }
 .mode-tab {
   padding: 8px 28px;
@@ -432,24 +432,17 @@ onMounted(async () => {
 .mode-tabs {
   position: relative;
 }
-.contact-area {
+.contact-hint {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text3);
+  font-weight: 500;
+}
+.contact-btn {
   position: absolute;
   right: 16px;
   top: 50%;
   transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-.contact-hint {
-  font-size: 10px;
-  color: var(--text3);
-  font-weight: 500;
-  text-align: center;
-  white-space: nowrap;
-}
-.contact-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -462,11 +455,10 @@ onMounted(async () => {
   text-decoration: none;
   box-shadow: 0 2px 8px rgba(74,158,255,0.3);
   white-space: nowrap;
-  position: relative;
   transition: all 0.2s;
 }
 .contact-btn:hover {
-  transform: translateY(-2px);
+  transform: translateY(calc(-50% - 2px));
   box-shadow: 0 6px 16px rgba(74,158,255,0.5);
 }
 .contact-btn::before {
