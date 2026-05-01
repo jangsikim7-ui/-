@@ -401,14 +401,15 @@ onMounted(async () => {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 270px));
+  grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   padding: 18px 22px;
   flex: 1;
   align-content: start;
+  justify-content: center;
 }
 
 @media (max-width: 600px) {
-  .grid { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: repeat(3, 1fr); }
 }
 </style>
