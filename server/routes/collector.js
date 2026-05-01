@@ -17,7 +17,6 @@ function getKST() {
   }
 }
 
-// 월별 누적 전체 BJ
 async function fetchMonthly(year, month) {
   const url = `https://static.poong.today/chart/get?ctype=month&ks=false&year=${year}&month=${month}&day=undefined`
   try {
@@ -30,7 +29,6 @@ async function fetchMonthly(year, month) {
   } catch(e) { console.error(`[fetch] 월별 실패:`, e.message); return null }
 }
 
-// 일별 오늘 하루 BJ
 async function fetchDaily(year, month, day) {
   const url = `https://static.poong.today/chart/get?ctype=day&ks=false&year=${year}&month=${month}&day=${day}`
   try {
@@ -55,7 +53,6 @@ export async function collectAll() {
 
   console.log(`[collect] ${year}년 ${month}월 ${day}일 - ${members.length}명 수집 시작`)
 
-  // 별풍선 + 시청자 동시 수집 (같은 API에서 b=별풍선, v=시청자)
   const [monthList, dayList] = await Promise.all([
     fetchMonthly(year, month),
     fetchDaily(year, month, day),
@@ -63,7 +60,6 @@ export async function collectAll() {
 
   if (!monthList) { console.error('[collect] 월별 데이터 실패'); return }
 
-  // 별풍선 맵 (b 필드) + 시청자 맵 (v 필드) - 동일한 리스트에서 추출
   const monthMap = {}
   const viewerMonthMap = {}
   for (const item of monthList) {
@@ -83,31 +79,39 @@ export async function collectAll() {
     }
   }
 
-  for (const member of members) {
-    const total = monthMap[member.soop_id] ?? 0
-    const daily = dayMap[member.soop_id] ?? 0
-    const totalViewers = viewerMonthMap[member.soop_id] ?? 0
-    const dailyViewers = viewerDayMap[member.soop_id] ?? 0
+  // 트랜잭션으로 묶어서 한번에 처리 (메모리 효율 향상)
+  const upsertBalloon = db.prepare(`
+    INSERT INTO balloon_snapshots (soop_id, year, month, day, total_balloons, daily_balloons)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(soop_id, year, month, day) DO UPDATE SET
+      total_balloons = excluded.total_balloons,
+      daily_balloons = excluded.daily_balloons,
+      fetched_at = datetime('now')
+  `)
 
-    db.prepare(`
-      INSERT INTO balloon_snapshots (soop_id, year, month, day, total_balloons, daily_balloons)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(member.soop_id, year, month, day, total, daily)
+  const upsertViewer = db.prepare(`
+    INSERT INTO viewer_snapshots (soop_id, year, month, total_viewers, daily_viewers)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(soop_id, year, month) DO UPDATE SET
+      total_viewers = excluded.total_viewers,
+      daily_viewers = excluded.daily_viewers,
+      fetched_at = datetime('now')
+  `)
 
-    // 시청자 snapshots (upsert)
-    const existing = db.prepare(
-      'SELECT id FROM viewer_snapshots WHERE soop_id=? AND year=? AND month=? ORDER BY fetched_at DESC LIMIT 1'
-    ).get(member.soop_id, year, month)
-    if (existing) {
-      db.prepare('UPDATE viewer_snapshots SET total_viewers=?, daily_viewers=? WHERE id=?')
-        .run(totalViewers, dailyViewers, existing.id)
-    } else {
-      db.prepare(`INSERT INTO viewer_snapshots (soop_id, year, month, total_viewers, daily_viewers) VALUES (?,?,?,?,?)`)
-        .run(member.soop_id, year, month, totalViewers, dailyViewers)
+  const runAll = db.transaction((members) => {
+    for (const member of members) {
+      const total = monthMap[member.soop_id] ?? 0
+      const daily = dayMap[member.soop_id] ?? 0
+      const totalViewers = viewerMonthMap[member.soop_id] ?? 0
+      const dailyViewers = viewerDayMap[member.soop_id] ?? 0
+
+      upsertBalloon.run(member.soop_id, year, month, day, total, daily)
+      upsertViewer.run(member.soop_id, year, month, totalViewers, dailyViewers)
+
+      console.log(`[collect] ${member.name}: 풍선 ${total.toLocaleString()} / 시청자 ${totalViewers.toLocaleString()}`)
     }
+  })
 
-    console.log(`[collect] ${member.name}: 풍선 ${total.toLocaleString()} / 시청자 ${totalViewers.toLocaleString()}`)
-  }
-
+  runAll(members)
   console.log('[collect] 완료')
 }

@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS crews (
   sort_order INTEGER DEFAULT 0,
   created_at TEXT DEFAULT (datetime('now'))
 );
-
 CREATE TABLE IF NOT EXISTS members (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   crew_id INTEGER NOT NULL,
@@ -19,7 +18,6 @@ CREATE TABLE IF NOT EXISTS members (
   created_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (crew_id) REFERENCES crews(id)
 );
-
 CREATE TABLE IF NOT EXISTS balloon_snapshots (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   soop_id TEXT NOT NULL,
@@ -28,12 +26,11 @@ CREATE TABLE IF NOT EXISTS balloon_snapshots (
   day INTEGER NOT NULL DEFAULT 0,
   total_balloons INTEGER DEFAULT 0,
   daily_balloons INTEGER DEFAULT 0,
-  fetched_at TEXT DEFAULT (datetime('now'))
+  fetched_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(soop_id, year, month, day)
 );
-
 CREATE INDEX IF NOT EXISTS idx_snapshots_member_date
   ON balloon_snapshots(soop_id, year, month, day);
-
 CREATE TABLE IF NOT EXISTS viewer_snapshots (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   soop_id TEXT NOT NULL,
@@ -41,8 +38,8 @@ CREATE TABLE IF NOT EXISTS viewer_snapshots (
   month INTEGER NOT NULL,
   total_viewers INTEGER DEFAULT 0,
   daily_viewers INTEGER DEFAULT 0,
-  fetched_at TEXT DEFAULT (datetime('now'))
+  fetched_at TEXT DEFAULT (datetime('now')),
+  UNIQUE(soop_id, year, month)
 );
-
 CREATE INDEX IF NOT EXISTS idx_viewer_snapshots_member_date
   ON viewer_snapshots(soop_id, year, month);
