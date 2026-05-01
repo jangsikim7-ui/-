@@ -357,22 +357,17 @@ router.post('/collect-prev', adminOnly, async (req, res) => {
     const map = {}
     for (const item of list) { if (item.i) map[item.i] = item.b || 0 }
 
-    for (const member of members) {
-      const total = map[member.soop_id] ?? 0
-      // 이미 있으면 업데이트, 없으면 삽입
-      const existing = db.prepare(
-        'SELECT id FROM balloon_snapshots WHERE soop_id=? AND year=? AND month=? ORDER BY fetched_at DESC LIMIT 1'
-      ).get(member.soop_id, prevYear, prevMonth)
-
-      if (existing) {
-        db.prepare('UPDATE balloon_snapshots SET total_balloons=? WHERE id=?').run(total, existing.id)
-      } else {
-        db.prepare(
-          'INSERT INTO balloon_snapshots (soop_id, year, month, total_balloons) VALUES (?,?,?,?)'
-        ).run(member.soop_id, prevYear, prevMonth, total)
-      }
-      console.log(`[collect-prev] ${member.name}(${member.soop_id}): ${prevYear}/${prevMonth} → ${total.toLocaleString()}`)
-    }
+for (const member of members) {
+  const total = map[member.soop_id] ?? 0
+  db.prepare(`
+    INSERT INTO balloon_snapshots (soop_id, year, month, day, total_balloons)
+    VALUES (?, ?, ?, 0, ?)
+    ON CONFLICT(soop_id, year, month, day) DO UPDATE SET
+      total_balloons = excluded.total_balloons,
+      fetched_at = datetime('now')
+  `).run(member.soop_id, prevYear, prevMonth, total)
+  console.log(`[collect-prev] ${member.name}(${member.soop_id}): ${prevYear}/${prevMonth} → ${total.toLocaleString()}`)
+}
     console.log('[collect-prev] 완료')
   } catch(e) { console.error('[collect-prev] 오류:', e.message) }
 })
