@@ -29,7 +29,7 @@
         :key="m.id"
         class="member-row"
         :class="{ 'top1': i === 0 }"
-        @click="selectedMember = m"
+        @click="(e) => { selectedMember = m; clickPos = { x: e.clientX, y: e.clientY } }"
         style="cursor:pointer"
       >
         <!-- 순위 먼저 -->
@@ -89,12 +89,13 @@
 
   <!-- 팬랭킹 모달 -->
   <FanRankingModal
-    v-if="selectedMember"
-    :member="selectedMember"
-    :year="year"
-    :month="month"
-    @close="selectedMember = null"
-  />
+  v-if="selectedMember"
+  :member="selectedMember"
+  :year="year"
+  :month="month"
+  :pos="clickPos"
+  @close="selectedMember = null"
+/>
 </template>
 
 <script setup>
@@ -104,6 +105,7 @@ import FanRankingModal from './FanRankingModal.vue'
 const props = defineProps({ crew: Object, maxBalloons: Number, rank: Number, mode: { type: String, default: 'balloon' }, year: Number, month: Number })
 
 const selectedMember = ref(null)
+const clickPos = ref({ x: 0, y: 0 })
 
 // sooplive CDN URL 생성 - 첫 두글자가 폴더명
 // 예: jaeha010 → /LOGO/ja/jaeha010/jaeha010.jpg

@@ -1,64 +1,98 @@
 <template>
-  <div class="fan-overlay" @click.self="$emit('close')">
-    <div class="fan-modal">
-      <!-- 헤더 -->
-      <div class="fan-header">
-        <div class="fan-bj">
-          <img :src="cdnUrl(member.soop_id)" class="fan-bj-img" @error="e=>e.target.style.display='none'" />
-          <div>
-            <div class="fan-bj-name">{{ member.name }}</div>
-            <div class="fan-bj-sub">이달의 후원자 TOP 10</div>
+  <Teleport to="body">
+    <div class="fan-overlay" @click.self="$emit('close')">
+      <div class="fan-modal" :style="modalStyle">
+        <!-- 헤더 -->
+        <div class="fan-header">
+          <div class="fan-bj">
+            <img :src="cdnUrl(member.soop_id)" class="fan-bj-img" @error="e=>e.target.style.display='none'" />
+            <div>
+              <div class="fan-bj-name">{{ member.name }}</div>
+              <div class="fan-bj-sub">이달의 후원자 TOP 10</div>
+            </div>
           </div>
+          <button class="fan-close" @click="$emit('close')">✕</button>
         </div>
-        <button class="fan-close" @click="$emit('close')">✕</button>
-      </div>
 
-      <!-- 로딩 -->
-      <div v-if="loading" class="fan-loading">
-        <div class="spin">⟳</div> 불러오는 중...
-      </div>
-
-      <!-- 에러 -->
-      <div v-else-if="error" class="fan-error">{{ error }}</div>
-
-      <!-- 팬 목록 -->
-      <div v-else class="fan-list">
-        <div class="fan-list-head">
-          <span>순위</span>
-          <span></span>
-          <span>닉네임</span>
-          <span class="r">선물횟수</span>
-          <span class="r">별풍선</span>
+        <!-- 로딩 -->
+        <div v-if="loading" class="fan-loading">
+          <div class="spin">⟳</div> 불러오는 중...
         </div>
-        <div v-for="fan in fans" :key="fan.rank" class="fan-row" :class="'r'+fan.rank">
-          <div class="fan-rank">
-            <span v-if="fan.rank === 1">🥇</span>
-            <span v-else-if="fan.rank === 2">🥈</span>
-            <span v-else-if="fan.rank === 3">🥉</span>
-            <span v-else class="fan-rank-num">{{ fan.rank }}</span>
+
+        <!-- 에러 -->
+        <div v-else-if="error" class="fan-error">{{ error }}</div>
+
+        <!-- 팬 목록 -->
+        <div v-else class="fan-list">
+          <div class="fan-list-head">
+            <span>순위</span>
+            <span></span>
+            <span>닉네임</span>
+            <span class="r">선물횟수</span>
+            <span class="r">별풍선</span>
           </div>
-          <img :src="fan.profile_img" class="fan-img" @error="e=>e.target.style.display='none'" />
-          <div class="fan-name">{{ fan.name }}</div>
-          <div class="fan-count r">{{ fan.count.toLocaleString('ko-KR') }}회</div>
-          <div class="fan-balloons r">{{ fan.balloons.toLocaleString('ko-KR') }}</div>
-        </div>
+          <div v-for="fan in fans" :key="fan.rank" class="fan-row" :class="'r'+fan.rank">
+            <div class="fan-rank">
+              <span v-if="fan.rank === 1">🥇</span>
+              <span v-else-if="fan.rank === 2">🥈</span>
+              <span v-else-if="fan.rank === 3">🥉</span>
+              <span v-else class="fan-rank-num">{{ fan.rank }}</span>
+            </div>
+            <img :src="fan.profile_img" class="fan-img" @error="e=>e.target.style.display='none'" />
+            <div class="fan-name">{{ fan.name }}</div>
+            <div class="fan-count r">{{ fan.count.toLocaleString('ko-KR') }}회</div>
+            <div class="fan-balloons r">{{ fan.balloons.toLocaleString('ko-KR') }}</div>
+          </div>
 
-        <div v-if="fans.length === 0" class="fan-empty">후원자 데이터가 없어요</div>
+          <div v-if="fans.length === 0" class="fan-empty">후원자 데이터가 없어요</div>
+        </div>
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { api } from '../composables/useApi.js'
 
-const props = defineProps({ member: Object, year: Number, month: Number })
+const props = defineProps({ member: Object, year: Number, month: Number, pos: Object })
 const emit = defineEmits(['close'])
 
 const loading = ref(true)
 const error = ref('')
 const fans = ref([])
+
+const MODAL_WIDTH = 380
+const MODAL_HEIGHT = 480
+
+const modalStyle = computed(() => {
+  if (!props.pos) return {}
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+
+  let x = props.pos.x + 12
+  let y = props.pos.y
+
+  // 오른쪽 화면 밖으로 나가면 왼쪽에
+  if (x + MODAL_WIDTH > vw - 12) {
+    x = props.pos.x - MODAL_WIDTH - 12
+  }
+
+  // 아래쪽 화면 밖으로 나가면 위로
+  if (y + MODAL_HEIGHT > vh - 12) {
+    y = vh - MODAL_HEIGHT - 12
+  }
+
+  // 위쪽 밖으로 나가면 고정
+  if (y < 12) y = 12
+
+  return {
+    position: 'fixed',
+    top: y + 'px',
+    left: x + 'px',
+    transform: 'none',
+  }
+})
 
 function cdnUrl(soopId) {
   const prefix = soopId.slice(0, 2).toLowerCase()
@@ -79,9 +113,8 @@ onMounted(async () => {
 <style scoped>
 .fan-overlay {
   position: fixed; inset: 0; z-index: 999;
-  background: rgba(0,0,0,0.7);
-  display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(2px);
   animation: fadeIn 0.15s ease;
 }
 @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
@@ -96,7 +129,7 @@ onMounted(async () => {
   animation: slideUp 0.2s ease;
   overflow: hidden;
 }
-@keyframes slideUp { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+@keyframes slideUp { from { transform: translateY(8px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
 
 .fan-header {
   display: flex; align-items: center; justify-content: space-between;
