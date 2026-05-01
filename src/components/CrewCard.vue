@@ -336,4 +336,22 @@ function onImgError(e, soopId) {
 [data-theme="light"] .card-foot .foot-val.t4,
 [data-theme="light"] .card-foot .foot-val.t5 { color: #0f0f1a; }
 .foot-prev { font-size: 11px; color: var(--text2); font-weight: 600; }
+@media (max-width: 600px) {
+  .card { max-width: 100%; }
+  
+  /* 프사 숨기기 */
+  .profile-wrap { display: none; }
+  .member-row.top1 .profile-wrap { display: none; }
+  
+  /* 글씨 크기 줄이기 */
+  .crew-name { font-size: 16px; }
+  .avg-val { font-size: 16px; }
+  .logo-img { width: 52px; height: 52px; }
+  .logo-placeholder { width: 52px; height: 52px; font-size: 18px; }
+  .mname { font-size: 11px; }
+  .mval { font-size: 11px; }
+  .member-row { padding: 5px 8px 9px; gap: 4px; }
+  .member-row.top1 .mname { font-size: 13px; }
+  .member-row.top1 .mval { font-size: 14px; }
+}
 </style>
