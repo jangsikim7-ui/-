@@ -410,6 +410,10 @@ onMounted(async () => {
 }
 
 @media (max-width: 600px) {
-  .grid { grid-template-columns: repeat(3, 1fr); }
+  .grid { 
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
 }
 </style>
