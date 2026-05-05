@@ -19,6 +19,10 @@
         <button class="btn-theme" @click="toggleTheme" :title="isDark ? '라이트 모드' : '다크 모드'">
           {{ isDark ? '☀️' : '🌙' }}
         </button>
+        <!-- 크루 대결 버튼 (PC만, 토글 ON일 때만) -->
+        <button v-if="battleEnabled" class="btn-battle-toggle pc-only" @click="showBattle = true" title="크루 대결 분석">
+          ⚔️ 크루대결
+        </button>
         <template v-if="isAdmin">
           <button class="btn-collect btn-sync" @click="triggerSync" :disabled="syncing" title="낙수표와 동기화">
             {{ syncing ? '동기화중...' : '🔄 낙수동기화' }}
@@ -124,7 +128,8 @@
       </div>
     </div>
 
-    <AdminModal v-if="showAdmin" @close="showAdmin = false" @updated="loadStats" />
+    <AdminModal v-if="showAdmin" @close="showAdmin = false" @updated="loadStats" @battle-toggle="onBattleToggle" />
+    <CrewBattleModal v-if="showBattle" :crews="stats" :mode="mode" @close="showBattle = false" />
   </div>
 </template>
 
@@ -132,6 +137,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import CrewCard from './components/CrewCard.vue'
 import AdminModal from './components/AdminModal.vue'
+import CrewBattleModal from './components/CrewBattleModal.vue'
 import { api, getAdminToken, setAdminToken, clearAdminToken } from './composables/useApi.js'
 
 const now = new Date()
@@ -141,6 +147,7 @@ const stats = ref([])
 const loading = ref(false)
 const error = ref('')
 const showAdmin = ref(false)
+const showBattle = ref(false)
 const mode = ref('balloon')
 const isAdmin = ref(false)
 const showLoginModal = ref(false)
@@ -151,8 +158,16 @@ const collectingPrev = ref(false)
 const syncing = ref(false)
 const updatingProfiles = ref(false)
 
-// 최대 3개월 전까지만 허용 (현재월 포함 3개월: 5월이면 3,4,5월)
-const MIN_MONTHS_BACK = 2 // 현재월 기준 2개월 전까지
+// 크루 대결 ON/OFF (localStorage 저장, 기본 ON)
+const battleEnabled = ref(localStorage.getItem('battle_enabled') !== 'false')
+
+function onBattleToggle(value) {
+  battleEnabled.value = value
+  localStorage.setItem('battle_enabled', value ? 'true' : 'false')
+}
+
+// 최대 3개월 전까지만 허용
+const MIN_MONTHS_BACK = 2
 
 function getOldestAllowed() {
   const n = new Date()
@@ -165,7 +180,6 @@ function getOldestAllowed() {
 
 const canGoPrev = computed(() => {
   const oldest = getOldestAllowed()
-  // 현재 보고 있는 달이 가장 오래된 달보다 더 뒤(미래)면 이전으로 갈 수 있음
   if (year.value > oldest.year) return true
   if (year.value === oldest.year && month.value > oldest.month) return true
   return false
@@ -267,7 +281,6 @@ async function triggerSync() {
       syncing.value = false
       return
     }
-    // diff 내용 요약 보여주고 전체 적용
     const msg = [
       diff.added.length > 0 ? `➕ 추가 ${diff.added.length}명:\n${diff.added.map(m=>`  • ${m.crew_name} - ${m.name}`).join('\n')}` : '',
       diff.removed.length > 0 ? `➖ 삭제 ${diff.removed.length}명:\n${diff.removed.map(m=>`  • ${m.crew_name} - ${m.name}`).join('\n')}` : '',
@@ -298,19 +311,14 @@ function formatTime(dt) {
 }
 
 onMounted(async () => {
-  // 저장된 테마 복원
   const saved = localStorage.getItem('theme') || 'dark'
   isDark.value = saved === 'dark'
   document.documentElement.setAttribute('data-theme', saved)
 
-  // 저장된 관리자 토큰 확인
   if (getAdminToken()) isAdmin.value = true
 
   loadStats()
-  // 1시간마다 화면 자동 새로고침
   setInterval(loadStats, 60 * 60 * 1000)
-
-  // 자동 임포트 제거 - 수동으로만 (낙수동기화 버튼)
 })
 </script>
 
@@ -354,6 +362,22 @@ onMounted(async () => {
   transition: all 0.15s;
 }
 .btn-theme:hover { background: var(--input-border); }
+
+/* 크루 대결 버튼 */
+.btn-battle-toggle {
+  padding: 6px 14px; border-radius: 8px;
+  background: linear-gradient(135deg, #4a9eff, #6b5fff);
+  color: #fff; border: none;
+  font-size: 11px; font-weight: 700;
+  cursor: pointer; font-family: inherit;
+  transition: all 0.15s;
+  box-shadow: 0 2px 8px rgba(74,158,255,0.25);
+  white-space: nowrap;
+}
+.btn-battle-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(74,158,255,0.4);
+}
 
 .btn-collect {
   padding: 6px 12px; border-radius: 7px; font-size: 11px; font-weight: 600;
@@ -456,6 +480,9 @@ onMounted(async () => {
     gap: 8px;
     padding: 10px;
   }
+  
+  /* 모바일에서 크루 대결 버튼 숨김 */
+  .pc-only { display: none !important; }
   
   /* 모바일: 3버튼 한 줄로 */
   .mode-tabs {

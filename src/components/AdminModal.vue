@@ -10,6 +10,7 @@
         <div class="tabs">
           <button :class="['tab', tab==='crews'&&'active']" @click="tab='crews'">크루 관리</button>
           <button :class="['tab', tab==='members'&&'active']" @click="tab='members'">멤버 관리</button>
+          <button :class="['tab', tab==='battle'&&'active']" @click="tab='battle'">⚔️ 크루대결</button>
           <button :class="['tab', tab==='backup'&&'active']" @click="tab='backup';loadBackups()">💾 백업</button>
         </div>
 
@@ -230,6 +231,35 @@
           </div>
         </div>
 
+        <!-- ── 크루 대결 설정 ── -->
+        <div v-if="tab==='battle'">
+          <div class="section-title">⚔️ 크루 대결 분석 기능</div>
+          <div class="battle-info-box">
+            <div class="battle-info-title">🎯 무엇을 하는 기능?</div>
+            <div class="battle-info-desc">
+              두 크루를 선택해서 평균 화력, 1위 의존도, 허리진/꼴찌라인 화력 등을 비교 분석해주는 기능이에요.
+              일반 사용자도 헤더의 ⚔️ 크루대결 버튼으로 사용할 수 있어요.
+            </div>
+            <div class="battle-info-note">📱 모바일에서는 자동으로 숨겨져요 (PC 전용)</div>
+          </div>
+
+          <div class="section-title" style="margin-top:18px">표시 설정</div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-label">크루 대결 버튼 표시</div>
+              <div class="toggle-desc">{{ battleEnabled ? '✅ 사용자에게 보임' : '🚫 숨김 처리됨' }}</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" v-model="battleEnabled" @change="onBattleToggleChange" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="hint" style="margin-top:14px">
+            💡 OFF로 설정하면 일반 사용자에게 ⚔️ 크루대결 버튼이 보이지 않아요. 다시 ON으로 바꾸면 즉시 표시돼요.
+          </div>
+        </div>
+
         <!-- 백업 탭 -->
         <div v-if="tab==='backup'">
           <!-- 비밀번호 변경 -->
@@ -273,7 +303,7 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { api } from '../composables/useApi.js'
 
-const emit = defineEmits(['close', 'updated'])
+const emit = defineEmits(['close', 'updated', 'battle-toggle'])
 
 const tab = ref('crews')
 const crews = ref([])
@@ -282,6 +312,14 @@ const adding = ref(false)
 const filterCrew = ref(0)
 const editingCrew = ref(null)
 const editingMember = ref(null)
+
+// 크루 대결 ON/OFF (localStorage 저장, 기본 ON)
+const battleEnabled = ref(localStorage.getItem('battle_enabled') !== 'false')
+
+function onBattleToggleChange() {
+  localStorage.setItem('battle_enabled', battleEnabled.value ? 'true' : 'false')
+  emit('battle-toggle', battleEnabled.value)
+}
 
 // 다량 입력
 const bulkInput = ref('')
@@ -302,15 +340,13 @@ const bulkParsed = computed(() => {
     .map(line => {
       line = line.trim()
       if (!line) return null
-      // URL에서 SOOP ID 추출
       const urlMatch = line.match(/poong\.today\/broadcast\/([^/?#\s]+)/)
       if (urlMatch) return urlMatch[1]
-      // SOOP ID 직접 입력
       if (/^[a-zA-Z0-9_]+$/.test(line)) return line
       return null
     })
     .filter(Boolean)
-    .filter((v, i, a) => a.indexOf(v) === i) // 중복 제거
+    .filter((v, i, a) => a.indexOf(v) === i)
 })
 
 const CREW_COLORS = [
@@ -410,7 +446,6 @@ async function addMember() {
   if (!newMember.value.crew_id) return alert('크루를 선택하세요')
   if (!newMember.value.soop_id.trim()) return alert('SOOP ID를 입력하세요')
 
-  // 닉네임 없으면 자동 조회
   if (!newMember.value.name.trim() || newMember.value.name === newMember.value.soop_id) {
     await lookupNickname()
   }
@@ -435,7 +470,7 @@ async function addBulk() {
       await api.createMember({
         crew_id: bulkCrewId.value,
         soop_id: soopId,
-        name: soopId, // 일단 SOOP ID로 등록
+        name: soopId,
         sort_order: 0,
         is_new: false
       })
@@ -492,7 +527,6 @@ async function checkSync() {
   try {
     const diff = await api.syncDiff()
     syncDiff.value = diff
-    // 전체 선택 기본값
     syncSelected.value = {
       added: diff.added.map(m => m.soop_id),
       removed: diff.removed.map(m => m.soop_id),
@@ -611,7 +645,7 @@ onMounted(load)
 .close-btn:hover { color: var(--text); background: var(--border); }
 .modal-body { padding: 14px 18px; overflow-y: auto; flex: 1; }
 
-.tabs { display: flex; gap: 4px; margin-bottom: 16px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; flex-wrap: wrap; }
 .tab { padding: 7px 16px; border-radius: 8px; color: var(--text2); font-weight: 700; font-size: 13px; transition: all 0.15s; background: none; border: none; cursor: pointer; font-family: inherit; }
 .tab:hover { color: var(--text); background: var(--border2); }
 .tab.active { background: var(--border); color: var(--text); border: 1px solid var(--input-border); }
@@ -645,7 +679,6 @@ onMounted(load)
 .new-badge-label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); white-space: nowrap; flex-shrink: 0; cursor: pointer; }
 .new-badge-label input { width: auto; flex: none; }
 
-/* 다량 입력 */
 .bulk-textarea {
   width: 100%; margin-top: 8px;
   background: var(--input-bg); border: 1px solid var(--input-border);
@@ -666,7 +699,7 @@ onMounted(load)
 .nick-status.found { color: #4cd964; }
 .nick-status.failed { color: #f5a623; }
 
-.hint { font-size: 11px; color: var(--text3); margin-top: 7px; }
+.hint { font-size: 11px; color: var(--text3); margin-top: 7px; line-height: 1.6; }
 
 .filter-bar { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
 .filter-btn { padding: 4px 10px; border-radius: 20px; font-size: 11px; color: var(--text2); background: var(--border2); border: 1px solid var(--border); cursor: pointer; font-family: inherit; transition: all 0.15s; }
@@ -737,6 +770,76 @@ onMounted(load)
 .diff-arrow { color: var(--text3); font-size: 10px; }
 .btn-sync-apply { align-self: flex-end; padding: 8px 20px; border-radius: 8px; border: none; background: var(--text); color: var(--bg); font-size: 12px; font-weight: 700; cursor: pointer; }
 .btn-sync-apply:disabled { opacity: 0.5; }
+
+/* 크루 대결 탭 */
+.battle-info-box {
+  background: color-mix(in srgb, #6b5fff 8%, var(--bg3));
+  border: 1.5px solid color-mix(in srgb, #6b5fff 25%, transparent);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.battle-info-title {
+  font-size: 13px; font-weight: 700; color: var(--text);
+}
+.battle-info-desc {
+  font-size: 12px; color: var(--text2);
+  line-height: 1.6;
+}
+.battle-info-note {
+  font-size: 11px; color: #6b5fff; font-weight: 600;
+  margin-top: 2px;
+}
+[data-theme="light"] .battle-info-note { color: #4a3fdd; }
+
+.toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--item-bg);
+  border: 1px solid var(--item-border);
+  border-radius: 10px;
+}
+.toggle-info { display: flex; flex-direction: column; gap: 3px; }
+.toggle-label {
+  font-size: 13px; font-weight: 700; color: var(--text);
+}
+.toggle-desc {
+  font-size: 11px; color: var(--text3);
+}
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px; height: 26px;
+  flex-shrink: 0;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--bar-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 999px;
+  transition: 0.2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 18px; width: 18px;
+  left: 3px; bottom: 3px;
+  background: var(--text);
+  border-radius: 50%;
+  transition: 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: linear-gradient(135deg, #4a9eff, #6b5fff);
+  border-color: transparent;
+}
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(22px);
+  background: #fff;
+}
+
 .member-item { flex-wrap: wrap; }
 .member-thumb { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
 .backup-desc { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
