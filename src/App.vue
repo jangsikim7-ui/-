@@ -3,7 +3,7 @@
     <header class="header">
       <div class="hl">
         <div class="logo">⚡ 엑셀크루 시너지표</div>
-        <div class="source">출처: poong.today · 1시간마다 자동 갱신</div>
+        <div class="source">출처: poong.today · 8시간마다 자동 갱신</div>
       </div>
 
       <div class="hc">
@@ -18,10 +18,6 @@
         <span class="updated" v-if="lastCollected">{{ formatTime(lastCollected) }} 수집</span>
         <button class="btn-theme" @click="toggleTheme" :title="isDark ? '라이트 모드' : '다크 모드'">
           {{ isDark ? '☀️' : '🌙' }}
-        </button>
-        <!-- 크루 대결 버튼 (PC만, 토글 ON일 때만) -->
-        <button v-if="battleEnabled" class="btn-battle-toggle pc-only" @click="showBattle = true" title="크루 대결 분석">
-          ⚔️ 크루대결
         </button>
         <template v-if="isAdmin">
           <button class="btn-collect btn-sync" @click="triggerSync" :disabled="syncing" title="낙수표와 동기화">
@@ -40,7 +36,7 @@
       </div>
     </header>
 
-<!-- 모드 탭 -->
+    <!-- 모드 탭 -->
     <div class="mode-tabs">
       <button class="mode-tab" :class="{ active: mode === 'balloon' }" @click="setMode('balloon')">
         🎈 별풍선
@@ -48,8 +44,13 @@
       <button class="mode-tab" :class="{ active: mode === 'viewer' }" @click="setMode('viewer')">
         👁️ 뷰어십
       </button>
-      
-<a 
+
+      <!-- 크루대결 버튼 - 탭 옆에 -->
+      <button v-if="battleEnabled" class="btn-battle-center pc-only" @click="showBattle = true">
+        ⚔️ 크루대결
+      </button>
+
+      <a
         href="https://ygosu.com/msg/?m2=write&member=703386"
         target="_blank"
         rel="noopener"
@@ -59,7 +60,7 @@
       </a>
     </div>
 
-<!-- 범례 -->
+    <!-- 범례 -->
     <div class="legend" v-if="mode === 'balloon'">
       <span class="li"><i style="background:#ff4d7d"/>130만+</span>
       <span class="li"><i style="background:#f5a623"/>100만+</span>
@@ -69,7 +70,7 @@
       <span class="contact-hint">데이터 수정 및 오류 제보는 문의하기 눌러주세요</span>
     </div>
     <div class="legend" v-if="mode === 'viewer'">
-<span class="li"><i style="background:#ff4d7d"/>50만+</span>
+      <span class="li"><i style="background:#ff4d7d"/>50만+</span>
       <span class="li"><i style="background:#f5a623"/>40만+</span>
       <span class="li"><i style="background:#4cd964"/>30만+</span>
       <span class="li"><i style="background:#4a9eff"/>15만+</span>
@@ -158,7 +159,6 @@ const collectingPrev = ref(false)
 const syncing = ref(false)
 const updatingProfiles = ref(false)
 
-// 크루 대결 ON/OFF (localStorage 저장, 기본 ON)
 const battleEnabled = ref(localStorage.getItem('battle_enabled') !== 'false')
 
 function onBattleToggle(value) {
@@ -166,7 +166,6 @@ function onBattleToggle(value) {
   localStorage.setItem('battle_enabled', value ? 'true' : 'false')
 }
 
-// 최대 3개월 전까지만 허용
 const MIN_MONTHS_BACK = 2
 
 function getOldestAllowed() {
@@ -318,7 +317,7 @@ onMounted(async () => {
   if (getAdminToken()) isAdmin.value = true
 
   loadStats()
-  setInterval(loadStats, 60 * 60 * 1000)
+  setInterval(loadStats, 8 * 60 * 60 * 1000)
 })
 </script>
 
@@ -363,22 +362,6 @@ onMounted(async () => {
 }
 .btn-theme:hover { background: var(--input-border); }
 
-/* 크루 대결 버튼 */
-.btn-battle-toggle {
-  padding: 6px 14px; border-radius: 8px;
-  background: linear-gradient(135deg, #4a9eff, #6b5fff);
-  color: #fff; border: none;
-  font-size: 11px; font-weight: 700;
-  cursor: pointer; font-family: inherit;
-  transition: all 0.15s;
-  box-shadow: 0 2px 8px rgba(74,158,255,0.25);
-  white-space: nowrap;
-}
-.btn-battle-toggle:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(74,158,255,0.4);
-}
-
 .btn-collect {
   padding: 6px 12px; border-radius: 7px; font-size: 11px; font-weight: 600;
   background: var(--btn-ghost-bg); border: 1px solid var(--border);
@@ -386,8 +369,20 @@ onMounted(async () => {
   transition: all 0.15s;
 }
 .btn-collect:hover:not(:disabled) { color: var(--text); }
+.btn-collect:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-sync { border-color: #6bcb77; color: #6bcb77; }
+.btn-sync:hover:not(:disabled) { background: rgba(107,203,119,0.1); }
+
 .btn-logout { background: none; border: 1px solid var(--border); color: var(--text3); padding: 5px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; }
 .btn-logout:hover { color: var(--text); }
+
+.btn-admin {
+  padding: 6px 12px; border-radius: 7px; font-size: 11px; font-weight: 700;
+  background: #4a9eff; border: none; color: #fff; cursor: pointer;
+  transition: background 0.15s; font-family: inherit;
+}
+.btn-admin:hover { background: #3a8ef0; }
+
 .login-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
 .login-modal { background: var(--bg3); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; width: 300px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
 .login-title { font-size: 16px; font-weight: 800; color: var(--text); text-align: center; }
@@ -397,18 +392,10 @@ onMounted(async () => {
 .login-btns { display: flex; gap: 8px; }
 .btn-login { flex: 1; padding: 10px; border-radius: 8px; border: none; background: var(--text); color: var(--bg); font-size: 13px; font-weight: 700; cursor: pointer; }
 .btn-login-cancel { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: none; color: var(--text3); font-size: 13px; cursor: pointer; }
-.btn-collect:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-sync { border-color: #6bcb77; color: #6bcb77; }
-.btn-sync:hover:not(:disabled) { background: rgba(107,203,119,0.1); }
 
-.btn-admin {
-  padding: 6px 12px; border-radius: 7px; font-size: 11px; font-weight: 700;
-  background: #4a9eff; border: none; color: #fff; cursor: pointer;
-  transition: background 0.15s; font-family: inherit;
-}
-.btn-admin:hover { background: #3a8ef0; }
-
+/* 모드 탭 */
 .mode-tabs {
+  position: relative;
   display: flex;
   gap: 8px;
   padding: 12px 20px 0;
@@ -438,6 +425,27 @@ onMounted(async () => {
   box-shadow: 0 4px 14px rgba(0,0,0,0.25);
 }
 
+/* 크루대결 버튼 - 탭 옆에 */
+.btn-battle-center {
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4a9eff, #6b5fff);
+  color: #fff;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.18s;
+  box-shadow: 0 2px 8px rgba(74,158,255,0.3);
+  white-space: nowrap;
+}
+.btn-battle-center:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(74,158,255,0.5);
+}
+
+/* 범례 */
 .legend {
   display: flex; align-items: center; gap: 14px;
   padding: 7px 20px;
@@ -449,75 +457,13 @@ onMounted(async () => {
 .li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
 .li i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; font-style: normal; }
 
-.state {
-  flex: 1; display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  color: var(--text2); gap: 6px; padding: 60px;
-}
-.empty-desc { color: var(--text3); font-size: 13px; }
-.spin {
-  width: 24px; height: 24px;
-  border: 2.5px solid var(--border);
-  border-top-color: #4a9eff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  padding: 18px 22px;
-  flex: 1;
-  align-content: start;
-  justify-content: center;
-}
-
-@media (max-width: 600px) {
-  .grid { 
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    padding: 10px;
-  }
-  
-  /* 모바일에서 크루 대결 버튼 숨김 */
-  .pc-only { display: none !important; }
-  
-  /* 모바일: 3버튼 한 줄로 */
-  .mode-tabs {
-    gap: 6px;
-    padding: 12px 10px 0;
-  }
-  .mode-tab {
-    padding: 7px 14px;
-    font-size: 12px;
-  }
-  .contact-btn {
-    position: static;
-    transform: none;
-    padding: 7px 12px;
-    font-size: 12px;
-  }
-  .contact-btn:hover {
-    transform: translateY(-2px);
-  }
-  
-  /* 모바일에선 설명 숨김 */
-  .contact-hint {
-    display: none;
-  }
-}
-
-.mode-tabs {
-  position: relative;
-}
 .contact-hint {
   margin-left: auto;
   font-size: 11px;
   color: var(--text3);
   font-weight: 500;
 }
+
 .contact-btn {
   position: absolute;
   right: 16px;
@@ -553,5 +499,57 @@ onMounted(async () => {
   0% { box-shadow: 0 0 0 0 rgba(74,158,255,0.6); }
   70% { box-shadow: 0 0 0 10px rgba(74,158,255,0); }
   100% { box-shadow: 0 0 0 0 rgba(74,158,255,0); }
+}
+
+.state {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--text2); gap: 6px; padding: 60px;
+}
+.empty-desc { color: var(--text3); font-size: 13px; }
+.spin {
+  width: 24px; height: 24px;
+  border: 2.5px solid var(--border);
+  border-top-color: #4a9eff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  padding: 18px 22px;
+  flex: 1;
+  align-content: start;
+  justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
+  .pc-only { display: none !important; }
+  .mode-tabs {
+    gap: 6px;
+    padding: 12px 10px 0;
+  }
+  .mode-tab {
+    padding: 7px 14px;
+    font-size: 12px;
+  }
+  .contact-btn {
+    position: static;
+    transform: none;
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+  .contact-btn:hover {
+    transform: translateY(-2px);
+  }
+  .contact-hint { display: none; }
 }
 </style>

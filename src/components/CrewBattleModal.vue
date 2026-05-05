@@ -165,7 +165,6 @@ const crewAId = ref('')
 const crewBId = ref('')
 const result = ref(null)
 
-// 멤버 있는 크루만
 const availableCrews = computed(() =>
   props.crews.filter(c => c.members && c.members.length > 0)
 )
@@ -183,7 +182,6 @@ function runBattle() {
   const items = []
   let scoreA = 0, scoreB = 0, draws = 0
 
-  // === 1. 평균 화력 ===
   const avgA = A.avg || 0
   const avgB = B.avg || 0
   const avgMax = Math.max(avgA, avgB)
@@ -212,7 +210,6 @@ function runBattle() {
     badge: avgBadge, badgeType: avgBadgeType, desc: avgDesc
   })
 
-  // === 2. 1위 의존도 ===
   const top1A = A.members[0]?.balloons || 0
   const top1B = B.members[0]?.balloons || 0
   const depA = A.total > 0 ? top1A / A.total * 100 : 0
@@ -238,7 +235,6 @@ function runBattle() {
     badge: depBadge, badgeType: depBadgeType, desc: depDesc
   })
 
-  // === 3. 허리진 화력 (6~10위 합계) ===
   const midA = A.members.slice(5, 10).reduce((s, m) => s + m.balloons, 0)
   const midB = B.members.slice(5, 10).reduce((s, m) => s + m.balloons, 0)
   const midMax = Math.max(midA, midB)
@@ -273,7 +269,6 @@ function runBattle() {
     badge: midBadge, badgeType: midBadgeType, desc: midDesc
   })
 
-  // === 4. 꼴찌라인 (하위 5명 합계) ===
   const tailA = A.members.slice(-5).reduce((s, m) => s + m.balloons, 0)
   const tailB = B.members.slice(-5).reduce((s, m) => s + m.balloons, 0)
   const tailMax = Math.max(tailA, tailB)
@@ -302,7 +297,6 @@ function runBattle() {
     badge: tailBadge, badgeType: tailBadgeType, desc: tailDesc
   })
 
-  // === 5. 에이스 1위 비교 ===
   const aceA = A.members[0]
   const aceB = B.members[0]
   const aceMax = Math.max(top1A, top1B)
@@ -333,13 +327,11 @@ function runBattle() {
     badge: aceBadge, badgeType: aceBadgeType, desc: aceDesc
   })
 
-  // === 종합 결과 ===
   let winnerName, winnerColor
   if (scoreA > scoreB) { winnerName = `${A.name} 우위`; winnerColor = A.color }
   else if (scoreB > scoreA) { winnerName = `${B.name} 우위`; winnerColor = B.color }
   else { winnerName = '무승부'; winnerColor = '#888' }
 
-  // === 인사이트 자동 생성 ===
   const insightA = generateInsight(A, B, { dep: depA, mid: midA, tail: tailA, top1: top1A })
   const insightB = generateInsight(B, A, { dep: depB, mid: midB, tail: tailB, top1: top1B })
 
@@ -353,21 +345,16 @@ function runBattle() {
 
 function generateInsight(self, other, stats) {
   const tags = []
-
-  // 1위 의존도 분석
   if (stats.dep > 30) tags.push('에이스 의존형')
   else if (stats.dep < 15) tags.push('균형 분산형')
 
-  // 허리진 평가
   const otherMid = other.members.slice(5, 10).reduce((s, m) => s + m.balloons, 0)
   if (stats.mid > otherMid * 1.5) tags.push('두터운 허리진')
   else if (stats.mid * 1.5 < otherMid) tags.push('상위권 화력 집중')
 
-  // 멤버 수
   if (self.members.length > other.members.length + 3) tags.push('많은 멤버 풀')
   else if (self.members.length + 3 < other.members.length) tags.push('정예 소수')
 
-  // 활동률 (1만 이상 멤버 비율)
   const active = self.members.filter(m => m.balloons >= 10000).length
   const activeRatio = self.members.length > 0 ? active / self.members.length : 0
   if (activeRatio >= 0.85) tags.push('전원 활동 우수')
@@ -385,19 +372,24 @@ function reset() {
 </script>
 
 <style scoped>
+/* ── 모달 위치: 상단 정렬 ── */
 .battle-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.78);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 1000; padding: 20px;
+  display: flex;
+  align-items: flex-start;       /* 상단 정렬 */
+  justify-content: center;
+  z-index: 1000;
+  padding: 40px 20px 20px;       /* 위에 여백만 */
   backdrop-filter: blur(4px);
+  overflow-y: auto;
 }
 .battle-modal {
   background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: 16px;
   width: 100%; max-width: 720px;
-  max-height: 92vh;
+  max-height: 88vh;
   display: flex; flex-direction: column;
   box-shadow: 0 24px 80px rgba(0,0,0,0.5);
 }
@@ -436,16 +428,35 @@ function reset() {
   font-size: 11px; font-weight: 700; color: var(--text2);
   text-transform: uppercase; letter-spacing: 0.5px;
 }
+
+/* ── select 다크/라이트 모드 글씨 수정 ── */
 .select-input {
   background: var(--input-bg);
   border: 1px solid var(--input-border);
   border-radius: 9px;
   padding: 10px 12px;
-  font-size: 13px; color: var(--text);
+  font-size: 13px;
+  color: var(--text);
   font-family: inherit; outline: none;
   transition: border-color 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
 }
 .select-input:focus { border-color: #4a9eff; }
+
+/* option 글씨색 강제 지정 */
+.select-input option {
+  background: #1e1e2e;
+  color: #ffffff;
+}
+[data-theme="light"] .select-input {
+  background: #ffffff;
+  color: #1a1a2e;
+}
+[data-theme="light"] .select-input option {
+  background: #ffffff;
+  color: #1a1a2e;
+}
 
 .preview-mini {
   display: flex; align-items: center; gap: 10px;
@@ -536,7 +547,6 @@ function reset() {
 }
 [data-theme="light"] .vs-big { text-shadow: none; }
 
-/* 항목별 비교 */
 .comp-list { display: flex; flex-direction: column; gap: 10px; }
 .comp-item {
   background: var(--item-bg);
@@ -578,7 +588,6 @@ function reset() {
   margin-top: 8px; line-height: 1.5;
 }
 
-/* 종합 결과 */
 .winner-card {
   background: linear-gradient(135deg,
     color-mix(in srgb, var(--c) 22%, var(--bg3)) 0%,
@@ -607,7 +616,6 @@ function reset() {
 .score-d { color: var(--text3); }
 .score-b { color: #ff4d7d; }
 
-/* 인사이트 */
 .insight-card {
   background: var(--item-bg);
   border: 1px solid var(--item-border);
@@ -640,7 +648,5 @@ function reset() {
   cursor: pointer; font-family: inherit;
   transition: all 0.15s;
 }
-.btn-again:hover {
-  background: var(--input-border);
-}
+.btn-again:hover { background: var(--input-border); }
 </style>
