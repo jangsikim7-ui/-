@@ -204,13 +204,14 @@ function onImgError(e, soopId) {
   background: rgba(255, 190, 0, 0.10);
   border-bottom: 1px solid rgba(255, 190, 0, 0.22);
 }
-[data-theme="light"] .master-revenue-bar { background: #2563eb; border-bottom-color: #1d4ed8; }
+[data-theme="light"] .master-revenue-bar { background: rgba(255,170,0,0.08); border-bottom-color: rgba(255,170,0,0.2); }
 .master-left { display: flex; align-items: center; gap: 5px; }
 .master-crown { font-size: 13px; }
 .master-label { font-size: 10px; font-weight: 700; color: #c9960a; letter-spacing: 0.3px; }
 [data-theme="light"] .master-label { color: #8a6400; }
 .master-val { font-size: 15px; font-weight: 900; color: #ffc832; letter-spacing: -0.5px; }
-[data-theme="light"] .master-val { color: #ffffff; }
+[data-theme="light"] .master-val { color: #b06000; }
+[data-theme="light"] .master-label { color: #7a4a00; }
 
 .member-list { flex: 1; background: var(--member-bg); }
 .member-list::before { content: ''; display: block; height: 6px; background: linear-gradient(to bottom, color-mix(in srgb, var(--c) 10%, var(--bg3)) 0%, var(--member-bg) 100%); }
