@@ -58,9 +58,26 @@
                     <input v-model="editingCrew.logo_url" placeholder="로고 URL" />
                     <label class="upload-btn-sm">📁<input type="file" accept="image/*" @change="handleEditLogoFile" style="display:none" /></label>
                   </div>
+                  <!-- 수장 soop_id 입력 -->
+                  <div class="master-input-box">
+                    <div class="master-input-label">👑 크루 수장 SOOP ID <span class="master-input-hint">(별풍선 탭에 크루 매출풍으로 표시)</span></div>
+                    <div class="form-row" style="margin-top:6px">
+                      <div class="soop-id-wrap">
+                        <input
+                          v-model="editingCrew.master_soop_id"
+                          placeholder="수장 SOOP ID (예: cheolgu2) — 없으면 비워두세요"
+                          @blur="lookupMasterNickname"
+                          @keyup.enter="lookupMasterNickname"
+                        />
+                        <span v-if="masterLooking" class="nick-status loading">조회중...</span>
+                        <span v-else-if="masterNickname" class="nick-status found">✓ {{ masterNickname }}</span>
+                        <span v-else-if="masterFailed" class="nick-status failed">닉네임 조회 실패 (ID는 저장됩니다)</span>
+                      </div>
+                    </div>
+                  </div>
                   <div class="edit-btns">
                     <button class="btn-save" @click="saveCrew">✓ 저장</button>
-                    <button class="btn-cancel" @click="editingCrew=null">취소</button>
+                    <button class="btn-cancel" @click="editingCrew=null; masterNickname=''; masterFailed=false">취소</button>
                   </div>
                 </div>
               </template>
@@ -69,6 +86,7 @@
                 <div v-else class="item-logo-placeholder" :style="{background: crew.color+'33', color: crew.color}">{{ crew.name.charAt(0) }}</div>
                 <div class="color-dot" :style="{background: crew.color}" />
                 <span class="item-name">{{ crew.name }}</span>
+                <span v-if="crew.master_soop_id" class="master-badge">👑 {{ crew.master_soop_id }}</span>
                 <span class="item-sub">순서 {{ crew.sort_order }}</span>
                 <button class="btn-edit" @click="startEdit(crew)">수정</button>
                 <button class="btn-del" @click="removeCrew(crew)">삭제</button>
@@ -138,12 +156,9 @@
                 {{ syncing ? '확인중...' : '변경사항 확인' }}
               </button>
             </div>
-
-            <!-- diff 결과 -->
             <div v-if="syncDiff" class="sync-diff">
               <div v-if="syncDiff.total === 0" class="sync-none">✅ 변경사항 없음 — 낙수표와 동일해요</div>
               <template v-else>
-                <!-- 추가 -->
                 <div v-if="syncDiff.added.length > 0" class="diff-section">
                   <div class="diff-label add">➕ 추가 {{ syncDiff.added.length }}명</div>
                   <div v-for="m in syncDiff.added" :key="m.soop_id" class="diff-row">
@@ -154,7 +169,6 @@
                     <span class="diff-id">{{ m.soop_id }}</span>
                   </div>
                 </div>
-                <!-- 삭제 -->
                 <div v-if="syncDiff.removed.length > 0" class="diff-section">
                   <div class="diff-label remove">➖ 삭제 {{ syncDiff.removed.length }}명</div>
                   <div v-for="m in syncDiff.removed" :key="m.soop_id" class="diff-row">
@@ -164,7 +178,6 @@
                     <span class="diff-id">{{ m.soop_id }}</span>
                   </div>
                 </div>
-                <!-- 이동 -->
                 <div v-if="syncDiff.moved.length > 0" class="diff-section">
                   <div class="diff-label move">🔀 크루이동 {{ syncDiff.moved.length }}명</div>
                   <div v-for="m in syncDiff.moved" :key="m.soop_id" class="diff-row">
@@ -236,13 +249,9 @@
           <div class="section-title">⚔️ 크루 대결 분석 기능</div>
           <div class="battle-info-box">
             <div class="battle-info-title">🎯 무엇을 하는 기능?</div>
-            <div class="battle-info-desc">
-              두 크루를 선택해서 평균 화력, 1위 의존도, 허리진/꼴찌라인 화력 등을 비교 분석해주는 기능이에요.
-              일반 사용자도 헤더의 ⚔️ 크루대결 버튼으로 사용할 수 있어요.
-            </div>
+            <div class="battle-info-desc">두 크루를 선택해서 평균 화력, 1위 의존도, 허리진/꼴찌라인 화력 등을 비교 분석해주는 기능이에요. 일반 사용자도 ⚔️ 크루대결 버튼으로 사용할 수 있어요.</div>
             <div class="battle-info-note">📱 모바일에서는 자동으로 숨겨져요 (PC 전용)</div>
           </div>
-
           <div class="section-title" style="margin-top:18px">표시 설정</div>
           <div class="toggle-row">
             <div class="toggle-info">
@@ -254,15 +263,11 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-
-          <div class="hint" style="margin-top:14px">
-            💡 OFF로 설정하면 일반 사용자에게 ⚔️ 크루대결 버튼이 보이지 않아요. 다시 ON으로 바꾸면 즉시 표시돼요.
-          </div>
+          <div class="hint" style="margin-top:14px">💡 OFF로 설정하면 일반 사용자에게 ⚔️ 크루대결 버튼이 보이지 않아요.</div>
         </div>
 
         <!-- 백업 탭 -->
         <div v-if="tab==='backup'">
-          <!-- 비밀번호 변경 -->
           <div class="section-title">🔑 관리자 비밀번호 변경</div>
           <div class="form-row">
             <input v-model="newPw" type="password" placeholder="새 비밀번호 (4자 이상)" />
@@ -275,9 +280,8 @@
             {{ pwMsg.ok ? '✅ ' + pwMsg.text : '❌ ' + pwMsg.text }}
           </div>
 
-          <!-- 낙수에 없는 크루 삭제 -->
           <div class="section-title">🗑️ 낙수표에 없는 크루</div>
-          <div class="backup-desc">낙수표에 없는 크루를 삭제해요 (문의/요청 등)</div>
+          <div class="backup-desc">낙수표에 없는 크루를 삭제해요</div>
           <div v-if="unknownCrews.length === 0" class="empty" style="padding:10px">✅ 없음</div>
           <div v-for="c in unknownCrews" :key="c.id" class="backup-row">
             <span class="backup-time" :style="{color: c.color}">{{ c.name }}</span>
@@ -300,7 +304,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { api } from '../composables/useApi.js'
 
 const emit = defineEmits(['close', 'updated', 'battle-toggle'])
@@ -311,17 +315,34 @@ const members = ref([])
 const adding = ref(false)
 const filterCrew = ref(0)
 const editingCrew = ref(null)
-const editingMember = ref(null)
 
-// 크루 대결 ON/OFF (localStorage 저장, 기본 ON)
+// 수장 닉네임 조회
+const masterLooking = ref(false)
+const masterNickname = ref('')
+const masterFailed = ref(false)
+
+async function lookupMasterNickname() {
+  const id = editingCrew.value?.master_soop_id?.trim()
+  if (!id) { masterNickname.value = ''; masterFailed.value = false; return }
+  masterLooking.value = true
+  masterNickname.value = ''
+  masterFailed.value = false
+  try {
+    const res = await fetch(`/api/nickname/${id}`)
+    if (res.ok) {
+      const data = await res.json()
+      masterNickname.value = data.nickname || id
+    } else { masterFailed.value = true }
+  } catch(e) { masterFailed.value = true }
+  masterLooking.value = false
+}
+
 const battleEnabled = ref(localStorage.getItem('battle_enabled') !== 'false')
-
 function onBattleToggleChange() {
   localStorage.setItem('battle_enabled', battleEnabled.value ? 'true' : 'false')
   emit('battle-toggle', battleEnabled.value)
 }
 
-// 다량 입력
 const bulkInput = ref('')
 const importing = ref(false)
 const importResult = ref(null)
@@ -335,24 +356,17 @@ const bulkDone = ref(0)
 
 const bulkParsed = computed(() => {
   if (!bulkInput.value.trim()) return []
-  return bulkInput.value
-    .split('\n')
-    .map(line => {
-      line = line.trim()
-      if (!line) return null
-      const urlMatch = line.match(/poong\.today\/broadcast\/([^/?#\s]+)/)
-      if (urlMatch) return urlMatch[1]
-      if (/^[a-zA-Z0-9_]+$/.test(line)) return line
-      return null
-    })
-    .filter(Boolean)
-    .filter((v, i, a) => a.indexOf(v) === i)
+  return bulkInput.value.split('\n').map(line => {
+    line = line.trim()
+    if (!line) return null
+    const urlMatch = line.match(/poong\.today\/broadcast\/([^/?#\s]+)/)
+    if (urlMatch) return urlMatch[1]
+    if (/^[a-zA-Z0-9_]+$/.test(line)) return line
+    return null
+  }).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i)
 })
 
-const CREW_COLORS = [
-  '#c84bff','#4a9eff','#ff4d7d','#f5a623','#4cd964',
-  '#ff6b35','#00d4ff','#a78bfa','#f43f5e','#34d399',
-]
+const CREW_COLORS = ['#c84bff','#4a9eff','#ff4d7d','#f5a623','#4cd964','#ff6b35','#00d4ff','#a78bfa','#f43f5e','#34d399']
 function nextAutoColor() {
   const used = crews.value.map(c => c.color)
   return CREW_COLORS.find(c => !used.includes(c)) || CREW_COLORS[crews.value.length % CREW_COLORS.length]
@@ -366,19 +380,12 @@ const nickFailed = ref(false)
 async function lookupNickname() {
   const id = newMember.value.soop_id.trim()
   if (!id) return
-  nickLooking.value = true
-  nickFailed.value = false
+  nickLooking.value = true; nickFailed.value = false
   try {
     const res = await fetch(`/api/nickname/${id}`)
-    if (res.ok) {
-      const data = await res.json()
-      newMember.value.name = data.nickname
-    } else {
-      nickFailed.value = true
-    }
-  } catch(e) {
-    nickFailed.value = true
-  }
+    if (res.ok) { const data = await res.json(); newMember.value.name = data.nickname }
+    else { nickFailed.value = true }
+  } catch(e) { nickFailed.value = true }
   nickLooking.value = false
 }
 
@@ -394,7 +401,11 @@ async function load() {
   } catch(e) { alert('로드 실패: ' + e.message) }
 }
 
-function startEdit(crew) { editingCrew.value = { ...crew } }
+function startEdit(crew) {
+  editingCrew.value = { ...crew }
+  masterNickname.value = ''
+  masterFailed.value = false
+}
 
 function handleLogoFile(e) {
   const file = e.target.files[0]; if (!file) return
@@ -416,9 +427,12 @@ async function saveCrew() {
       name: editingCrew.value.name,
       color: editingCrew.value.color,
       sort_order: editingCrew.value.sort_order,
-      logo_url: editingCrew.value.logo_url || ''
+      logo_url: editingCrew.value.logo_url || '',
+      master_soop_id: editingCrew.value.master_soop_id?.trim() || null
     })
     editingCrew.value = null
+    masterNickname.value = ''
+    masterFailed.value = false
     await load(); emit('updated')
   } catch(e) { alert(e.message) }
 }
@@ -436,20 +450,14 @@ async function addCrew() {
 
 async function removeCrew(crew) {
   if (!confirm(`"${crew.name}" 크루를 삭제할까요?\n소속 멤버도 비활성화됩니다.`)) return
-  try {
-    await api.deleteCrew(crew.id)
-    await load(); emit('updated')
-  } catch(e) { alert('삭제 실패: ' + e.message) }
+  try { await api.deleteCrew(crew.id); await load(); emit('updated') }
+  catch(e) { alert('삭제 실패: ' + e.message) }
 }
 
 async function addMember() {
   if (!newMember.value.crew_id) return alert('크루를 선택하세요')
   if (!newMember.value.soop_id.trim()) return alert('SOOP ID를 입력하세요')
-
-  if (!newMember.value.name.trim() || newMember.value.name === newMember.value.soop_id) {
-    await lookupNickname()
-  }
-
+  if (!newMember.value.name.trim() || newMember.value.name === newMember.value.soop_id) await lookupNickname()
   adding.value = true
   try {
     await api.createMember({ ...newMember.value })
@@ -463,55 +471,22 @@ async function addMember() {
 async function addBulk() {
   if (!bulkCrewId.value) return alert('크루를 선택하세요')
   if (bulkParsed.value.length === 0) return alert('추가할 멤버가 없어요')
-  bulking.value = true
-  bulkDone.value = 0
+  bulking.value = true; bulkDone.value = 0
   for (const soopId of bulkParsed.value) {
-    try {
-      await api.createMember({
-        crew_id: bulkCrewId.value,
-        soop_id: soopId,
-        name: soopId,
-        sort_order: 0,
-        is_new: false
-      })
-      bulkDone.value++
-    } catch(e) {
-      console.warn(`${soopId} 등록 실패:`, e.message)
-      bulkDone.value++
-    }
+    try { await api.createMember({ crew_id: bulkCrewId.value, soop_id: soopId, name: soopId, sort_order: 0, is_new: false }) }
+    catch(e) { console.warn(`${soopId} 등록 실패:`, e.message) }
+    bulkDone.value++
     await new Promise(r => setTimeout(r, 500))
   }
-  bulkInput.value = ''
-  bulking.value = false
+  bulkInput.value = ''; bulking.value = false
   await load(); emit('updated')
-  alert(`${bulkDone.value}명 등록 완료! 닉네임은 멤버 목록에서 직접 수정하세요.`)
+  alert(`${bulkDone.value}명 등록 완료!`)
 }
 
 async function removeMember(m) {
   if (!confirm(`"${m.name}" 멤버를 삭제할까요?`)) return
-  try {
-    await api.deleteMember(m.id)
-    await load(); emit('updated')
-  } catch(e) { alert(e.message) }
-}
-
-function startEditMember(m) {
-  editingMember.value = { ...m }
-}
-
-async function saveMember() {
-  if (!editingMember.value.name.trim()) return alert('닉네임을 입력하세요')
-  try {
-    await api.updateMember(editingMember.value.id, {
-      name: editingMember.value.name,
-      crew_id: editingMember.value.crew_id,
-      sort_order: editingMember.value.sort_order ?? 0,
-      is_new: editingMember.value.is_new ?? 0,
-      profile_img: editingMember.value.profile_img || ''
-    })
-    editingMember.value = null
-    await load(); emit('updated')
-  } catch(e) { alert(e.message) }
+  try { await api.deleteMember(m.id); await load(); emit('updated') }
+  catch(e) { alert(e.message) }
 }
 
 async function toggleNew(m) {
@@ -522,16 +497,11 @@ async function toggleNew(m) {
 }
 
 async function checkSync() {
-  syncing.value = true
-  syncDiff.value = null
+  syncing.value = true; syncDiff.value = null
   try {
     const diff = await api.syncDiff()
     syncDiff.value = diff
-    syncSelected.value = {
-      added: diff.added.map(m => m.soop_id),
-      removed: diff.removed.map(m => m.soop_id),
-      moved: diff.moved.map(m => m.soop_id)
-    }
+    syncSelected.value = { added: diff.added.map(m => m.soop_id), removed: diff.removed.map(m => m.soop_id), moved: diff.moved.map(m => m.soop_id) }
   } catch(e) { alert('확인 실패: ' + e.message) }
   syncing.value = false
 }
@@ -546,23 +516,16 @@ async function applySync() {
   applying.value = true
   try {
     await api.syncApply({ added: selectedAdded, removed: selectedRemoved, moved: selectedMoved })
-    syncDiff.value = null
-    await load(); emit('updated')
-    alert('동기화 완료!')
+    syncDiff.value = null; await load(); emit('updated'); alert('동기화 완료!')
   } catch(e) { alert('적용 실패: ' + e.message) }
   applying.value = false
 }
 
 async function doImportNaksoo() {
-  if (!confirm('naksoo.vercel.app 데이터를 임포트합니다.\n크루 7개, 멤버 84명을 수집합니다.\n(1~2분 소요)\n\n계속하시겠습니까?')) return
-  importing.value = true
-  importResult.value = null
-  try {
-    const res = await api.importNaksoo()
-    importResult.value = res
-    await load()
-    emit('updated')
-  } catch(e) { alert('임포트 실패: ' + e.message) }
+  if (!confirm('naksoo.vercel.app 데이터를 임포트합니다.\n(1~2분 소요)\n\n계속하시겠습니까?')) return
+  importing.value = true; importResult.value = null
+  try { const res = await api.importNaksoo(); importResult.value = res; await load(); emit('updated') }
+  catch(e) { alert('임포트 실패: ' + e.message) }
   importing.value = false
 }
 
@@ -576,12 +539,8 @@ async function changePassword() {
   if (newPw.value.length < 4) return pwMsg.value = { ok: false, text: '4자 이상 입력하세요' }
   if (newPw.value !== newPwConfirm.value) return pwMsg.value = { ok: false, text: '비밀번호가 일치하지 않아요' }
   changingPw.value = true
-  try {
-    await api.changePassword(newPw.value)
-    pwMsg.value = { ok: true, text: '변경 완료! 다음 로그인부터 적용돼요.' }
-    newPw.value = ''
-    newPwConfirm.value = ''
-  } catch(e) { pwMsg.value = { ok: false, text: e.message } }
+  try { await api.changePassword(newPw.value); pwMsg.value = { ok: true, text: '변경 완료!' }; newPw.value = ''; newPwConfirm.value = '' }
+  catch(e) { pwMsg.value = { ok: false, text: e.message } }
   changingPw.value = false
 }
 
@@ -599,20 +558,15 @@ async function loadBackups() {
 
 async function deleteUnknownCrew(id) {
   if (!confirm('이 크루와 소속 멤버를 삭제할까요?')) return
-  try {
-    await api.deleteUnknownCrew(id)
-    unknownCrews.value = unknownCrews.value.filter(c => c.id !== id)
-    await load(); emit('updated')
-  } catch(e) { alert('삭제 실패: ' + e.message) }
+  try { await api.deleteUnknownCrew(id); unknownCrews.value = unknownCrews.value.filter(c => c.id !== id); await load(); emit('updated') }
+  catch(e) { alert('삭제 실패: ' + e.message) }
 }
 
 async function restoreBackup(name) {
   if (!confirm(`${name} 백업으로 복원할까요?\n복원 후 서버를 재시작해야 해요.`)) return
   restoring.value = name
-  try {
-    const res = await api.restoreBackup(name)
-    alert(res.message)
-  } catch(e) { alert('복원 실패: ' + e.message) }
+  try { const res = await api.restoreBackup(name); alert(res.message) }
+  catch(e) { alert('복원 실패: ' + e.message) }
   restoring.value = null
 }
 
@@ -620,26 +574,9 @@ onMounted(load)
 </script>
 
 <style scoped>
-.overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.75);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 1000; padding: 20px;
-}
-.modal {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  width: 100%; max-width: 580px;
-  max-height: 90vh;
-  display: flex; flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-}
-.modal-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border);
-}
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+.modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 580px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); }
 .modal-header h2 { font-size: 15px; font-weight: 800; color: var(--text); }
 .close-btn { font-size: 16px; color: var(--text2); padding: 4px 8px; cursor: pointer; border-radius: 6px; transition: all 0.15s; background: none; border: none; }
 .close-btn:hover { color: var(--text); background: var(--border); }
@@ -651,13 +588,8 @@ onMounted(load)
 .tab.active { background: var(--border); color: var(--text); border: 1px solid var(--input-border); }
 
 .section-title { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; }
-
 .form-row { display: flex; gap: 8px; align-items: center; }
-.form-row input, .form-row select, .form-row textarea {
-  flex: 1; background: var(--input-bg); border: 1px solid var(--input-border);
-  border-radius: 8px; padding: 8px 10px; font-size: 13px; color: var(--text);
-  font-family: inherit; outline: none; transition: border-color 0.15s; min-width: 0;
-}
+.form-row input, .form-row select, .form-row textarea { flex: 1; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; padding: 8px 10px; font-size: 13px; color: var(--text); font-family: inherit; outline: none; transition: border-color 0.15s; min-width: 0; }
 .form-row input:focus, .form-row select:focus { border-color: #4a9eff; }
 .form-row input::placeholder { color: var(--text4); }
 
@@ -676,16 +608,26 @@ onMounted(load)
 .btn-add:hover:not(:disabled) { background: #3a8ef0; }
 .btn-add:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* 수장 입력 박스 */
+.master-input-box {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(255, 190, 0, 0.07);
+  border: 1px solid rgba(255, 190, 0, 0.2);
+  border-radius: 10px;
+}
+.master-input-label { font-size: 11px; font-weight: 700; color: #c9960a; }
+[data-theme="light"] .master-input-label { color: #8a6400; }
+.master-input-hint { font-size: 10px; font-weight: 400; color: var(--text3); margin-left: 4px; }
+
+/* 수장 뱃지 (크루 목록에 표시) */
+.master-badge { font-size: 10px; font-weight: 700; color: #ffc832; background: rgba(255,190,0,0.12); border: 1px solid rgba(255,190,0,0.25); padding: 2px 7px; border-radius: 6px; white-space: nowrap; }
+[data-theme="light"] .master-badge { color: #a07800; background: rgba(255,170,0,0.1); }
+
 .new-badge-label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text2); white-space: nowrap; flex-shrink: 0; cursor: pointer; }
 .new-badge-label input { width: auto; flex: none; }
 
-.bulk-textarea {
-  width: 100%; margin-top: 8px;
-  background: var(--input-bg); border: 1px solid var(--input-border);
-  border-radius: 8px; padding: 10px; font-size: 12px; color: var(--text);
-  font-family: monospace; resize: vertical; outline: none; line-height: 1.6;
-  transition: border-color 0.15s;
-}
+.bulk-textarea { width: 100%; margin-top: 8px; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 8px; padding: 10px; font-size: 12px; color: var(--text); font-family: monospace; resize: vertical; outline: none; line-height: 1.6; transition: border-color 0.15s; }
 .bulk-textarea:focus { border-color: #4a9eff; }
 .bulk-preview { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
 .bulk-preview-title { width: 100%; font-size: 11px; color: var(--text2); margin-bottom: 4px; }
@@ -708,7 +650,6 @@ onMounted(load)
 .item-list { display: flex; flex-direction: column; gap: 4px; }
 .item-row { display: flex; align-items: center; gap: 9px; padding: 8px 10px; background: var(--item-bg); border: 1px solid var(--item-border); border-radius: 9px; transition: background 0.1s; }
 .item-row:hover { background: var(--border2); }
-
 .item-logo { width: 28px; height: 28px; border-radius: 7px; object-fit: contain; flex-shrink: 0; }
 .item-logo-placeholder { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; flex-shrink: 0; }
 .color-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
@@ -728,27 +669,22 @@ onMounted(load)
 .crew-item { flex-wrap: wrap; }
 .edit-block { width: 100%; display: flex; flex-direction: column; gap: 6px; }
 .edit-btns { display: flex; gap: 6px; justify-content: flex-end; margin-top: 2px; }
-.btn-save { padding: 6px 14px; border-radius: 7px; background: #4a9eff; color: #fff; border: none; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+.btn-save { padding: 6px 14px; border-radius: 7px; background: #4a9eff; color: #fff; border: none; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
 .btn-save:hover { background: #3a8ef0; }
-.btn-cancel { padding: 6px 14px; border-radius: 7px; background: var(--border); color: var(--text2); border: 1px solid var(--input-border); font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.btn-cancel { padding: 6px 14px; border-radius: 7px; background: var(--border); color: var(--text2); border: 1px solid var(--input-border); font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
 .btn-cancel:hover { color: var(--text); }
 .upload-btn-sm { padding: 7px 10px; border-radius: 8px; background: var(--border); border: 1px solid var(--input-border); color: var(--text2); font-size: 13px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
 .empty { text-align: center; color: var(--text4); padding: 20px; font-size: 13px; }
-.naksoo-import-box {
-  margin-top: 20px;
-  background: color-mix(in srgb, #4d96ff 8%, var(--bg3));
-  border: 1.5px solid color-mix(in srgb, #4d96ff 30%, transparent);
-  border-radius: 12px;
-  padding: 14px 16px;
-  display: flex; flex-direction: column; gap: 8px;
-}
+
+.naksoo-import-box { margin-top: 20px; background: color-mix(in srgb, #4d96ff 8%, var(--bg3)); border: 1.5px solid color-mix(in srgb, #4d96ff 30%, transparent); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
 .naksoo-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text); }
 .naksoo-badge { font-size: 10px; font-weight: 600; color: #4d96ff; background: rgba(77,150,255,0.12); border: 1px solid rgba(77,150,255,0.25); padding: 2px 8px; border-radius: 20px; }
 .naksoo-desc { font-size: 11px; color: var(--text3); }
-.btn-naksoo { padding: 9px 16px; border-radius: 8px; border: none; background: #4d96ff; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+.btn-naksoo { padding: 9px 16px; border-radius: 8px; border: none; background: #4d96ff; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
 .btn-naksoo:hover:not(:disabled) { opacity: 0.85; }
 .btn-naksoo:disabled { opacity: 0.5; cursor: not-allowed; }
 .naksoo-result { font-size: 12px; font-weight: 600; color: #4cd964; }
+
 .sync-box { margin-top: 16px; background: color-mix(in srgb, #6bcb77 8%, var(--bg3)); border: 1.5px solid color-mix(in srgb, #6bcb77 25%, transparent); border-radius: 12px; padding: 14px 16px; }
 .sync-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .sync-title { font-size: 13px; font-weight: 700; color: var(--text); }
@@ -771,77 +707,23 @@ onMounted(load)
 .btn-sync-apply { align-self: flex-end; padding: 8px 20px; border-radius: 8px; border: none; background: var(--text); color: var(--bg); font-size: 12px; font-weight: 700; cursor: pointer; }
 .btn-sync-apply:disabled { opacity: 0.5; }
 
-/* 크루 대결 탭 */
-.battle-info-box {
-  background: color-mix(in srgb, #6b5fff 8%, var(--bg3));
-  border: 1.5px solid color-mix(in srgb, #6b5fff 25%, transparent);
-  border-radius: 12px;
-  padding: 14px 16px;
-  display: flex; flex-direction: column; gap: 8px;
-}
-.battle-info-title {
-  font-size: 13px; font-weight: 700; color: var(--text);
-}
-.battle-info-desc {
-  font-size: 12px; color: var(--text2);
-  line-height: 1.6;
-}
-.battle-info-note {
-  font-size: 11px; color: #6b5fff; font-weight: 600;
-  margin-top: 2px;
-}
+.battle-info-box { background: color-mix(in srgb, #6b5fff 8%, var(--bg3)); border: 1.5px solid color-mix(in srgb, #6b5fff 25%, transparent); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.battle-info-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.battle-info-desc { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.battle-info-note { font-size: 11px; color: #6b5fff; font-weight: 600; margin-top: 2px; }
 [data-theme="light"] .battle-info-note { color: #4a3fdd; }
 
-.toggle-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 16px;
-  background: var(--item-bg);
-  border: 1px solid var(--item-border);
-  border-radius: 10px;
-}
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--item-bg); border: 1px solid var(--item-border); border-radius: 10px; }
 .toggle-info { display: flex; flex-direction: column; gap: 3px; }
-.toggle-label {
-  font-size: 13px; font-weight: 700; color: var(--text);
-}
-.toggle-desc {
-  font-size: 11px; color: var(--text3);
-}
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 48px; height: 26px;
-  flex-shrink: 0;
-}
+.toggle-label { font-size: 13px; font-weight: 700; color: var(--text); }
+.toggle-desc { font-size: 11px; color: var(--text3); }
+.toggle-switch { position: relative; display: inline-block; width: 48px; height: 26px; flex-shrink: 0; }
 .toggle-switch input { opacity: 0; width: 0; height: 0; }
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  inset: 0;
-  background: var(--bar-bg);
-  border: 1px solid var(--input-border);
-  border-radius: 999px;
-  transition: 0.2s;
-}
-.toggle-slider::before {
-  content: '';
-  position: absolute;
-  height: 18px; width: 18px;
-  left: 3px; bottom: 3px;
-  background: var(--text);
-  border-radius: 50%;
-  transition: 0.2s;
-}
-.toggle-switch input:checked + .toggle-slider {
-  background: linear-gradient(135deg, #4a9eff, #6b5fff);
-  border-color: transparent;
-}
-.toggle-switch input:checked + .toggle-slider::before {
-  transform: translateX(22px);
-  background: #fff;
-}
+.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--bar-bg); border: 1px solid var(--input-border); border-radius: 999px; transition: 0.2s; }
+.toggle-slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: var(--text); border-radius: 50%; transition: 0.2s; }
+.toggle-switch input:checked + .toggle-slider { background: linear-gradient(135deg, #4a9eff, #6b5fff); border-color: transparent; }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(22px); background: #fff; }
 
-.member-item { flex-wrap: wrap; }
-.member-thumb { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1px solid var(--border); flex-shrink: 0; }
 .backup-desc { font-size: 11px; color: var(--text3); margin-bottom: 10px; }
 .backup-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: var(--bg3); border-radius: 8px; margin-bottom: 6px; }
 .backup-time { font-size: 12px; color: var(--text2); font-family: monospace; }
