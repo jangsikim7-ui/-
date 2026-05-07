@@ -210,8 +210,8 @@ function onImgError(e, soopId) {
 .master-label { font-size: 10px; font-weight: 700; color: #c9960a; letter-spacing: 0.3px; }
 [data-theme="light"] .master-label { color: #8a6400; }
 .master-val { font-size: 15px; font-weight: 900; color: #ffc832; letter-spacing: -0.5px; }
-[data-theme="light"] .master-val { color: #b8860b; }
-[data-theme="light"] .master-label { color: #8a6400; }
+[data-theme="light"] .master-val { color: #ffc832; }
+[data-theme="light"] .master-label { color: #e6a800; }
 
 .member-list { flex: 1; background: var(--member-bg); }
 .member-list::before { content: ''; display: block; height: 6px; background: linear-gradient(to bottom, color-mix(in srgb, var(--c) 10%, var(--bg3)) 0%, var(--member-bg) 100%); }
