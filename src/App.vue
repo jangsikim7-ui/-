@@ -131,6 +131,55 @@
 
     <AdminModal v-if="showAdmin" @close="showAdmin = false" @updated="loadStats" @battle-toggle="onBattleToggle" />
     <CrewBattleModal v-if="showBattle" :crews="stats" :mode="mode" @close="showBattle = false" />
+
+    <!-- 웰컴 팝업 -->
+    <div v-if="showWelcomePopup" class="popup-overlay" @click.self="closePopup">
+      <div class="popup-box">
+        <button class="popup-x" @click="closePopup">✕</button>
+        <span class="popup-pill">⚡ 엑셀크루 시너지표</span>
+        <p class="popup-ttl">어떤 기능들이<br>있는지 알아봐요</p>
+        <p class="popup-sub">크루별 BJ 데이터를 다양한 방식으로 확인하세요</p>
+        <div class="popup-grid">
+          <div class="popup-feat">
+            <span class="popup-ico">🎈</span>
+            <p class="popup-nm">별풍선 순위</p>
+            <p class="popup-ds">크루별 월간<br>별풍선 현황 비교</p>
+          </div>
+          <div class="popup-feat">
+            <span class="popup-ico">👁️</span>
+            <p class="popup-nm">뷰어십 순위</p>
+            <p class="popup-ds">시청자 수 기준<br>크루 경쟁력 확인</p>
+          </div>
+          <div class="popup-feat">
+            <span class="popup-ico">⚔️</span>
+            <p class="popup-nm">크루대결</p>
+            <p class="popup-ds">두 크루를<br>직접 맞대결 비교</p>
+          </div>
+          <div class="popup-feat">
+            <span class="popup-ico">📩</span>
+            <p class="popup-nm">문의하기</p>
+            <p class="popup-ds">오류·수정 요청<br>바로 전송</p>
+          </div>
+          <div class="popup-feat popup-feat-special">
+            <div class="popup-feat-inline">
+              <span class="popup-ico">👑</span>
+              <p class="popup-nm">크루 매출풍</p>
+            </div>
+            <p class="popup-ds">크루 멤버 전체 별풍선 합산 총액 확인</p>
+          </div>
+        </div>
+        <div class="popup-auto">
+          <span class="popup-dot"></span>
+          <span>데이터 <strong>4시간마다 자동 갱신</strong></span>
+        </div>
+        <button class="popup-btn" @click="closePopup">확인했어요!</button>
+        <div class="popup-sep"></div>
+        <div class="popup-skip" @click="skipToday = !skipToday">
+          <div class="popup-chk" :class="{ on: skipToday }">✓</div>
+          <span class="popup-sk-lbl">오늘 하루 안 보기</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -158,6 +207,17 @@ const collecting = ref(false)
 const collectingPrev = ref(false)
 const syncing = ref(false)
 const updatingProfiles = ref(false)
+
+// 웰컴 팝업
+const showWelcomePopup = ref(false)
+const skipToday = ref(false)
+
+function closePopup() {
+  if (skipToday.value) {
+    localStorage.setItem('popup_hidden_until', new Date().toDateString())
+  }
+  showWelcomePopup.value = false
+}
 
 const battleEnabled = ref(localStorage.getItem('battle_enabled') !== 'false')
 
@@ -316,6 +376,12 @@ onMounted(async () => {
 
   if (getAdminToken()) isAdmin.value = true
 
+  // 오늘 하루 안보기 체크
+  const hiddenUntil = localStorage.getItem('popup_hidden_until')
+  if (hiddenUntil !== new Date().toDateString()) {
+    showWelcomePopup.value = true
+  }
+
   loadStats()
   setInterval(loadStats, 8 * 60 * 60 * 1000)
 })
@@ -414,86 +480,45 @@ onMounted(async () => {
   transition: all 0.18s;
   letter-spacing: -0.2px;
 }
-.mode-tab:hover {
-  border-color: var(--text3);
-  color: var(--text);
-}
+.mode-tab:hover { border-color: var(--text3); color: var(--text); }
 .mode-tab.active {
-  background: var(--text);
-  color: var(--bg);
+  background: var(--text); color: var(--bg);
   border-color: var(--text);
   box-shadow: 0 4px 14px rgba(0,0,0,0.25);
 }
 
-/* 크루대결 버튼 - 탭 옆에 */
 .btn-battle-center {
-  padding: 8px 18px;
-  border-radius: 999px;
+  padding: 8px 18px; border-radius: 999px;
   background: linear-gradient(135deg, #4a9eff, #6b5fff);
-  color: #fff;
-  border: none;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.18s;
-  box-shadow: 0 2px 8px rgba(74,158,255,0.3);
-  white-space: nowrap;
+  color: #fff; border: none; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit; transition: all 0.18s;
+  box-shadow: 0 2px 8px rgba(74,158,255,0.3); white-space: nowrap;
 }
-.btn-battle-center:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 14px rgba(74,158,255,0.5);
-}
+.btn-battle-center:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(74,158,255,0.5); }
 
-/* 범례 */
 .legend {
   display: flex; align-items: center; gap: 14px;
-  padding: 7px 20px;
-  background: var(--bg2);
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
+  padding: 7px 20px; background: var(--bg2);
+  border-bottom: 1px solid var(--border); flex-wrap: wrap;
   transition: background 0.3s;
 }
 .li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
 .li i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; font-style: normal; }
 
-.contact-hint {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--text3);
-  font-weight: 500;
-}
+.contact-hint { margin-left: auto; font-size: 11px; color: var(--text3); font-weight: 500; }
 
 .contact-btn {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  position: absolute; right: 16px; top: 50%; transform: translateY(-50%);
+  display: inline-flex; align-items: center; gap: 6px;
   background: linear-gradient(135deg, #4a9eff, #6b5fff);
-  color: #fff;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  box-shadow: 0 2px 8px rgba(74,158,255,0.3);
-  white-space: nowrap;
-  transition: all 0.2s;
+  color: #fff; padding: 8px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 700; text-decoration: none;
+  box-shadow: 0 2px 8px rgba(74,158,255,0.3); white-space: nowrap; transition: all 0.2s;
 }
-.contact-btn:hover {
-  transform: translateY(calc(-50% - 2px));
-  box-shadow: 0 6px 16px rgba(74,158,255,0.5);
-}
+.contact-btn:hover { transform: translateY(calc(-50% - 2px)); box-shadow: 0 6px 16px rgba(74,158,255,0.5); }
 .contact-btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 10px;
-  animation: contactPulse 2s infinite;
-  pointer-events: none;
+  content: ''; position: absolute; inset: 0; border-radius: 10px;
+  animation: contactPulse 2s infinite; pointer-events: none;
 }
 @keyframes contactPulse {
   0% { box-shadow: 0 0 0 0 rgba(74,158,255,0.6); }
@@ -509,47 +534,128 @@ onMounted(async () => {
 .empty-desc { color: var(--text3); font-size: 13px; }
 .spin {
   width: 24px; height: 24px;
-  border: 2.5px solid var(--border);
-  border-top-color: #4a9eff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  border: 2.5px solid var(--border); border-top-color: #4a9eff;
+  border-radius: 50%; animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  padding: 18px 22px;
-  flex: 1;
-  align-content: start;
-  justify-content: center;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 14px; padding: 18px 22px; flex: 1;
+  align-content: start; justify-content: center;
 }
 
+/* ===== 웰컴 팝업 ===== */
+.popup-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.65);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(6px);
+}
+.popup-box {
+  border-radius: 22px; width: 320px; padding: 24px 22px 20px;
+  position: relative; display: flex; flex-direction: column;
+  background: var(--bg3);
+  border: 0.5px solid var(--border);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+}
+.popup-x {
+  position: absolute; top: 14px; right: 14px;
+  width: 26px; height: 26px; border-radius: 50%; border: none;
+  font-size: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--btn-ghost-bg); color: var(--text3);
+  font-family: inherit;
+}
+.popup-pill {
+  display: inline-flex; align-items: center;
+  font-size: 10px; font-weight: 500;
+  padding: 3px 10px; border-radius: 999px; margin-bottom: 10px;
+  background: var(--bg4); color: var(--text2);
+  border: 0.5px solid var(--border);
+}
+.popup-ttl {
+  font-size: 18px; font-weight: 500; line-height: 1.35;
+  margin-bottom: 5px; color: var(--text);
+}
+.popup-sub {
+  font-size: 12px; line-height: 1.5; color: var(--text3);
+  padding-bottom: 14px; margin-bottom: 14px;
+  border-bottom: 0.5px solid var(--border);
+}
+.popup-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 8px; margin-bottom: 10px;
+}
+.popup-feat {
+  border-radius: 12px; padding: 12px 11px 10px;
+  background: var(--bg4); border: 0.5px solid var(--border);
+}
+.popup-ico { font-size: 19px; display: block; margin-bottom: 6px; line-height: 1; }
+.popup-nm { font-size: 12px; font-weight: 500; margin-bottom: 2px; color: var(--text); }
+.popup-ds { font-size: 10px; line-height: 1.5; color: var(--text3); }
+
+/* 크루 매출풍 카드 - 다크: 골드 / 라이트: 파란색 */
+.popup-feat-special {
+  grid-column: 1 / -1;
+}
+[data-theme="dark"] .popup-feat-special {
+  background: #1c1a10;
+  border-color: rgba(255,196,0,0.25);
+}
+[data-theme="light"] .popup-feat-special {
+  background: #1e1a0e;
+  border-color: rgba(255,196,0,0.3);
+}
+.popup-feat-inline { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.popup-feat-inline .popup-ico { font-size: 17px; display: inline; margin-bottom: 0; }
+[data-theme="dark"] .popup-feat-special .popup-nm { color: #f5c842; }
+[data-theme="light"] .popup-feat-special .popup-nm { color: #fff; }
+[data-theme="dark"] .popup-feat-special .popup-ds { color: #7a6c38; }
+[data-theme="light"] .popup-feat-special .popup-ds { color: rgba(255,255,255,0.75); }
+
+.popup-auto {
+  display: flex; align-items: center; gap: 8px;
+  border-radius: 10px; padding: 9px 12px; margin-bottom: 12px;
+  font-size: 11px; background: var(--bg4);
+  border: 0.5px solid var(--border); color: var(--text3);
+}
+.popup-dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
+.popup-auto strong { color: #5dcaa5; font-weight: 500; }
+[data-theme="light"] .popup-auto strong { color: #0d6b52; }
+
+.popup-btn {
+  width: 100%; padding: 12px; border-radius: 12px; border: none;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: inherit; margin-bottom: 10px;
+  background: #a09af5; color: #fff;
+  transition: opacity .15s;
+}
+[data-theme="light"] .popup-btn { background: #534AB7; }
+.popup-btn:hover { opacity: .88; }
+
+.popup-sep { height: 0.5px; background: var(--border); margin-bottom: 10px; }
+.popup-skip {
+  display: flex; align-items: center; justify-content: center;
+  gap: 7px; cursor: pointer; user-select: none;
+}
+.popup-chk {
+  width: 15px; height: 15px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: transparent;
+  border: 1.5px solid var(--text3); transition: all .15s;
+}
+.popup-chk.on { background: #7c74e8; border-color: #7c74e8; color: #fff; }
+.popup-sk-lbl { font-size: 11px; font-weight: 500; color: var(--text2); }
+
 @media (max-width: 600px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    padding: 10px;
-  }
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
   .pc-only { display: none !important; }
-  .mode-tabs {
-    gap: 6px;
-    padding: 12px 10px 0;
-  }
-  .mode-tab {
-    padding: 7px 14px;
-    font-size: 12px;
-  }
-  .contact-btn {
-    position: static;
-    transform: none;
-    padding: 7px 12px;
-    font-size: 12px;
-  }
-  .contact-btn:hover {
-    transform: translateY(-2px);
-  }
+  .mode-tabs { gap: 6px; padding: 12px 10px 0; }
+  .mode-tab { padding: 7px 14px; font-size: 12px; }
+  .contact-btn { position: static; transform: none; padding: 7px 12px; font-size: 12px; }
+  .contact-btn:hover { transform: translateY(-2px); }
   .contact-hint { display: none; }
+  .popup-box { width: 90vw; }
 }
 </style>
