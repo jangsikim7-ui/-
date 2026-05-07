@@ -549,15 +549,18 @@ onMounted(async () => {
 .popup-overlay {
   position: fixed; inset: 0; z-index: 9999;
   background: rgba(0,0,0,0.65);
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: flex-start; justify-content: center;
+  padding-top: 60px;
   backdrop-filter: blur(6px);
+  overflow-y: auto;
 }
 .popup-box {
-  border-radius: 22px; width: 320px; padding: 24px 22px 20px;
+  border-radius: 22px; width: 480px; padding: 28px 26px 22px;
   position: relative; display: flex; flex-direction: column;
   background: var(--bg3);
   border: 0.5px solid var(--border);
   box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  margin-bottom: 40px;
 }
 .popup-x {
   position: absolute; top: 14px; right: 14px;
@@ -656,6 +659,7 @@ onMounted(async () => {
   .contact-btn { position: static; transform: none; padding: 7px 12px; font-size: 12px; }
   .contact-btn:hover { transform: translateY(-2px); }
   .contact-hint { display: none; }
-  .popup-box { width: 90vw; }
+  .popup-box { width: 90vw; padding: 20px 18px 18px; }
+  .popup-overlay { padding-top: 20px; }
 }
 </style>
