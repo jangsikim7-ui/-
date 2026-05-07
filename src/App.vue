@@ -139,35 +139,32 @@
         <span class="popup-pill">⚡ 엑셀크루 시너지표</span>
         <p class="popup-ttl">어떤 기능들이<br>있는지 알아봐요</p>
         <p class="popup-sub">크루별 BJ 데이터를 다양한 방식으로 확인하세요</p>
-        <div class="popup-grid">
-          <div class="popup-feat">
-            <span class="popup-ico">🎈</span>
-            <p class="popup-nm">별풍선 순위</p>
-            <p class="popup-ds">크루별 월간<br>별풍선 현황 비교</p>
-          </div>
-          <div class="popup-feat">
-            <span class="popup-ico">👁️</span>
-            <p class="popup-nm">뷰어십 순위</p>
-            <p class="popup-ds">시청자 수 기준<br>크루 경쟁력 확인</p>
-          </div>
-          <div class="popup-feat">
-            <span class="popup-ico">⚔️</span>
-            <p class="popup-nm">크루대결</p>
-            <p class="popup-ds">두 크루를<br>직접 맞대결 비교</p>
-          </div>
-          <div class="popup-feat">
-            <span class="popup-ico">📩</span>
-            <p class="popup-nm">문의하기</p>
-            <p class="popup-ds">오류·수정 요청<br>바로 전송</p>
-          </div>
-          <div class="popup-feat popup-feat-special">
-            <div class="popup-feat-inline">
-              <span class="popup-ico">👑</span>
-              <p class="popup-nm">크루 매출풍</p>
-            </div>
-            <p class="popup-ds">크루 멤버 전체 별풍선 합산 총액 확인</p>
-          </div>
-        </div>
+     <div class="popup-grid">
+  <div class="popup-feat balloon">
+    <div class="feat-top"><div class="feat-ico">🎈</div><span class="feat-nm">별풍선 순위</span></div>
+    <p class="feat-ds">크루별 월간 별풍선 현황 비교</p>
+  </div>
+  <div class="popup-feat viewer">
+    <div class="feat-top"><div class="feat-ico">👁️</div><span class="feat-nm">뷰어십 순위</span></div>
+    <p class="feat-ds">시청자 수 기준 크루 경쟁력 확인</p>
+  </div>
+  <div class="popup-feat battle">
+    <div class="feat-top"><div class="feat-ico">⚔️</div><span class="feat-nm">크루대결</span></div>
+    <p class="feat-ds">두 크루를 직접 맞대결 비교</p>
+  </div>
+  <div class="popup-feat contact">
+    <div class="feat-top"><div class="feat-ico">📩</div><span class="feat-nm">문의하기</span></div>
+    <p class="feat-ds">오류·수정 요청 바로 전송</p>
+  </div>
+  <div class="popup-feat full gold-card">
+    <div class="feat-top"><div class="feat-ico">👑</div><span class="feat-nm">크루 매출풍</span></div>
+    <p class="feat-ds">엑셀크루 수장 월간 별풍선</p>
+  </div>
+  <div class="popup-feat full fan-card">
+    <div class="feat-top"><div class="feat-ico">🏅</div><span class="feat-nm">이달의 후원자</span></div>
+    <p class="feat-ds">BJ 이름 클릭 시 TOP 10 후원자 확인 가능</p>
+  </div>
+</div>
         <div class="popup-auto">
           <span class="popup-dot"></span>
           <span>데이터 <strong>4시간마다 자동 갱신</strong></span>
@@ -624,7 +621,7 @@ onMounted(async () => {
   border: 0.5px solid var(--border); color: var(--text3);
 }
 .popup-dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
-.popup-auto strong { color: #5dcaa5; font-weight: 500; }
+.popup-auto strong { color: var(--text); font-weight: 500; }
 [data-theme="light"] .popup-auto strong { color: #0d6b52; }
 
 .popup-btn {
@@ -662,4 +659,27 @@ onMounted(async () => {
   .popup-box { width: 90vw; padding: 20px 18px 18px; }
   .popup-overlay { padding-top: 20px; }
 }
+.feat-top { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
+.feat-ico { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.feat-nm { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; }
+.feat-ds { font-size: 10px; line-height: 1.6; color: var(--text2); word-break: keep-all; }
+
+.balloon .feat-ico { background: rgba(255,77,125,0.15); }
+.viewer .feat-ico { background: rgba(74,158,255,0.15); }
+.battle .feat-ico { background: rgba(107,95,255,0.15); }
+.contact .feat-ico { background: rgba(74,201,158,0.15); }
+
+.full { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; padding: 11px 14px; gap: 12px; }
+.full .feat-top { margin-bottom: 0; flex-shrink: 0; }
+.full .feat-ds { text-align: right; font-size: 10px; }
+
+.gold-card { background: rgba(255,196,0,0.07); border-color: rgba(255,196,0,0.2); }
+.gold-card .feat-nm { color: #c9960a; }
+[data-theme="dark"] .gold-card .feat-nm { color: #f5c842; }
+.gold-card .feat-ico { background: rgba(255,196,0,0.12); }
+
+.fan-card { background: rgba(74,158,255,0.07); border-color: rgba(74,158,255,0.2); }
+.fan-card .feat-nm { color: #1a6fb5; }
+[data-theme="dark"] .fan-card .feat-nm { color: #60b4ff; }
+.fan-card .feat-ico { background: rgba(74,158,255,0.12); }
 </style>
