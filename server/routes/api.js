@@ -3,6 +3,7 @@ import { join } from 'path'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 import { existsSync, mkdirSync, copyFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs'
+import { clearApiCache } from '../index.js'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 import db from '../db/connection.js'
 import { collectAll, fetchMonthlyAll } from './collector.js'
@@ -46,6 +47,17 @@ async function fetchSoopInfo(soopId) {
 async function fetchNickname(soopId) {
   const info = await fetchSoopInfo(soopId)
   return info?.nickname || null
+}
+
+// ── 관리자 인증 ───────────────────────────────────────
+let ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'poong2026'
+
+function adminOnly(req, res, next) {
+  const token = req.headers['x-admin-token']
+  if (token !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: '관리자 권한이 필요합니다' })
+  }
+  next()
 }
 
 // ── 크루 ──────────────────────────────────────────────
@@ -162,7 +174,7 @@ router.delete('/members/:id', adminOnly, (req, res) => {
   res.json({ ok: true })
 })
 
-// ── 통계 (수장 매출풍 포함, 평균/합계 제외) ──────────
+// ── 통계 ──────────────────────────────────────────────
 router.get('/stats', (req, res) => {
   const now = new Date()
   const year = parseInt(req.query.year) || now.getFullYear()
@@ -205,7 +217,6 @@ router.get('/stats', (req, res) => {
 
   const crewMap = {}
   for (const crew of allCrews) {
-    // 수장 풍선 조회
     let master_balloons = 0
     let master_name = null
     if (crew.master_soop_id) {
@@ -215,50 +226,31 @@ router.get('/stats', (req, res) => {
         ORDER BY fetched_at DESC LIMIT 1
       `).get(crew.master_soop_id, year, month)
       master_balloons = masterSnap?.total_balloons ?? 0
-
-      // 수장 이름 조회 (members에 있으면 가져오고, 없으면 soop_id 사용)
       const masterMember = db.prepare('SELECT name FROM members WHERE soop_id = ?').get(crew.master_soop_id)
       master_name = masterMember?.name || crew.master_soop_id
     }
-
     crewMap[crew.id] = {
-      id: crew.id,
-      name: crew.name,
-      color: crew.color,
-      logo_url: crew.logo_url || '',
-      sort_order: crew.sort_order,
-      master_soop_id: crew.master_soop_id || null,
-      master_name,
-      master_balloons,
-      members: [],
-      total: 0,
-      prev_total: 0,
-      avg: 0
+      id: crew.id, name: crew.name, color: crew.color,
+      logo_url: crew.logo_url || '', sort_order: crew.sort_order,
+      master_soop_id: crew.master_soop_id || null, master_name, master_balloons,
+      members: [], total: 0, prev_total: 0, avg: 0
     }
   }
 
   for (const row of rows) {
     if (!crewMap[row.crew_id]) continue
     crewMap[row.crew_id].members.push({
-      id: row.id,
-      soop_id: row.soop_id,
-      name: row.name,
-      profile_img: row.profile_img,
-      balloons: row.balloons,
-      daily_balloons: row.daily_balloons,
+      id: row.id, soop_id: row.soop_id, name: row.name, profile_img: row.profile_img,
+      balloons: row.balloons, daily_balloons: row.daily_balloons,
       yesterday_diff: row.balloons - row.yesterday_balloons,
-      prev_balloons: row.prev_balloons,
-      is_new: row.is_new,
-      sort_order: row.sort_order
+      prev_balloons: row.prev_balloons, is_new: row.is_new, sort_order: row.sort_order
     })
-    // 수장은 평균/합계에서 제외 (일반 멤버만 계산)
     crewMap[row.crew_id].total += row.balloons
     crewMap[row.crew_id].prev_total += row.prev_balloons
   }
 
   const crews = Object.values(crewMap).map(c => ({
-    ...c,
-    avg: c.members.length > 0 ? Math.round(c.total / c.members.length) : 0
+    ...c, avg: c.members.length > 0 ? Math.round(c.total / c.members.length) : 0
   })).sort((a, b) => b.avg - a.avg)
 
   res.json({ year, month, prevYear, prevMonth, crews })
@@ -305,7 +297,6 @@ router.get('/viewer-stats', (req, res) => {
     crewMap[crew.id] = {
       id: crew.id, name: crew.name, color: crew.color,
       logo_url: crew.logo_url || '', sort_order: crew.sort_order,
-      // 뷰어십에는 수장 매출풍 없음
       master_soop_id: null, master_name: null, master_balloons: 0,
       members: [], total: 0, prev_total: 0, avg: 0
     }
@@ -314,21 +305,17 @@ router.get('/viewer-stats', (req, res) => {
   for (const row of rows) {
     if (!crewMap[row.crew_id]) continue
     crewMap[row.crew_id].members.push({
-      id: row.id, soop_id: row.soop_id, name: row.name,
-      profile_img: row.profile_img,
-      balloons: row.viewers,
-      daily_balloons: 0,
+      id: row.id, soop_id: row.soop_id, name: row.name, profile_img: row.profile_img,
+      balloons: row.viewers, daily_balloons: 0,
       yesterday_diff: row.viewers - row.yesterday_viewers,
-      prev_balloons: row.prev_viewers,
-      is_new: row.is_new, sort_order: row.sort_order
+      prev_balloons: row.prev_viewers, is_new: row.is_new, sort_order: row.sort_order
     })
     crewMap[row.crew_id].total += row.viewers
     crewMap[row.crew_id].prev_total += row.prev_viewers
   }
 
   const crews = Object.values(crewMap).map(c => ({
-    ...c,
-    avg: c.members.length > 0 ? Math.round(c.total / c.members.length) : 0
+    ...c, avg: c.members.length > 0 ? Math.round(c.total / c.members.length) : 0
   })).sort((a, b) => b.avg - a.avg)
 
   res.json({ year, month, prevYear, prevMonth, crews })
@@ -337,7 +324,7 @@ router.get('/viewer-stats', (req, res) => {
 // ── 수동 수집 트리거 ─────────────────────────────────
 router.post('/collect', adminOnly, async (req, res) => {
   res.json({ ok: true, message: '수집 시작' })
-  collectAll().catch(console.error)
+  collectAll().then(() => clearApiCache()).catch(console.error)
 })
 
 // ── 지난달 수집 트리거 ───────────────────────────────
@@ -375,17 +362,6 @@ router.get('/last-collected', (req, res) => {
   ).get()
   res.json({ last_collected: row?.fetched_at ?? null })
 })
-
-// ── 관리자 인증 ───────────────────────────────────────
-let ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'poong2026'
-
-function adminOnly(req, res, next) {
-  const token = req.headers['x-admin-token']
-  if (token !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: '관리자 권한이 필요합니다' })
-  }
-  next()
-}
 
 const CREW_COLORS = ["#ff6b9d","#ffd93d","#6bcb77","#4d96ff","#ff6b6b","#c77dff","#ff9a3c"]
 
@@ -622,6 +598,18 @@ router.delete('/unknown-crews/:id', adminOnly, (req, res) => {
   res.json({ ok: true })
 })
 
+router.post('/update-profiles', adminOnly, async (req, res) => {
+  const members = db.prepare('SELECT id, soop_id FROM members WHERE is_active = 1').all()
+  res.json({ ok: true, message: `${members.length}명 프사 업데이트 시작` })
+  for (const m of members) {
+    const info = await fetchSoopInfo(m.soop_id)
+    const profile_img = info?.profile_img || soopCdnUrl(m.soop_id)
+    db.prepare('UPDATE members SET profile_img=? WHERE id=?').run(profile_img, m.id)
+    await new Promise(r => setTimeout(r, 300))
+  }
+  console.log('[profile] 일괄 업데이트 완료')
+})
+
 export async function autoImportNaksoo() {
   try {
     const naksooData = await fetchNaksooData()
@@ -672,15 +660,3 @@ export async function autoImportNaksoo() {
 }
 
 export default router
-
-router.post('/update-profiles', adminOnly, async (req, res) => {
-  const members = db.prepare('SELECT id, soop_id FROM members WHERE is_active = 1').all()
-  res.json({ ok: true, message: `${members.length}명 프사 업데이트 시작` })
-  for (const m of members) {
-    const info = await fetchSoopInfo(m.soop_id)
-    const profile_img = info?.profile_img || soopCdnUrl(m.soop_id)
-    db.prepare('UPDATE members SET profile_img=? WHERE id=?').run(profile_img, m.id)
-    await new Promise(r => setTimeout(r, 300))
-  }
-  console.log('[profile] 일괄 업데이트 완료')
-})
