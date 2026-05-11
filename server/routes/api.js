@@ -65,6 +65,15 @@ function cleanMemberName(raw) {
   return raw.replace(/^[🥇🥈🥉]\s*/, '').replace(/^\s+/, '').trim()
 }
 
+// 이름 특수문자 제거 후 비교용 정규화
+function normalizeName(name) {
+  return name
+    .replace(/[🥇🥈🥉]/g, '')
+    .replace(/[\s_\-\.˚°"'`~!@#$%^&*()\[\]{}|\\:;<>?,/♥♡＠]/g, '')
+    .toLowerCase()
+    .trim()
+}
+
 const YXLINFO_BACKUP = {
   "GW":       ["임주연♥","미디♡.","함지아♥","미숑.♥","이온♥","아이빈","원영님♥","가을이♡","서윤슬@","안둥♥","맹이.zip","파미"],
   "C9":       ["이다니♥","혜루찡","송채연","체온_♡","설윤이♥","BJ채리","초초","쁠리vvely","인지연JYEON","하이희야♡","아윤♡","♡혜밍","ε연두з","#초린","리하♥","히나_♥","애순이"],
@@ -484,7 +493,7 @@ router.get('/sync-naksoo/diff', adminOnly, async (req, res) => {
   const nameToCrewMap = {}
   for (const [crewName, names] of Object.entries(yxlinfoData)) {
     for (const name of names) {
-      nameToCrewMap[name.toLowerCase()] = crewName
+      nameToCrewMap[normalizeName(name)] = { crewName, originalName: name }
     }
   }
 
@@ -498,19 +507,19 @@ router.get('/sync-naksoo/diff', adminOnly, async (req, res) => {
   // 삭제 / 이동 감지
   for (const member of myMembers) {
     if (!yxlinfoCrewNames.includes(member.crew_name)) continue
-    const yxlinfoCrewForMember = nameToCrewMap[member.name.toLowerCase()]
-    if (yxlinfoCrewForMember === undefined) {
+    const matched = nameToCrewMap[normalizeName(member.name)]
+    if (!matched) {
       removed.push({ soop_id: member.soop_id, name: member.name, crew_name: member.crew_name })
-    } else if (yxlinfoCrewForMember !== member.crew_name) {
-      moved.push({ soop_id: member.soop_id, name: member.name, from_crew: member.crew_name, to_crew: yxlinfoCrewForMember })
+    } else if (matched.crewName !== member.crew_name) {
+      moved.push({ soop_id: member.soop_id, name: member.name, from_crew: member.crew_name, to_crew: matched.crewName })
     }
   }
 
   // 신규 감지
-  const myMemberNames = new Set(myMembers.map(m => m.name.toLowerCase()))
+  const myMemberNamesNorm = new Set(myMembers.map(m => normalizeName(m.name)))
   for (const [crewName, names] of Object.entries(yxlinfoData)) {
     for (const name of names) {
-      if (!myMemberNames.has(name.toLowerCase())) {
+      if (!myMemberNamesNorm.has(normalizeName(name))) {
         added.push({ soop_id: null, name, crew_name: crewName })
       }
     }
@@ -683,10 +692,10 @@ export async function autoImportNaksoo() {
       colorIdx++
 
       // yxlinfo에 없는 멤버 비활성화
-      const yxlinfoNamesLower = names.map(n => n.toLowerCase())
+      const yxlinfoNamesNorm = new Set(names.map(n => normalizeName(n)))
       const crewMembers = db.prepare('SELECT id, name FROM members WHERE crew_id = ? AND is_active = 1').all(crew.id)
       for (const m of crewMembers) {
-        if (!yxlinfoNamesLower.includes(m.name.toLowerCase())) {
+        if (!yxlinfoNamesNorm.has(normalizeName(m.name))) {
           db.prepare('UPDATE members SET is_active=0 WHERE id=?').run(m.id)
           console.log(`[autoImport] 비활성화: ${m.name}`)
         }
@@ -695,7 +704,8 @@ export async function autoImportNaksoo() {
       // 크루 이동 감지
       for (let i = 0; i < names.length; i++) {
         const name = names[i]
-        const existing = db.prepare('SELECT id, crew_id FROM members WHERE LOWER(name) = LOWER(?) AND is_active = 1').get(name)
+        const existing = db.prepare('SELECT id, crew_id FROM members WHERE is_active = 1').all()
+          .find(m => normalizeName(m.name) === normalizeName(name))
         if (existing && existing.crew_id !== crew.id) {
           db.prepare('UPDATE members SET crew_id=?, sort_order=? WHERE id=?').run(crew.id, i + 1, existing.id)
           console.log(`[autoImport] 크루이동: ${name} → ${crewName}`)
