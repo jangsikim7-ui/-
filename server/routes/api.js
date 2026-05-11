@@ -435,7 +435,7 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
     const now = new Date()
     const list = await fetchMonthlyAll(now.getFullYear(), now.getMonth() + 1)
     if (!list) return res.json({ results: [] })
-    const keyword = name.toLowerCase().replace(/[♥♡@#\s_*.:\[\]!+˚º\-()=。˚]/g, '')
+ const keyword = name.toLowerCase().replace(/[^\uAC00-\uD7A3a-z0-9]/g, '')
     const results = list
       .filter(item => {
         if (!item.n) return false
