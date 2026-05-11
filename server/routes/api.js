@@ -60,6 +60,61 @@ function adminOnly(req, res, next) {
   next()
 }
 
+// ── yxlinfo 데이터 ────────────────────────────────────
+function cleanMemberName(raw) {
+  return raw.replace(/^[🥇🥈🥉]\s*/, '').replace(/^\s+/, '').trim()
+}
+
+const YXLINFO_BACKUP = {
+  "GW":       ["임주연♥","미디♡.","함지아♥","미숑.♥","이온♥","아이빈","원영님♥","가을이♡","서윤슬@","안둥♥","맹이.zip","파미"],
+  "C9":       ["이다니♥","혜루찡","송채연","체온_♡","설윤이♥","BJ채리","초초","쁠리vvely","인지연JYEON","하이희야♡","아윤♡","♡혜밍","ε연두з","#초린","리하♥","히나_♥","애순이"],
+  "YXL":      ["리윤_♥","후잉♥","냥냥수주","너의˚멜로디","류서하♥","미로。","서니_♥","백나현","하랑짱♥","김유정S2","유나연º-º","#율무","소다♥","ZO아름♡"],
+  "INOLABLE": ["애지니♡","설탱♥","꽃부기♥","히냥이♥","#누리-","이월♥","밤비♥","리에♡","설인_♥","이리원♥","♥밍초♥","연보민","[SO]박소연"],
+  "JS":       ["♥백설♥","서이안","유서림♥","윤수♥","아유님♥","김규리♥","햇동이♥","율비♡","윤세빈♥","♡김베리♡","당신의채안♥","나의유주♥","채보미=3="],
+  "The K":    ["[BJ]에디양","강한빛♡","지아콩","포카린","엘♥","퀸다미♧","푸린♡","차시월","! 채채","한슬댕","채리나","쑤♥","소냥이에요"],
+  "771":      ["예란","푸글리♡","이나율♥","나래♡","지숙♥_.","나래님♥","예수","김봄비","박예솜:)","한채아♥","이밍+♥"],
+  "GD":       ["♥유현♥","설인아님♥","쥬브리","아링","은아린!!","해리님♥","E윤아♡"],
+  "Show K":   ["＠서단","송유이♥","유이나.♡","도예빈♥","쏘피♥","재온ly","새봄_♡","정인♥","♥제니♥","송화양","이로♥","도하정♥","@유톨"],
+  "Moon A":   ["미지수♥","햄벅","슈나♥","♥채화","하임*","강형민이","예니__","뮤엘♥","서언수","박재열","E-;이은♥","설현미","천시아S2",".장지민","현강림2","#다인"]
+}
+
+async function fetchYxlinfoData() {
+  try {
+    const res = await fetch('https://yxlinfo.github.io/crew-rank/', {
+      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const html = await res.text()
+    const result = {}
+    const sections = html.split('<div class="crew-card"')
+    for (const section of sections.slice(1)) {
+      const titleMatch = section.match(/<div class="crew-title">([^<]+)<\/div>/)
+      if (!titleMatch) continue
+      const crewName = titleMatch[1].trim()
+      const members = []
+      const nickRegex = /<div class="nick">([^<]+)<\/div>/g
+      let m
+      while ((m = nickRegex.exec(section)) !== null) {
+        const name = cleanMemberName(m[1])
+        if (name) members.push(name)
+      }
+      result[crewName] = members
+    }
+    const crewCount = Object.keys(result).length
+    const memberCount = Object.values(result).reduce((s, v) => s + v.length, 0)
+    if (crewCount > 0 && memberCount > 10) {
+      console.log(`[yxlinfo] 성공: 크루 ${crewCount}개, 멤버 ${memberCount}명`)
+      return result
+    }
+    throw new Error(`파싱 결과 부족: 크루 ${crewCount}, 멤버 ${memberCount}`)
+  } catch(e) {
+    console.log('[yxlinfo] 실패, 백업 사용:', e.message)
+    return YXLINFO_BACKUP
+  }
+}
+
+const CREW_COLORS = ["#ff6b9d","#ffd93d","#6bcb77","#4d96ff","#ff6b6b","#c77dff","#ff9a3c"]
+
 // ── 크루 ──────────────────────────────────────────────
 router.get('/crews', (req, res) => {
   const crews = db.prepare('SELECT * FROM crews ORDER BY sort_order, id').all()
@@ -363,134 +418,113 @@ router.get('/last-collected', (req, res) => {
   res.json({ last_collected: row?.fetched_at ?? null })
 })
 
-const CREW_COLORS = ["#ff6b9d","#ffd93d","#6bcb77","#4d96ff","#ff6b6b","#c77dff","#ff9a3c"]
-
-async function fetchNaksooData() {
+// ── 이름으로 멤버 검색 (신규 멤버 soop ID 찾기용) ────
+router.get('/search-by-name', adminOnly, async (req, res) => {
+  const { name } = req.query
+  if (!name) return res.json({ results: [] })
   try {
-    const res = await fetch('https://naksoo.vercel.app/', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html,application/xhtml+xml'
-      }
-    })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    const html = await res.text()
-    const crewMatches = [...html.matchAll(/##\s+(.+)/g)]
-    const seenCrews = new Set()
-    const crews = []
-    for (const m of crewMatches) {
-      const name = m[1].trim()
-      if (!seenCrews.has(name) && name !== '문의 / 요청') {
-        seenCrews.add(name)
-        crews.push({ name, index: m.index })
-      }
-    }
-    const result = {}
-    for (let i = 0; i < crews.length; i++) {
-      const start = crews[i].index
-      const end = i + 1 < crews.length ? crews[i + 1].index : html.length
-      const section = html.slice(start, end)
-      const members = []
-      const seen = new Set()
-      let match
-      const re = /profile\.img\.sooplive\.com\/LOGO\/[a-z0-9]{2}\/([^\/]+)\/\1\.jpg/g
-      while ((match = re.exec(section)) !== null) {
-        if (!seen.has(match[1])) { seen.add(match[1]); members.push(match[1]) }
-      }
-      result[crews[i].name] = members
-    }
-    const crewCount = Object.keys(result).length
-    const memberCount = Object.values(result).reduce((s, v) => s + v.length, 0)
-    if (crewCount > 0 && memberCount > 10) {
-      console.log(`[naksoo] 크롤링 성공: 크루 ${crewCount}개, 멤버 ${memberCount}명`)
-      return result
-    }
-    throw new Error(`파싱 결과 부족: 크루 ${crewCount}, 멤버 ${memberCount}`)
-  } catch(e) {
-    console.log('[naksoo] 크롤링 실패, 백업 데이터 사용:', e.message)
-    return NAKSOO_BACKUP
-  }
-}
+    const now = new Date()
+    const list = await fetchMonthlyAll(now.getFullYear(), now.getMonth() + 1)
+    if (!list) return res.json({ results: [] })
+    const keyword = name.toLowerCase().replace(/[♥♡@#\s_*.:\[\]!+˚º\-()=。˚]/g, '')
+    const results = list
+      .filter(item => {
+        if (!item.n) return false
+        const n = item.n.toLowerCase().replace(/[♥♡@#\s_*.:\[\]!+˚º\-()=。˚]/g, '')
+        return n.includes(keyword) || keyword.includes(n)
+      })
+      .slice(0, 6)
+      .map(item => ({
+        soop_id: item.i,
+        name: item.n,
+        balloons: item.b,
+        profile_img: soopCdnUrl(item.i)
+      }))
+    res.json({ results })
+  } catch(e) { res.json({ results: [] }) }
+})
 
-const NAKSOO_BACKUP = {
-  "광우상사":  ["iluvbin","pms999","fall1128","dbstmf3497","yui0902","qor0919","kkok7816","andoong0227","hellparty1","ektnrnrgml","hhyounooo"],
-  "씨나인":    ["leeso0403","epsthddus","alwl1047","lcy011027","jkmjkm1236","dlswldus107","yunyeson3015","chocho12","oosuoey","ayoona","luaa0803","dhtnqls1238","ksdd7856"],
-  "YXL":       ["sladk51","jaeha010","meldoy777","wk3220","zbxlzzz","asy1218","smkim82372","offside629","star49","tkek55","ahrum0912","fhwm0602","iluvpp","jeewon1202"],
-  "이노레이블": ["baek224983","flowerboogie","bc3yu2fl","yeeeee00","sonhj2244","nooree","qkrrkgml1231","lia0322","nrini1213","duzzangg","ss2312","sul0509","522222m"],
-  "정선컴퍼니": ["yin3745","whdbstns7","seola1420","lllloq","xgyuri2","yuyu0929","kariveal","your75","hhy789","youxzu","elixxir","yulbee","coqhal1992"],
-  "GD컴퍼니":  ["inaa04","kyhkyh825","dbswn2312","pinepine0","jssisabel","jungym0116","haeri0324"],
-  "더케이":    ["vvkk80","yhm777","kerin0308","dreamch77","pu1030","sso123","kcktksal12","eeseuu","elleeayo","damikim","mxxjiaa2358","onevley77","ssoi0911"]
-}
-
+// ── yxlinfo 임포트 ───────────────────────────────────
 router.post('/import-naksoo', adminOnly, async (req, res) => {
-  const results = { crews_added: 0, crews_skipped: 0, members_added: 0, members_skipped: 0 }
-  const naksooData = await fetchNaksooData()
+  const results = { crews_added: 0, crews_skipped: 0, members_matched: 0, members_skipped: 0, members_needs_soop_id: [] }
+  const yxlinfoData = await fetchYxlinfoData()
   let colorIdx = db.prepare('SELECT COUNT(*) as c FROM crews').get().c
-  for (const [crewName, soopIds] of Object.entries(naksooData)) {
+
+  for (const [crewName, names] of Object.entries(yxlinfoData)) {
     let crew = db.prepare('SELECT id FROM crews WHERE name = ?').get(crewName)
     if (!crew) {
       const color = CREW_COLORS[colorIdx % CREW_COLORS.length]
-      const result = db.prepare('INSERT INTO crews (name, color, sort_order) VALUES (?, ?, ?)').run(crewName, color, colorIdx + 1)
-      crew = { id: result.lastInsertRowid }
+      const r = db.prepare('INSERT INTO crews (name, color, sort_order) VALUES (?, ?, ?)').run(crewName, color, colorIdx + 1)
+      crew = { id: r.lastInsertRowid }
       results.crews_added++
     } else { results.crews_skipped++ }
     colorIdx++
-    for (let i = 0; i < soopIds.length; i++) {
-      const soopId = soopIds[i]
-      const exists = db.prepare('SELECT id FROM members WHERE soop_id = ?').get(soopId)
-      if (exists) {
-        if (!exists.is_active) db.prepare('UPDATE members SET is_active=1, crew_id=? WHERE soop_id=?').run(crew.id, soopId)
+
+    for (let i = 0; i < names.length; i++) {
+      const name = names[i]
+      const existing = db.prepare('SELECT id, soop_id FROM members WHERE LOWER(name) = LOWER(?) AND is_active = 1').get(name)
+      if (existing) {
+        db.prepare('UPDATE members SET crew_id = ?, sort_order = ? WHERE id = ?').run(crew.id, i + 1, existing.id)
+        results.members_matched++
+      } else {
+        results.members_needs_soop_id.push({ name, crew_name: crewName })
         results.members_skipped++
-        continue
       }
-      const profile_img = soopCdnUrl(soopId)
-      db.prepare('INSERT INTO members (soop_id, name, crew_id, sort_order, profile_img, is_active) VALUES (?,?,?,?,?,1)')
-        .run(soopId, soopId, crew.id, i + 1, profile_img)
-      results.members_added++
     }
   }
+
   res.json({ ok: true, ...results })
-  console.log('[naksoo] 임포트 완료:', results, '→ 닉네임 수집 시작')
-  const noName = db.prepare("SELECT id, soop_id FROM members WHERE name = soop_id AND is_active = 1").all()
-  for (const m of noName) {
-    const info = await fetchSoopInfo(m.soop_id)
-    if (info?.nickname) {
-      db.prepare('UPDATE members SET name=?, profile_img=? WHERE id=?')
-        .run(info.nickname, info.profile_img || soopCdnUrl(m.soop_id), m.id)
-    }
-    await new Promise(r => setTimeout(r, 200))
-  }
-  console.log('[naksoo] 닉네임 업데이트 완료')
 })
 
+// ── yxlinfo 동기화 diff ──────────────────────────────
 router.get('/sync-naksoo/diff', adminOnly, async (req, res) => {
-  const naksooData = await fetchNaksooData()
+  const yxlinfoData = await fetchYxlinfoData()
   const added = [], removed = [], moved = []
-  for (const [crewName, soopIds] of Object.entries(naksooData)) {
-    for (const soopId of soopIds) {
-      const member = db.prepare('SELECT m.*, c.name as crew_name FROM members m JOIN crews c ON m.crew_id = c.id WHERE m.soop_id = ? AND m.is_active = 1').get(soopId)
-      if (!member) {
-        const info = await fetchSoopInfo(soopId)
-        added.push({ soop_id: soopId, name: info?.nickname || soopId, profile_img: info?.profile_img || soopCdnUrl(soopId), crew_name: crewName })
-      } else if (member.crew_name !== crewName) {
-        moved.push({ soop_id: soopId, name: member.name, from_crew: member.crew_name, to_crew: crewName })
+
+  const nameToCrewMap = {}
+  for (const [crewName, names] of Object.entries(yxlinfoData)) {
+    for (const name of names) {
+      nameToCrewMap[name.toLowerCase()] = crewName
+    }
+  }
+
+  const yxlinfoCrewNames = Object.keys(yxlinfoData)
+  const myMembers = db.prepare(`
+    SELECT m.soop_id, m.name, c.name as crew_name
+    FROM members m JOIN crews c ON m.crew_id = c.id
+    WHERE m.is_active = 1
+  `).all()
+
+  // 삭제 / 이동 감지
+  for (const member of myMembers) {
+    if (!yxlinfoCrewNames.includes(member.crew_name)) continue
+    const yxlinfoCrewForMember = nameToCrewMap[member.name.toLowerCase()]
+    if (yxlinfoCrewForMember === undefined) {
+      removed.push({ soop_id: member.soop_id, name: member.name, crew_name: member.crew_name })
+    } else if (yxlinfoCrewForMember !== member.crew_name) {
+      moved.push({ soop_id: member.soop_id, name: member.name, from_crew: member.crew_name, to_crew: yxlinfoCrewForMember })
+    }
+  }
+
+  // 신규 감지
+  const myMemberNames = new Set(myMembers.map(m => m.name.toLowerCase()))
+  for (const [crewName, names] of Object.entries(yxlinfoData)) {
+    for (const name of names) {
+      if (!myMemberNames.has(name.toLowerCase())) {
+        added.push({ soop_id: null, name, crew_name: crewName })
       }
     }
   }
-  const allNaksooIds = Object.values(naksooData).flat()
-  const naksooCrewNames = Object.keys(naksooData)
-  const myMembers = db.prepare('SELECT m.soop_id, m.name, c.name as crew_name FROM members m JOIN crews c ON m.crew_id = c.id WHERE m.is_active = 1').all()
-  for (const m of myMembers) {
-    if (naksooCrewNames.includes(m.crew_name) && !allNaksooIds.includes(m.soop_id)) {
-      removed.push({ soop_id: m.soop_id, name: m.name, crew_name: m.crew_name })
-    }
-  }
+
   res.json({ added, removed, moved, total: added.length + removed.length + moved.length })
 })
 
+// ── yxlinfo 동기화 apply ─────────────────────────────
 router.post('/sync-naksoo/apply', adminOnly, async (req, res) => {
   const { added = [], removed = [], moved = [] } = req.body
-  const results = { added: 0, removed: 0, moved: 0 }
+  const results = { added: 0, removed: 0, moved: 0, skipped_added: 0 }
+
+  // 백업
   try {
     const dbPath = join(__dirname, '../data.db')
     const backupDir = join(__dirname, '../backups')
@@ -500,10 +534,27 @@ router.post('/sync-naksoo/apply', adminOnly, async (req, res) => {
     const files = readdirSync(backupDir).filter(f => f.endsWith('.db')).sort()
     if (files.length > 5) files.slice(0, files.length - 5).forEach(f => unlinkSync(join(backupDir, f)))
   } catch(e) { console.warn('[backup] 백업 실패:', e.message) }
-  const naksooData = await fetchNaksooData()
-  const validCrewNames = Object.keys(naksooData)
+
+  // 삭제
+  for (const m of removed) {
+    if (!m.soop_id) continue
+    db.prepare('UPDATE members SET is_active = 0 WHERE soop_id = ?').run(m.soop_id)
+    results.removed++
+  }
+
+  // 이동
+  for (const m of moved) {
+    if (!m.soop_id) continue
+    const crew = db.prepare('SELECT id FROM crews WHERE name = ?').get(m.to_crew)
+    if (crew) {
+      db.prepare('UPDATE members SET crew_id = ? WHERE soop_id = ?').run(crew.id, m.soop_id)
+      results.moved++
+    }
+  }
+
+  // 추가 (soop_id 있는 것만)
   for (const m of added) {
-    if (!validCrewNames.includes(m.crew_name)) continue
+    if (!m.soop_id) { results.skipped_added++; continue }
     let crew = db.prepare('SELECT id FROM crews WHERE name = ?').get(m.crew_name)
     if (!crew) {
       const color = CREW_COLORS[db.prepare('SELECT COUNT(*) as c FROM crews').get().c % CREW_COLORS.length]
@@ -518,11 +569,7 @@ router.post('/sync-naksoo/apply', adminOnly, async (req, res) => {
       results.added++
     }
   }
-  for (const m of removed) { db.prepare('UPDATE members SET is_active = 0 WHERE soop_id = ?').run(m.soop_id); results.removed++ }
-  for (const m of moved) {
-    const crew = db.prepare('SELECT id FROM crews WHERE name = ?').get(m.to_crew)
-    if (crew) { db.prepare('UPDATE members SET crew_id = ? WHERE soop_id = ?').run(crew.id, m.soop_id); results.moved++ }
-  }
+
   res.json({ ok: true, ...results })
 })
 
@@ -584,10 +631,10 @@ router.post('/backups/restore', adminOnly, (req, res) => {
 
 router.get('/unknown-crews', adminOnly, async (req, res) => {
   try {
-    const naksooData = await fetchNaksooData()
-    const naksooCrewNames = Object.keys(naksooData)
+    const yxlinfoData = await fetchYxlinfoData()
+    const yxlinfoCrewNames = Object.keys(yxlinfoData)
     const allCrews = db.prepare('SELECT * FROM crews').all()
-    const unknown = allCrews.filter(c => !naksooCrewNames.includes(c.name))
+    const unknown = allCrews.filter(c => !yxlinfoCrewNames.includes(c.name))
     res.json({ crews: unknown })
   } catch(e) { res.json({ crews: [] }) }
 })
@@ -612,51 +659,52 @@ router.post('/update-profiles', adminOnly, async (req, res) => {
 
 export async function autoImportNaksoo() {
   try {
-    const naksooData = await fetchNaksooData()
-    let crewsAdded = 0, membersAdded = 0
-    let colorIdx = db.prepare('SELECT COUNT(*) as c FROM crews').get().c
-    const naksooCrewNames = Object.keys(naksooData)
+    const yxlinfoData = await fetchYxlinfoData()
+    const yxlinfoCrewNames = Object.keys(yxlinfoData)
+
+    // yxlinfo에 없는 크루 비활성화
     const allCrews = db.prepare('SELECT * FROM crews').all()
     for (const crew of allCrews) {
-      if (!naksooCrewNames.includes(crew.name)) {
+      if (!yxlinfoCrewNames.includes(crew.name)) {
         db.prepare('UPDATE members SET is_active=0 WHERE crew_id=?').run(crew.id)
         db.prepare('DELETE FROM crews WHERE id=?').run(crew.id)
       }
     }
-    for (const [crewName, soopIds] of Object.entries(naksooData)) {
+
+    let colorIdx = db.prepare('SELECT COUNT(*) as c FROM crews').get().c
+
+    for (const [crewName, names] of Object.entries(yxlinfoData)) {
       let crew = db.prepare('SELECT id FROM crews WHERE name = ?').get(crewName)
       if (!crew) {
         const color = CREW_COLORS[colorIdx % CREW_COLORS.length]
         const r = db.prepare('INSERT INTO crews (name, color, sort_order) VALUES (?,?,?)').run(crewName, color, colorIdx + 1)
         crew = { id: r.lastInsertRowid }
-        crewsAdded++
       }
       colorIdx++
-      for (let i = 0; i < soopIds.length; i++) {
-        const soopId = soopIds[i]
-        const exists = db.prepare('SELECT id, is_active FROM members WHERE soop_id = ?').get(soopId)
-        if (!exists) {
-          db.prepare('INSERT INTO members (soop_id, name, crew_id, sort_order, profile_img, is_active) VALUES (?,?,?,?,?,1)')
-            .run(soopId, soopId, crew.id, i + 1, soopCdnUrl(soopId))
-          membersAdded++
-        } else if (!exists.is_active) {
-          db.prepare('UPDATE members SET is_active=1, crew_id=? WHERE soop_id=?').run(crew.id, soopId)
-          membersAdded++
+
+      // yxlinfo에 없는 멤버 비활성화
+      const yxlinfoNamesLower = names.map(n => n.toLowerCase())
+      const crewMembers = db.prepare('SELECT id, name FROM members WHERE crew_id = ? AND is_active = 1').all(crew.id)
+      for (const m of crewMembers) {
+        if (!yxlinfoNamesLower.includes(m.name.toLowerCase())) {
+          db.prepare('UPDATE members SET is_active=0 WHERE id=?').run(m.id)
+          console.log(`[autoImport] 비활성화: ${m.name}`)
+        }
+      }
+
+      // 크루 이동 감지
+      for (let i = 0; i < names.length; i++) {
+        const name = names[i]
+        const existing = db.prepare('SELECT id, crew_id FROM members WHERE LOWER(name) = LOWER(?) AND is_active = 1').get(name)
+        if (existing && existing.crew_id !== crew.id) {
+          db.prepare('UPDATE members SET crew_id=?, sort_order=? WHERE id=?').run(crew.id, i + 1, existing.id)
+          console.log(`[autoImport] 크루이동: ${name} → ${crewName}`)
         }
       }
     }
-    if (crewsAdded > 0 || membersAdded > 0) {
-      const noName = db.prepare("SELECT id, soop_id FROM members WHERE name = soop_id AND is_active = 1").all()
-      for (const m of noName) {
-        const info = await fetchSoopInfo(m.soop_id)
-        if (info?.nickname) {
-          db.prepare('UPDATE members SET name=?, profile_img=? WHERE id=?')
-            .run(info.nickname, info.profile_img || soopCdnUrl(m.soop_id), m.id)
-        }
-        await new Promise(r => setTimeout(r, 200))
-      }
-    }
-  } catch(e) { console.warn('[자동임포트] 실패:', e.message) }
+
+    console.log('[autoImport] yxlinfo 동기화 완료')
+  } catch(e) { console.warn('[autoImport] 실패:', e.message) }
 }
 
 export default router

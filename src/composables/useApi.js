@@ -1,5 +1,4 @@
 const BASE = import.meta.env.VITE_API_URL || '/api'
-
 export function getAdminToken() {
   return localStorage.getItem('admin_token') || ''
 }
@@ -9,7 +8,6 @@ export function setAdminToken(token) {
 export function clearAdminToken() {
   localStorage.removeItem('admin_token')
 }
-
 export async function apiFetch(path, options = {}) {
   const method = options.method || 'GET'
   const needsBody = method === 'POST' || method === 'PUT'
@@ -28,7 +26,6 @@ export async function apiFetch(path, options = {}) {
   }
   return res.json()
 }
-
 export const api = {
   getStats: (year, month) => apiFetch(`/stats?year=${year}&month=${month}`),
   getViewerStats: (year, month) => apiFetch(`/viewer-stats?year=${year}&month=${month}`),
@@ -54,5 +51,5 @@ export const api = {
   updateProfiles: () => apiFetch('/update-profiles', { method: 'POST' }),
   lastCollected: () => apiFetch('/last-collected'),
   changePassword: (newPassword) => apiFetch('/admin/change-password', { method: 'POST', body: { newPassword } }),
+  searchByName: (name) => apiFetch(`/search-by-name?name=${encodeURIComponent(name)}`),
 }
-
