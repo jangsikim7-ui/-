@@ -20,8 +20,8 @@
           {{ isDark ? '☀️' : '🌙' }}
         </button>
         <template v-if="isAdmin">
-          <button class="btn-collect btn-sync" @click="triggerSync" :disabled="syncing" title="낙수표와 동기화">
-            {{ syncing ? '동기화중...' : '🔄 낙수동기화' }}
+          <button class="btn-collect btn-sync" @click="showSync = true" title="낙수표와 동기화">
+            🔄 낙수동기화
           </button>
           <button class="btn-collect" @click="triggerCollect" :disabled="collecting">
             {{ collecting ? '수집중...' : '♻️ 수집' }}
@@ -45,7 +45,6 @@
         👁️ 뷰어십
       </button>
 
-      <!-- 크루대결 버튼 - 탭 옆에 -->
       <button v-if="battleEnabled" class="btn-battle-center pc-only" @click="showBattle = true">
         ⚔️ 크루대결
       </button>
@@ -131,6 +130,7 @@
 
     <AdminModal v-if="showAdmin" @close="showAdmin = false" @updated="loadStats" @battle-toggle="onBattleToggle" />
     <CrewBattleModal v-if="showBattle" :crews="stats" :mode="mode" @close="showBattle = false" />
+    <SyncModal v-if="showSync" @close="showSync = false" @done="loadStats" />
 
     <!-- 웰컴 팝업 -->
     <div v-if="showWelcomePopup" class="popup-overlay" @click.self="closePopup">
@@ -139,32 +139,32 @@
         <span class="popup-pill">⚡ 엑셀크루 시너지표</span>
         <p class="popup-ttl">어떤 기능들이<br>있는지 알아봐요</p>
         <p class="popup-sub">크루별 BJ 데이터를 다양한 방식으로 확인하세요</p>
-     <div class="popup-grid">
-  <div class="popup-feat balloon">
-    <div class="feat-top"><div class="feat-ico">🎈</div><span class="feat-nm">별풍선 순위</span></div>
-    <p class="feat-ds">크루별 월간 별풍선 현황 비교</p>
-  </div>
-  <div class="popup-feat viewer">
-    <div class="feat-top"><div class="feat-ico">👁️</div><span class="feat-nm">뷰어십 순위</span></div>
-    <p class="feat-ds">시청자 수 기준 크루 경쟁력 확인</p>
-  </div>
-  <div class="popup-feat battle">
-    <div class="feat-top"><div class="feat-ico">⚔️</div><span class="feat-nm">크루대결</span></div>
-    <p class="feat-ds">두 크루를 직접 맞대결 비교</p>
-  </div>
-  <div class="popup-feat contact">
-    <div class="feat-top"><div class="feat-ico">📩</div><span class="feat-nm">문의하기</span></div>
-    <p class="feat-ds">오류·수정 요청 바로 전송</p>
-  </div>
-  <div class="popup-feat full gold-card">
-    <div class="feat-top"><div class="feat-ico">👑</div><span class="feat-nm">크루 매출풍</span></div>
-    <p class="feat-ds">엑셀크루 수장 월간 별풍선</p>
-  </div>
-  <div class="popup-feat full fan-card">
-    <div class="feat-top"><div class="feat-ico">🏅</div><span class="feat-nm">이달의 후원자</span></div>
-    <p class="feat-ds">BJ 이름 클릭 시 TOP 10 후원자 확인 가능</p>
-  </div>
-</div>
+        <div class="popup-grid">
+          <div class="popup-feat balloon">
+            <div class="feat-top"><div class="feat-ico">🎈</div><span class="feat-nm">별풍선 순위</span></div>
+            <p class="feat-ds">크루별 월간 별풍선 현황 비교</p>
+          </div>
+          <div class="popup-feat viewer">
+            <div class="feat-top"><div class="feat-ico">👁️</div><span class="feat-nm">뷰어십 순위</span></div>
+            <p class="feat-ds">시청자 수 기준 크루 경쟁력 확인</p>
+          </div>
+          <div class="popup-feat battle">
+            <div class="feat-top"><div class="feat-ico">⚔️</div><span class="feat-nm">크루대결</span></div>
+            <p class="feat-ds">두 크루를 직접 맞대결 비교</p>
+          </div>
+          <div class="popup-feat contact">
+            <div class="feat-top"><div class="feat-ico">📩</div><span class="feat-nm">문의하기</span></div>
+            <p class="feat-ds">오류·수정 요청 바로 전송</p>
+          </div>
+          <div class="popup-feat full gold-card">
+            <div class="feat-top"><div class="feat-ico">👑</div><span class="feat-nm">크루 매출풍</span></div>
+            <p class="feat-ds">엑셀크루 수장 월간 별풍선</p>
+          </div>
+          <div class="popup-feat full fan-card">
+            <div class="feat-top"><div class="feat-ico">🏅</div><span class="feat-nm">이달의 후원자</span></div>
+            <p class="feat-ds">BJ 이름 클릭 시 TOP 10 후원자 확인 가능</p>
+          </div>
+        </div>
         <div class="popup-auto">
           <span class="popup-dot"></span>
           <span>데이터 <strong>4시간마다 자동 갱신</strong></span>
@@ -181,10 +181,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import CrewCard from './components/CrewCard.vue'
 import AdminModal from './components/AdminModal.vue'
 import CrewBattleModal from './components/CrewBattleModal.vue'
+import SyncModal from './components/SyncModal.vue'
 import { api, getAdminToken, setAdminToken, clearAdminToken } from './composables/useApi.js'
 
 const now = new Date()
@@ -195,6 +196,7 @@ const loading = ref(false)
 const error = ref('')
 const showAdmin = ref(false)
 const showBattle = ref(false)
+const showSync = ref(false)
 const mode = ref('balloon')
 const isAdmin = ref(false)
 const showLoginModal = ref(false)
@@ -202,7 +204,6 @@ const loginPassword = ref('')
 const loginError = ref('')
 const collecting = ref(false)
 const collectingPrev = ref(false)
-const syncing = ref(false)
 const updatingProfiles = ref(false)
 
 // 웰컴 팝업
@@ -302,12 +303,6 @@ function nextMonth() {
   loadStats()
 }
 
-async function triggerCollectPrev() {
-  collectingPrev.value = true
-  await api.collectPrev()
-  setTimeout(() => { loadStats(); collectingPrev.value = false }, 10000)
-}
-
 async function login() {
   loginError.value = ''
   try {
@@ -326,32 +321,6 @@ async function login() {
 function logout() {
   clearAdminToken()
   isAdmin.value = false
-}
-
-async function triggerSync() {
-  syncing.value = true
-  try {
-    const diff = await api.syncDiff()
-    if (diff.total === 0) {
-      alert('✅ 변경사항 없음 — 낙수표와 동일해요!')
-      syncing.value = false
-      return
-    }
-    const msg = [
-      diff.added.length > 0 ? `➕ 추가 ${diff.added.length}명:\n${diff.added.map(m=>`  • ${m.crew_name} - ${m.name}`).join('\n')}` : '',
-      diff.removed.length > 0 ? `➖ 삭제 ${diff.removed.length}명:\n${diff.removed.map(m=>`  • ${m.crew_name} - ${m.name}`).join('\n')}` : '',
-      diff.moved.length > 0 ? `🔀 이동 ${diff.moved.length}명:\n${diff.moved.map(m=>`  • ${m.name}: ${m.from_crew} → ${m.to_crew}`).join('\n')}` : '',
-    ].filter(Boolean).join('\n\n')
-
-    if (!confirm(`낙수표 변경사항 감지!\n\n${msg}\n\n전체 적용할까요?`)) {
-      syncing.value = false
-      return
-    }
-    await api.syncApply({ added: diff.added, removed: diff.removed, moved: diff.moved })
-    await loadStats()
-    alert(`동기화 완료!\n추가 ${diff.added.length}명 / 삭제 ${diff.removed.length}명 / 이동 ${diff.moved.length}명`)
-  } catch(e) { alert('동기화 실패: ' + e.message) }
-  syncing.value = false
 }
 
 async function triggerCollect() {
@@ -373,7 +342,6 @@ onMounted(async () => {
 
   if (getAdminToken()) isAdmin.value = true
 
-  // 오늘 하루 안보기 체크
   const hiddenUntil = localStorage.getItem('popup_hidden_until')
   if (hiddenUntil !== new Date().toDateString()) {
     showWelcomePopup.value = true
@@ -456,33 +424,17 @@ onMounted(async () => {
 .btn-login { flex: 1; padding: 10px; border-radius: 8px; border: none; background: var(--text); color: var(--bg); font-size: 13px; font-weight: 700; cursor: pointer; }
 .btn-login-cancel { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: none; color: var(--text3); font-size: 13px; cursor: pointer; }
 
-/* 모드 탭 */
 .mode-tabs {
-  position: relative;
-  display: flex;
-  gap: 8px;
-  padding: 12px 20px 0;
-  justify-content: center;
-  background: var(--bg2);
+  position: relative; display: flex; gap: 8px;
+  padding: 12px 20px 0; justify-content: center; background: var(--bg2);
 }
 .mode-tab {
-  padding: 8px 28px;
-  border-radius: 999px;
-  border: 1.5px solid var(--border);
-  background: var(--bg3);
-  color: var(--text2);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s;
-  letter-spacing: -0.2px;
+  padding: 8px 28px; border-radius: 999px; border: 1.5px solid var(--border);
+  background: var(--bg3); color: var(--text2); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.18s; letter-spacing: -0.2px;
 }
 .mode-tab:hover { border-color: var(--text3); color: var(--text); }
-.mode-tab.active {
-  background: var(--text); color: var(--bg);
-  border-color: var(--text);
-  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-}
+.mode-tab.active { background: var(--text); color: var(--bg); border-color: var(--text); box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
 
 .btn-battle-center {
   padding: 8px 18px; border-radius: 999px;
@@ -496,12 +448,10 @@ onMounted(async () => {
 .legend {
   display: flex; align-items: center; gap: 14px;
   padding: 7px 20px; background: var(--bg2);
-  border-bottom: 1px solid var(--border); flex-wrap: wrap;
-  transition: background 0.3s;
+  border-bottom: 1px solid var(--border); flex-wrap: wrap; transition: background 0.3s;
 }
 .li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
 .li i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; font-style: normal; }
-
 .contact-hint { margin-left: auto; font-size: 11px; color: var(--text3); font-weight: 500; }
 
 .contact-btn {
@@ -542,108 +492,57 @@ onMounted(async () => {
   align-content: start; justify-content: center;
 }
 
-/* ===== 웰컴 팝업 ===== */
+/* 웰컴 팝업 */
 .popup-overlay {
-  position: fixed; inset: 0; z-index: 9999;
-  background: rgba(0,0,0,0.65);
+  position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.65);
   display: flex; align-items: flex-start; justify-content: center;
-  padding-top: 60px;
-  backdrop-filter: blur(6px);
-  overflow-y: auto;
+  padding-top: 60px; backdrop-filter: blur(6px); overflow-y: auto;
 }
 .popup-box {
   border-radius: 22px; width: 480px; padding: 28px 26px 22px;
   position: relative; display: flex; flex-direction: column;
-  background: var(--bg3);
-  border: 0.5px solid var(--border);
-  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-  margin-bottom: 40px;
+  background: var(--bg3); border: 0.5px solid var(--border);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5); margin-bottom: 40px;
 }
 .popup-x {
   position: absolute; top: 14px; right: 14px;
   width: 26px; height: 26px; border-radius: 50%; border: none;
-  font-size: 12px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--btn-ghost-bg); color: var(--text3);
-  font-family: inherit;
+  font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  background: var(--btn-ghost-bg); color: var(--text3); font-family: inherit;
 }
 .popup-pill {
-  display: inline-flex; align-items: center;
-  font-size: 10px; font-weight: 500;
+  display: inline-flex; align-items: center; font-size: 10px; font-weight: 500;
   padding: 3px 10px; border-radius: 999px; margin-bottom: 10px;
-  background: var(--bg4); color: var(--text2);
-  border: 0.5px solid var(--border);
+  background: var(--bg4); color: var(--text2); border: 0.5px solid var(--border);
 }
-.popup-ttl {
-  font-size: 18px; font-weight: 500; line-height: 1.35;
-  margin-bottom: 5px; color: var(--text);
-}
+.popup-ttl { font-size: 18px; font-weight: 500; line-height: 1.35; margin-bottom: 5px; color: var(--text); }
 .popup-sub {
   font-size: 12px; line-height: 1.5; color: var(--text3);
-  padding-bottom: 14px; margin-bottom: 14px;
-  border-bottom: 0.5px solid var(--border);
+  padding-bottom: 14px; margin-bottom: 14px; border-bottom: 0.5px solid var(--border);
 }
-.popup-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 8px; margin-bottom: 10px;
-}
-.popup-feat {
-  border-radius: 12px; padding: 12px 11px 10px;
-  background: var(--bg4); border: 0.5px solid var(--border);
-}
+.popup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.popup-feat { border-radius: 12px; padding: 12px 11px 10px; background: var(--bg4); border: 0.5px solid var(--border); }
 .popup-ico { font-size: 19px; display: block; margin-bottom: 6px; line-height: 1; }
 .popup-nm { font-size: 12px; font-weight: 500; margin-bottom: 2px; color: var(--text); }
 .popup-ds { font-size: 10px; line-height: 1.5; color: var(--text3); }
-
-/* 크루 매출풍 카드 - 다크: 골드 / 라이트: 파란색 */
-.popup-feat-special {
-  grid-column: 1 / -1;
-}
-[data-theme="dark"] .popup-feat-special {
-  background: #1c1a10;
-  border-color: rgba(255,196,0,0.25);
-}
-[data-theme="light"] .popup-feat-special {
-  background: #1e1a0e;
-  border-color: rgba(255,196,0,0.3);
-}
-.popup-feat-inline { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
-.popup-feat-inline .popup-ico { font-size: 17px; display: inline; margin-bottom: 0; }
-[data-theme="dark"] .popup-feat-special .popup-nm { color: #f5c842; }
-[data-theme="light"] .popup-feat-special .popup-nm { color: #fff; }
-[data-theme="dark"] .popup-feat-special .popup-ds { color: #7a6c38; }
-[data-theme="light"] .popup-feat-special .popup-ds { color: rgba(255,255,255,0.75); }
-
 .popup-auto {
-  display: flex; align-items: center; gap: 8px;
-  border-radius: 10px; padding: 9px 12px; margin-bottom: 12px;
-  font-size: 11px; background: var(--bg4);
-  border: 0.5px solid var(--border); color: var(--text3);
+  display: flex; align-items: center; gap: 8px; border-radius: 10px; padding: 9px 12px; margin-bottom: 12px;
+  font-size: 11px; background: var(--bg4); border: 0.5px solid var(--border); color: var(--text3);
 }
 .popup-dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
 .popup-auto strong { color: var(--text); font-weight: 500; }
 [data-theme="light"] .popup-auto strong { color: #0d6b52; }
-
 .popup-btn {
-  width: 100%; padding: 12px; border-radius: 12px; border: none;
-  font-size: 13px; font-weight: 700; cursor: pointer;
-  font-family: inherit; margin-bottom: 10px;
-  background: #a09af5; color: #fff;
-  transition: opacity .15s;
+  width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 13px; font-weight: 700;
+  cursor: pointer; font-family: inherit; margin-bottom: 10px; background: #a09af5; color: #fff; transition: opacity .15s;
 }
 [data-theme="light"] .popup-btn { background: #534AB7; }
 .popup-btn:hover { opacity: .88; }
-
 .popup-sep { height: 0.5px; background: var(--border); margin-bottom: 10px; }
-.popup-skip {
-  display: flex; align-items: center; justify-content: center;
-  gap: 7px; cursor: pointer; user-select: none;
-}
+.popup-skip { display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; user-select: none; }
 .popup-chk {
-  width: 15px; height: 15px; border-radius: 4px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 700; color: transparent;
-  border: 1.5px solid var(--text3); transition: all .15s;
+  width: 15px; height: 15px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: transparent; border: 1.5px solid var(--text3); transition: all .15s;
 }
 .popup-chk.on { background: #7c74e8; border-color: #7c74e8; color: #fff; }
 .popup-sk-lbl { font-size: 11px; font-weight: 500; color: var(--text2); }
@@ -663,21 +562,17 @@ onMounted(async () => {
 .feat-ico { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
 .feat-nm { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; }
 .feat-ds { font-size: 10px; line-height: 1.6; color: var(--text2); word-break: keep-all; }
-
 .balloon .feat-ico { background: rgba(255,77,125,0.15); }
 .viewer .feat-ico { background: rgba(74,158,255,0.15); }
 .battle .feat-ico { background: rgba(107,95,255,0.15); }
 .contact .feat-ico { background: rgba(74,201,158,0.15); }
-
 .full { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; padding: 11px 14px; gap: 12px; }
 .full .feat-top { margin-bottom: 0; flex-shrink: 0; }
 .full .feat-ds { text-align: right; font-size: 10px; }
-
 .gold-card { background: rgba(255,196,0,0.07); border-color: rgba(255,196,0,0.2); }
 .gold-card .feat-nm { color: #c9960a; }
 [data-theme="dark"] .gold-card .feat-nm { color: #f5c842; }
 .gold-card .feat-ico { background: rgba(255,196,0,0.12); }
-
 .fan-card { background: rgba(74,158,255,0.07); border-color: rgba(74,158,255,0.2); }
 .fan-card .feat-nm { color: #1a6fb5; }
 [data-theme="dark"] .fan-card .feat-nm { color: #60b4ff; }
