@@ -62,7 +62,11 @@ function adminOnly(req, res, next) {
 
 // ── yxlinfo 데이터 ────────────────────────────────────
 function cleanMemberName(raw) {
-  return raw.replace(/^[🥇🥈🥉]\s*/, '').replace(/^\s+/, '').trim()
+  return raw
+    .replace(/^[🥇🥈🥉]\s*/, '')
+    .replace(/^[◆◇♦♢■□▲△▶▷●○★☆✦✧※◈]\s*/, '')
+    .replace(/^\s+/, '')
+    .trim()
 }
 
 // 이름 특수문자 제거 후 비교용 정규화
@@ -89,8 +93,52 @@ const CREW_NAME_MAP = {
   "Show K":   "쇼케이",
   "Moon A":   "문에이",
 }
+
+// 크루명 정규화: 공백·특수문자 제거 + 소문자 (비교용)
+function normalizeCrewName(name) {
+  return name
+    .replace(/[\s_\-\.]/g, '')
+    .toLowerCase()
+}
+
+// 정규화된 크루명 → 정식 크루명 매핑 (모두 소문자 키)
+const CREW_NORMALIZED_MAP = {
+  // 광우상사
+  '광우상사': '광우상사', 'gw': '광우상사', 'gwanwoo': '광우상사', 'gwanwoosangsa': '광우상사',
+  // 씨나인
+  '씨나인': '씨나인', 'c9': '씨나인', 'cnine': '씨나인',
+  // YXL
+  'yxl': 'YXL',
+  // 이노레이블
+  '이노레이블': '이노레이블', 'inolable': '이노레이블', 'inolable': '이노레이블', 'inolabel': '이노레이블',
+  // 더케이
+  '더케이': '더케이', 'thek': '더케이', 'theK': '더케이',
+  // 정선컴퍼니
+  '정선컴퍼니': '정선컴퍼니', 'js': '정선컴퍼니', 'jungsun': '정선컴퍼니', 'jungsuncompany': '정선컴퍼니', 'jeongseon': '정선컴퍼니',
+  // 771
+  '771': '771',
+  // GD컴퍼니
+  'gd컴퍼니': 'GD컴퍼니', 'gd': 'GD컴퍼니', 'gdcompany': 'GD컴퍼니', 'gd컴': 'GD컴퍼니',
+  // 쇼케이
+  '쇼케이': '쇼케이', 'showk': '쇼케이', 'show k': '쇼케이',
+  // 문에이
+  '문에이': '문에이', 'moona': '문에이', 'moon a': '문에이', 'moonA': '문에이',
+}
+
 function mapCrewName(yxlName) {
   return CREW_NAME_MAP[yxlName] || yxlName
+}
+
+// DB 크루명과 yxlinfo 크루명이 같은 크루인지 확인
+function isSameCrew(dbCrewName, yxlCrewName) {
+  if (dbCrewName === yxlCrewName) return true
+  const dbNorm = normalizeCrewName(dbCrewName)   // 공백·특수문자 제거 + 소문자
+  const yxlNorm = normalizeCrewName(yxlCrewName)
+  if (dbNorm === yxlNorm) return true
+  // 정규화 맵에서 둘 다 같은 정식명으로 매핑되는지 확인 (키는 모두 소문자)
+  const dbCanon = CREW_NORMALIZED_MAP[dbNorm] || CREW_NORMALIZED_MAP[dbCrewName.toLowerCase()] || dbCrewName
+  const yxlCanon = CREW_NORMALIZED_MAP[yxlNorm] || CREW_NORMALIZED_MAP[yxlCrewName.toLowerCase()] || yxlCrewName
+  return dbCanon === yxlCanon
 }
 
 const YXLINFO_BACKUP = {
@@ -476,7 +524,7 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
       const merged = [...exact, ...partial].slice(0, 6)
       results = merged.map(item => ({
         soop_id: item.i,
-        name: item.n,
+        name: cleanMemberName(item.n),
         balloons: item.b,
         profile_img: soopCdnUrl(item.i)
       }))
@@ -543,11 +591,11 @@ router.get('/sync-naksoo/diff', adminOnly, async (req, res) => {
 
   // 삭제 / 이동 감지
   for (const member of myMembers) {
-    if (!yxlinfoCrewNames.includes(member.crew_name)) continue
+    if (!yxlinfoCrewNames.some(n => isSameCrew(member.crew_name, n))) continue
     const matched = nameToCrewMap[normalizeName(member.name)]
     if (!matched) {
       removed.push({ soop_id: member.soop_id, name: member.name, crew_name: member.crew_name })
-    } else if (matched.crewName !== member.crew_name) {
+    } else if (!isSameCrew(matched.crewName, member.crew_name)) {
       moved.push({ soop_id: member.soop_id, name: member.name, from_crew: member.crew_name, to_crew: matched.crewName })
     }
   }
@@ -680,7 +728,7 @@ router.get('/unknown-crews', adminOnly, async (req, res) => {
     const yxlinfoData = await fetchYxlinfoData()
     const yxlinfoCrewNames = Object.keys(yxlinfoData)
     const allCrews = db.prepare('SELECT * FROM crews').all()
-    const unknown = allCrews.filter(c => !yxlinfoCrewNames.includes(c.name))
+    const unknown = allCrews.filter(c => !yxlinfoCrewNames.some(n => isSameCrew(c.name, n)))
     res.json({ crews: unknown })
   } catch(e) { res.json({ crews: [] }) }
 })
@@ -711,7 +759,7 @@ export async function autoImportNaksoo() {
     // yxlinfo에 없는 크루 비활성화
     const allCrews = db.prepare('SELECT * FROM crews').all()
     for (const crew of allCrews) {
-      if (!yxlinfoCrewNames.includes(crew.name)) {
+      if (!yxlinfoCrewNames.some(n => isSameCrew(crew.name, n))) {
         db.prepare('UPDATE members SET is_active=0 WHERE crew_id=?').run(crew.id)
         db.prepare('DELETE FROM crews WHERE id=?').run(crew.id)
       }
