@@ -193,7 +193,7 @@ function onImgError(e, soopId) {
 [data-theme="light"] .crew-name { text-shadow: none; }
 .avg-block { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; margin-top: 2px; }
 .avg-label { font-size: 11px; font-weight: 600; color: var(--text2); }
-.avg-val { font-size: 22px; font-weight: 900; color: var(--c); letter-spacing: -0.8px; line-height: 1; text-shadow: 0 1px 3px rgba(0,0,0,0.45); }
+.avg-val { font-size: 22px; font-weight: 900; color: color-mix(in srgb, var(--c) 70%, #fff); letter-spacing: -0.8px; line-height: 1; text-shadow: 0 1px 3px rgba(0,0,0,0.45); }
 [data-theme="light"] .avg-val { color: color-mix(in srgb, var(--c) 55%, #000); text-shadow: none; }
 .rank-ribbon { position: absolute; top: 0; left: 0; width: 32px; height: 32px; background: var(--c); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: #fff; border-radius: 0 0 14px 0; box-shadow: 2px 2px 8px rgba(0,0,0,0.3); z-index: 3; }
 
