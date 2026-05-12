@@ -74,17 +74,34 @@ function normalizeName(name) {
     .trim()
 }
 
+// ── yxlinfo 크루명 → 내 크루명 매핑 ──────────────────
+const CREW_NAME_MAP = {
+  "GW":       "광우상사",
+  "C9":       "씨나인",
+  "YXL":      "YXL",
+  "INOLABLE": "이노레이블",
+  "The K":    "더케이",
+  "JS":       "정선컴퍼니",
+  "771":      "771",
+  "GD":       "GD컴퍼니",
+  "Show K":   "쇼케이",
+  "Moon A":   "문에이",
+}
+function mapCrewName(yxlName) {
+  return CREW_NAME_MAP[yxlName] || yxlName
+}
+
 const YXLINFO_BACKUP = {
-  "GW":       ["임주연♥","미디♡.","함지아♥","미숑.♥","이온♥","아이빈","원영님♥","가을이♡","서윤슬@","안둥♥","맹이.zip","파미"],
-  "C9":       ["이다니♥","혜루찡","송채연","체온_♡","설윤이♥","BJ채리","초초","쁠리vvely","인지연JYEON","하이희야♡","아윤♡","♡혜밍","ε연두з","#초린","리하♥","히나_♥","애순이"],
+  "광우상사":   ["임주연♥","미디♡.","함지아♥","미숑.♥","이온♥","아이빈","원영님♥","가을이♡","서윤슬@","안둥♥","맹이.zip","파미"],
+  "씨나인":    ["이다니♥","혜루찡","송채연","체온_♡","설윤이♥","BJ채리","초초","쁠리vvely","인지연JYEON","하이희야♡","아윤♡","♡혜밍","ε연두з","#초린","리하♥","히나_♥","애순이"],
   "YXL":      ["리윤_♥","후잉♥","냥냥수주","너의˚멜로디","류서하♥","미로。","서니_♥","백나현","하랑짱♥","김유정S2","유나연º-º","#율무","소다♥","ZO아름♡"],
-  "INOLABLE": ["애지니♡","설탱♥","꽃부기♥","히냥이♥","#누리-","이월♥","밤비♥","리에♡","설인_♥","이리원♥","♥밍초♥","연보민","[SO]박소연"],
-  "JS":       ["♥백설♥","서이안","유서림♥","윤수♥","아유님♥","김규리♥","햇동이♥","율비♡","윤세빈♥","♡김베리♡","당신의채안♥","나의유주♥","채보미=3="],
-  "The K":    ["[BJ]에디양","강한빛♡","지아콩","포카린","엘♥","퀸다미♧","푸린♡","차시월","! 채채","한슬댕","채리나","쑤♥","소냥이에요"],
+  "이노레이블": ["애지니♡","설탱♥","꽃부기♥","히냥이♥","#누리-","이월♥","밤비♥","리에♡","설인_♥","이리원♥","♥밍초♥","연보민","[SO]박소연"],
+  "정선컴퍼니": ["♥백설♥","서이안","유서림♥","윤수♥","아유님♥","김규리♥","햇동이♥","율비♡","윤세빈♥","♡김베리♡","당신의채안♥","나의유주♥","채보미=3="],
+  "더케이":    ["[BJ]에디양","강한빛♡","지아콩","포카린","엘♥","퀸다미♧","푸린♡","차시월","! 채채","한슬댕","채리나","쑤♥","소냥이에요"],
   "771":      ["예란","푸글리♡","이나율♥","나래♡","지숙♥_.","나래님♥","예수","김봄비","박예솜:)","한채아♥","이밍+♥"],
-  "GD":       ["♥유현♥","설인아님♥","쥬브리","아링","은아린!!","해리님♥","E윤아♡"],
-  "Show K":   ["＠서단","송유이♥","유이나.♡","도예빈♥","쏘피♥","재온ly","새봄_♡","정인♥","♥제니♥","송화양","이로♥","도하정♥","@유톨"],
-  "Moon A":   ["미지수♥","햄벅","슈나♥","♥채화","하임*","강형민이","예니__","뮤엘♥","서언수","박재열","E-;이은♥","설현미","천시아S2",".장지민","현강림2","#다인"]
+  "GD컴퍼니":  ["♥유현♥","설인아님♥","쥬브리","아링","은아린!!","해리님♥","E윤아♡"],
+  "쇼케이":    ["＠서단","송유이♥","유이나.♡","도예빈♥","쏘피♥","재온ly","새봄_♡","정인♥","♥제니♥","송화양","이로♥","도하정♥","@유톨"],
+  "문에이":    ["미지수♥","햄벅","슈나♥","♥채화","하임*","강형민이","예니__","뮤엘♥","서언수","박재열","E-;이은♥","설현미","천시아S2",".장지민","현강림2","#다인"]
 }
 
 async function fetchYxlinfoData() {
@@ -99,7 +116,7 @@ async function fetchYxlinfoData() {
     for (const section of sections.slice(1)) {
       const titleMatch = section.match(/<div class="crew-title">([^<]+)<\/div>/)
       if (!titleMatch) continue
-      const crewName = titleMatch[1].trim()
+      const crewName = mapCrewName(titleMatch[1].trim())
       const members = []
       const nickRegex = /<div class="nick">([^<]+)<\/div>/g
       let m
@@ -427,30 +444,77 @@ router.get('/last-collected', (req, res) => {
   res.json({ last_collected: row?.fetched_at ?? null })
 })
 
+// ── SOOP 닉네임 검색 API ─────────────────────────────
+async function searchSoopByNick(keyword) {
+  try {
+    const url = `https://sch.afreecatv.com/api.php?m=searchStation&v=1.0&szOrder=&szKeyword=${encodeURIComponent(keyword)}&nPage=1&nListCnt=10&szStype=nick`
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://www.sooplive.co.kr/',
+        'Origin': 'https://www.sooplive.co.kr'
+      }
+    })
+    if (!res.ok) return []
+    const data = await res.json()
+    const list = data?.DATA || []
+    return list.map(item => ({
+      soop_id: item.user_id,
+      name: item.user_nick,
+      balloons: 0,
+      profile_img: soopCdnUrl(item.user_id)
+    }))
+  } catch(e) {
+    console.log('[searchSoop] 실패:', e.message)
+    return []
+  }
+}
+
 // ── 이름으로 멤버 검색 (신규 멤버 soop ID 찾기용) ────
 router.get('/search-by-name', adminOnly, async (req, res) => {
   const { name } = req.query
   if (!name) return res.json({ results: [] })
   try {
+    const keyword = name.toLowerCase().replace(/[^\uAC00-\uD7A3a-z0-9]/g, '')
+
+    // 1차: 풍투데이 월별 데이터에서 검색
     const now = new Date()
     const list = await fetchMonthlyAll(now.getFullYear(), now.getMonth() + 1)
-    if (!list) return res.json({ results: [] })
-    const keyword = name.toLowerCase().replace(/[^\uAC00-\uD7A3a-z0-9]/g, '')
-    const results = list
-      .filter(item => {
-        if (!item.n) return false
-        const n = item.n.toLowerCase().replace(/[^\uAC00-\uD7A3a-z0-9]/g, '')
-        return n.includes(keyword) || keyword.includes(n)
-      })
-      .slice(0, 6)
-      .map(item => ({
-        soop_id: item.i,
-        name: item.n,
-        balloons: item.b,
-        profile_img: soopCdnUrl(item.i)
-      }))
+    let results = []
+    if (list) {
+      results = list
+        .filter(item => {
+          if (!item.n) return false
+          const n = item.n.toLowerCase().replace(/[^\uAC00-\uD7A3a-z0-9]/g, '')
+          return n.includes(keyword) || keyword.includes(n)
+        })
+        .slice(0, 6)
+        .map(item => ({
+          soop_id: item.i,
+          name: item.n,
+          balloons: item.b,
+          profile_img: soopCdnUrl(item.i)
+        }))
+    }
+
+    // 2차: 풍투데이에서 못 찾으면 SOOP 닉네임 검색 API로 폴백
+    if (results.length === 0) {
+      console.log(`[search] "${name}" 풍투데이 결과 없음 → SOOP 검색 시도`)
+      results = await searchSoopByNick(name)
+      // 특수문자 제거한 키워드로도 재시도
+      if (results.length === 0 && keyword !== name.toLowerCase()) {
+        const plainName = name.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '')
+        if (plainName.length >= 2) {
+          results = await searchSoopByNick(plainName)
+        }
+      }
+    }
+
     res.json({ results })
-  } catch(e) { res.json({ results: [] }) }
+  } catch(e) {
+    console.log('[search-by-name] 오류:', e.message)
+    res.json({ results: [] })
+  }
 })
 
 // ── yxlinfo 임포트 ───────────────────────────────────
