@@ -524,8 +524,8 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
   const { name } = req.query
   if (!name) return res.json({ results: [] })
   try {
-    // 대괄호 prefix 제거 ([SO], [BJ] 등) 후 특수문자 제거
-    const cleanName = name.replace(/^\[[^\]]+\]\s*/, '').trim() || name
+    // ◈ 등 특수기호 먼저 제거 후 대괄호 prefix 제거 ([SO], [BJ] 등)
+    const cleanName = cleanMemberName(name).replace(/^\[[^\]]+\]\s*/, '').trim() || name
     const keyword = cleanName.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '').toLowerCase()
     if (keyword.length < 1) return res.json({ results: [] })
 
