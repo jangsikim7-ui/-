@@ -10,24 +10,33 @@ import { collectAll, fetchMonthlyAll } from './collector.js'
 
 const router = Router()
 
-// 멤버 이름 앞 특수기호 제거 마이그레이션
+// 멤버 이름 앞 특수기호 제거 마이그레이션 (비활성 중복 정리 포함)
 ;(function migrateNames() {
   try {
-    const members = db.prepare('SELECT id, name FROM members').all()
+    const members = db.prepare('SELECT id, name, is_active FROM members').all()
     const update = db.prepare('UPDATE members SET name=? WHERE id=?')
-    let count = 0
+    const del = db.prepare('DELETE FROM members WHERE id=?')
+    let count = 0, removed = 0
     for (const m of members) {
       const cleaned = m.name
         .replace(/^[\u{1F947}\u{1F948}\u{1F949}]\s*/u, '')
         .replace(/^[\u25C6\u25C7\u2666\u2662\u25C8\u25A0\u25A1\u25B2\u25B3\u25B6\u25B7\u25CF\u25CB\u2605\u2606\u2726\u2727\u203B]+\s*/, '')
         .trim()
       if (cleaned !== m.name) {
-        update.run(cleaned, m.id)
-        console.log('[migration] ' + JSON.stringify(m.name) + ' -> ' + JSON.stringify(cleaned))
-        count++
+        // 같은 이름의 다른 row(특히 활성)가 이미 있고 이건 비활성이면 → 삭제
+        const dupe = db.prepare('SELECT id, is_active FROM members WHERE name=? AND id<>?').get(cleaned, m.id)
+        if (dupe && m.is_active === 0) {
+          del.run(m.id)
+          removed++
+          console.log('[migration] DELETE dup ' + JSON.stringify(m.name))
+        } else {
+          update.run(cleaned, m.id)
+          console.log('[migration] ' + JSON.stringify(m.name) + ' -> ' + JSON.stringify(cleaned))
+          count++
+        }
       }
     }
-    console.log('[migration] 완료: ' + count + '명')
+    console.log('[migration] 완료: 변경 ' + count + '명, 중복삭제 ' + removed + '명')
   } catch(e) {
     console.log('[migration] 오류: ' + e.message)
   }
@@ -92,11 +101,13 @@ function cleanMemberName(raw) {
     .trim()
 }
 
-// 이름 특수문자 제거 후 비교용 정규화
+// 이름 특수문자 제거 후 비교용 정규화 (이모지/심볼 강화 버전)
 function normalizeName(name) {
   return name
-    .replace(/[🥇🥈🥉]/g, '')
-    // ◈ ◆ ◇ ♦ ♢ ■ □ ▲ △ ▶ ▷ ● ○ ★ ☆ ✦ ✧ ※ 등 특수기호 제거
+    // 모든 이모지/심볼 영역 통째로 제거 (메달 🥇🥈🥉 등 surrogate pair 포함)
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+    .replace(/[\u{2600}-\u{27BF}]/gu, '')
+    // 추가 특수기호들
     .replace(/[◈◉◆◇♦♢■□▲△▶▷●○★☆✦✧※◊]/g, '')
     // 전각문자 → 반각 변환 (！→!, ＠→@, ［SO］등)
     .replace(/[\uFF01-\uFF5E]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
@@ -135,9 +146,9 @@ const CREW_NORMALIZED_MAP = {
   // YXL
   'yxl': 'YXL',
   // 이노레이블
-  '이노레이블': '이노레이블', 'inolable': '이노레이블', 'inolable': '이노레이블', 'inolabel': '이노레이블',
+  '이노레이블': '이노레이블', 'inolable': '이노레이블', 'inolabel': '이노레이블',
   // 더케이
-  '더케이': '더케이', 'thek': '더케이', 'theK': '더케이',
+  '더케이': '더케이', 'thek': '더케이',
   // 정선컴퍼니
   '정선컴퍼니': '정선컴퍼니', 'js': '정선컴퍼니', 'jungsun': '정선컴퍼니', 'jungsuncompany': '정선컴퍼니', 'jeongseon': '정선컴퍼니',
   // 771
@@ -145,9 +156,9 @@ const CREW_NORMALIZED_MAP = {
   // GD컴퍼니
   'gd컴퍼니': 'GD컴퍼니', 'gd': 'GD컴퍼니', 'gdcompany': 'GD컴퍼니', 'gd컴': 'GD컴퍼니',
   // 쇼케이
-  '쇼케이': '쇼케이', 'showk': '쇼케이', 'show k': '쇼케이',
+  '쇼케이': '쇼케이', 'showk': '쇼케이',
   // 문에이
-  '문에이': '문에이', 'moona': '문에이', 'moon a': '문에이', 'moonA': '문에이',
+  '문에이': '문에이', 'moona': '문에이',
 }
 
 function mapCrewName(yxlName) {
@@ -157,26 +168,25 @@ function mapCrewName(yxlName) {
 // DB 크루명과 yxlinfo 크루명이 같은 크루인지 확인
 function isSameCrew(dbCrewName, yxlCrewName) {
   if (dbCrewName === yxlCrewName) return true
-  const dbNorm = normalizeCrewName(dbCrewName)   // 공백·특수문자 제거 + 소문자
+  const dbNorm = normalizeCrewName(dbCrewName)
   const yxlNorm = normalizeCrewName(yxlCrewName)
   if (dbNorm === yxlNorm) return true
-  // 정규화 맵에서 둘 다 같은 정식명으로 매핑되는지 확인 (키는 모두 소문자)
   const dbCanon = CREW_NORMALIZED_MAP[dbNorm] || CREW_NORMALIZED_MAP[dbCrewName.toLowerCase()] || dbCrewName
   const yxlCanon = CREW_NORMALIZED_MAP[yxlNorm] || CREW_NORMALIZED_MAP[yxlCrewName.toLowerCase()] || yxlCrewName
   return dbCanon === yxlCanon
 }
 
 const YXLINFO_BACKUP = {
-  "광우상사":   ["임주연♥","미디♡.","함지아♥","미숑.♥","이온♥","아이빈","원영님♥","가을이♡","서윤슬@","안둥♥","맹이.zip","파미"],
-  "씨나인":    ["이다니♥","혜루찡","송채연","체온_♡","설윤이♥","BJ채리","초초","쁠리vvely","인지연JYEON","하이희야♡","아윤♡","♡혜밍","ε연두з","#초린","리하♥","히나_♥","애순이"],
-  "YXL":      ["리윤_♥","후잉♥","냥냥수주","너의˚멜로디","류서하♥","미로。","서니_♥","백나현","하랑짱♥","김유정S2","유나연º-º","#율무","소다♥","ZO아름♡"],
-  "이노레이블": ["애지니♡","설탱♥","꽃부기♥","히냥이♥","#누리-","이월♥","밤비♥","리에♡","설인_♥","이리원♥","♥밍초♥","연보민","[SO]박소연"],
-  "정선컴퍼니": ["♥백설♥","서이안","유서림♥","윤수♥","아유님♥","김규리♥","햇동이♥","율비♡","윤세빈♥","♡김베리♡","당신의채안♥","나의유주♥","채보미=3="],
-  "더케이":    ["[BJ]에디양","강한빛♡","지아콩","포카린","엘♥","퀸다미♧","푸린♡","차시월","! 채채","한슬댕","채리나","쑤♥","소냥이에요"],
+  "광우상사":   ["임주연♥","미디♡.","함지아♥","미숑.♥","아이빈","이온♥","원영님♥","가을이♡","서윤슬@","안둥♥","맹이.zip","파미"],
+  "씨나인":    ["이다니♥","혜루찡","송채연","체온_♡","설윤이♥","쁠리vvely","하이희야♡","BJ채리","초초","인지연JYEON","아윤♡","ε연두з","♡혜밍","#초린","리하♥","히나_♥","애순이"],
+  "YXL":      ["리윤_♥","후잉♥","냥냥수주","너의˚멜로디","류서하♥","미로。","서니_♥","백나현","김유정S2","#율무","하랑짱♥","유나연º-º","소다♥","ZO아름♡"],
+  "이노레이블": ["애지니♡","설탱♥","꽃부기♥","히냥이♥","#누리-","이월♥","밤비♥","설인_♥","리에♡","이리원♥","♥밍초♥","연보민","[SO]박소연"],
+  "더케이":    ["[BJ]에디양","지아콩","! 채채","강한빛♡","포카린","엘♥","퀸다미♧","푸린♡","차시월","한슬댕","채리나","쑤♥","소냥이에요"],
+  "정선컴퍼니": ["♥백설♥","윤수♥","서이안","유서림♥","김규리♥","아유님♥","햇동이♥","율비♡","윤세빈♥","♡김베리♡","당신의채안♥","나의유주♥","채보미=3="],
   "771":      ["예란","푸글리♡","이나율♥","나래♡","지숙♥_.","나래님♥","예수","김봄비","박예솜:)","한채아♥","이밍+♥"],
-  "GD컴퍼니":  ["♥유현♥","설인아님♥","쥬브리","아링","은아린!!","해리님♥","E윤아♡"],
-  "쇼케이":    ["＠서단","송유이♥","유이나.♡","도예빈♥","쏘피♥","재온ly","새봄_♡","정인♥","♥제니♥","송화양","이로♥","도하정♥","@유톨"],
-  "문에이":    ["미지수♥","햄벅","슈나♥","♥채화","하임*","강형민이","예니__","뮤엘♥","서언수","박재열","E-;이은♥","설현미","천시아S2",".장지민","현강림2","#다인"]
+  "GD컴퍼니":  ["♥유현♥","쥬브리","설인아님♥","아링","은아린!!","E윤아♡","해리님♥"],
+  "쇼케이":    ["＠서단","송유이♥","유이나.♡","쏘피♥","도예빈♥","정인♥","재온ly","새봄_♡","송화양","♥제니♥","이로♥","도하정♥","@유톨"],
+  "문에이":    ["미지수♥","슈나♥","하임*","햄벅","♥채화","강형민이","예니__","뮤엘♥","서언수","E-;이은♥","박재열","설현미",".장지민","천시아S2","현강림2","#다인"]
 }
 
 async function fetchYxlinfoData() {
@@ -524,7 +534,6 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
   const { name } = req.query
   if (!name) return res.json({ results: [] })
   try {
-    // ◈ 등 특수기호 먼저 제거 후 대괄호 prefix 제거 ([SO], [BJ] 등)
     const cleanName = cleanMemberName(name).replace(/^\[[^\]]+\]\s*/, '').trim() || name
     const keyword = cleanName.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '').toLowerCase()
     if (keyword.length < 1) return res.json({ results: [] })
@@ -533,7 +542,6 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
     const list = await fetchMonthlyAll(now.getFullYear(), now.getMonth() + 1)
     let results = []
     if (list) {
-      // 완전일치 우선, 그 다음 포함 검색
       const exact = []
       const partial = []
       for (const item of list) {
@@ -545,7 +553,6 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
           partial.push(item)
         }
       }
-      // 완전일치 먼저, 부분일치 최대 5개
       const merged = [...exact, ...partial].slice(0, 6)
       results = merged.map(item => ({
         soop_id: item.i,
@@ -555,7 +562,7 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
       }))
     }
 
-    console.log(`[search] "${name}" (keyword: ${keyword}) → ${results.length}건 (exact: ${results.filter(r=>r.name.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g,'').toLowerCase()===keyword).length})`)
+    console.log(`[search] "${name}" (keyword: ${keyword}) → ${results.length}건`)
     res.json({ results })
   } catch(e) {
     console.log('[search-by-name] 오류:', e.message)
@@ -595,7 +602,7 @@ router.post('/import-naksoo', adminOnly, async (req, res) => {
   res.json({ ok: true, ...results })
 })
 
-// ── yxlinfo 동기화 diff ──────────────────────────────
+// ── yxlinfo 동기화 diff (비활성 멤버 함께 검토) ─────
 router.get('/sync-naksoo/diff', adminOnly, async (req, res) => {
   const yxlinfoData = await fetchYxlinfoData()
   const added = [], removed = [], moved = []
@@ -608,14 +615,26 @@ router.get('/sync-naksoo/diff', adminOnly, async (req, res) => {
   }
 
   const yxlinfoCrewNames = Object.keys(yxlinfoData)
-  const myMembers = db.prepare(`
+
+  // 활성 멤버: 삭제/이동 판단용
+  const activeMembers = db.prepare(`
     SELECT m.soop_id, m.name, c.name as crew_name
     FROM members m JOIN crews c ON m.crew_id = c.id
     WHERE m.is_active = 1
   `).all()
 
-  // 삭제 / 이동 감지
-  for (const member of myMembers) {
+  // 전체 멤버(비활성 포함): 신규 판단 시 이미 DB에 있는지 체크
+  const allMembersByNorm = {}
+  const allMembersRows = db.prepare(`
+    SELECT m.id, m.soop_id, m.name, m.is_active, c.name as crew_name
+    FROM members m JOIN crews c ON m.crew_id = c.id
+  `).all()
+  for (const r of allMembersRows) {
+    allMembersByNorm[normalizeName(r.name)] = r
+  }
+
+  // 삭제 / 이동 감지 (활성 멤버 기준)
+  for (const member of activeMembers) {
     if (!yxlinfoCrewNames.some(n => isSameCrew(member.crew_name, n))) continue
     const matched = nameToCrewMap[normalizeName(member.name)]
     if (!matched) {
@@ -625,23 +644,30 @@ router.get('/sync-naksoo/diff', adminOnly, async (req, res) => {
     }
   }
 
-  // 신규 감지
-  const myMemberNamesNorm = new Set(myMembers.map(m => normalizeName(m.name)))
+  // 신규 감지 - 활성/비활성 모두 비교해서 비활성에 같은 사람 있으면 신규 아님
+  const activeNamesNorm = new Set(activeMembers.map(m => normalizeName(m.name)))
   for (const [crewName, names] of Object.entries(yxlinfoData)) {
     for (const name of names) {
-      if (!myMemberNamesNorm.has(normalizeName(name))) {
-        added.push({ soop_id: null, name, crew_name: crewName })
+      const norm = normalizeName(name)
+      if (activeNamesNorm.has(norm)) continue  // 이미 활성 → 신규 아님
+
+      const existing = allMembersByNorm[norm]
+      if (existing && existing.is_active === 0) {
+        // 비활성 동일 인물 존재 → 신규로 보이지 말고 skip
+        // (apply에서 재활성화 처리)
+        continue
       }
+      added.push({ soop_id: null, name, crew_name: crewName })
     }
   }
 
   res.json({ added, removed, moved, total: added.length + removed.length + moved.length })
 })
 
-// ── yxlinfo 동기화 apply ─────────────────────────────
+// ── yxlinfo 동기화 apply (비활성/동명이인 재활용) ───
 router.post('/sync-naksoo/apply', adminOnly, async (req, res) => {
   const { added = [], removed = [], moved = [] } = req.body
-  const results = { added: 0, removed: 0, moved: 0, skipped_added: 0 }
+  const results = { added: 0, removed: 0, moved: 0, reactivated: 0, skipped_added: 0 }
 
   // 백업
   try {
@@ -671,22 +697,51 @@ router.post('/sync-naksoo/apply', adminOnly, async (req, res) => {
     }
   }
 
-  // 추가 (soop_id 있는 것만)
+  // 추가
   for (const m of added) {
     if (!m.soop_id) { results.skipped_added++; continue }
+
+    // 크루 보장
     let crew = db.prepare('SELECT id FROM crews WHERE name = ?').get(m.crew_name)
     if (!crew) {
       const color = CREW_COLORS[db.prepare('SELECT COUNT(*) as c FROM crews').get().c % CREW_COLORS.length]
       const r = db.prepare('INSERT INTO crews (name, color, sort_order) VALUES (?,?,?)').run(m.crew_name, color, 99)
       crew = { id: r.lastInsertRowid }
     }
-    const exists = db.prepare('SELECT id FROM members WHERE soop_id = ?').get(m.soop_id)
-    if (!exists) {
+
+    // 1) soop_id가 이미 있으면 → 재활성화 + 크루/이름 업데이트
+    const bySoop = db.prepare('SELECT id FROM members WHERE soop_id = ?').get(m.soop_id)
+    if (bySoop) {
       const maxOrder = db.prepare('SELECT MAX(sort_order) as m FROM members WHERE crew_id = ?').get(crew.id)?.m || 0
-      db.prepare('INSERT INTO members (soop_id, name, crew_id, sort_order, profile_img, is_active) VALUES (?,?,?,?,?,1)')
-        .run(m.soop_id, m.name, crew.id, maxOrder + 1, m.profile_img || soopCdnUrl(m.soop_id))
+      db.prepare(`
+        UPDATE members
+        SET name=?, crew_id=?, is_active=1, sort_order=?, profile_img=COALESCE(profile_img, ?)
+        WHERE id=?
+      `).run(m.name, crew.id, maxOrder + 1, m.profile_img || soopCdnUrl(m.soop_id), bySoop.id)
       results.added++
+      continue
     }
+
+    // 2) 정규화된 이름이 같은 비활성 멤버 → 같은 사람으로 보고 재활성화
+    const targetNorm = normalizeName(m.name)
+    const inactiveMembers = db.prepare('SELECT id, name FROM members WHERE is_active = 0').all()
+    const sameNameInactive = inactiveMembers.find(c => normalizeName(c.name) === targetNorm)
+    if (sameNameInactive) {
+      const maxOrder = db.prepare('SELECT MAX(sort_order) as m FROM members WHERE crew_id = ?').get(crew.id)?.m || 0
+      db.prepare(`
+        UPDATE members
+        SET soop_id=?, name=?, crew_id=?, is_active=1, sort_order=?, profile_img=COALESCE(profile_img, ?)
+        WHERE id=?
+      `).run(m.soop_id, m.name, crew.id, maxOrder + 1, m.profile_img || soopCdnUrl(m.soop_id), sameNameInactive.id)
+      results.reactivated++
+      continue
+    }
+
+    // 3) 진짜 신규
+    const maxOrder = db.prepare('SELECT MAX(sort_order) as m FROM members WHERE crew_id = ?').get(crew.id)?.m || 0
+    db.prepare('INSERT INTO members (soop_id, name, crew_id, sort_order, profile_img, is_active) VALUES (?,?,?,?,?,1)')
+      .run(m.soop_id, m.name, crew.id, maxOrder + 1, m.profile_img || soopCdnUrl(m.soop_id))
+    results.added++
   }
 
   res.json({ ok: true, ...results })
