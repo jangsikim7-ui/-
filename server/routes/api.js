@@ -96,6 +96,8 @@ function cleanMemberName(raw) {
 function normalizeName(name) {
   return name
     .replace(/[🥇🥈🥉]/g, '')
+    // ◈ ◆ ◇ ♦ ♢ ■ □ ▲ △ ▶ ▷ ● ○ ★ ☆ ✦ ✧ ※ 등 특수기호 제거
+    .replace(/[◈◉◆◇♦♢■□▲△▶▷●○★☆✦✧※◊]/g, '')
     // 전각문자 → 반각 변환 (！→!, ＠→@, ［SO］등)
     .replace(/[\uFF01-\uFF5E]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
     .replace(/[\s_\-\.˚°"'`~!@#$%^&*()\[\]{}|\\:;<>?,/♥♡＠]/g, '')
