@@ -444,72 +444,42 @@ router.get('/last-collected', (req, res) => {
   res.json({ last_collected: row?.fetched_at ?? null })
 })
 
-// ── SOOP 닉네임 검색 API ─────────────────────────────
-async function searchSoopByNick(keyword) {
-  try {
-    const url = `https://sch.afreecatv.com/api.php?m=searchStation&v=1.0&szOrder=&szKeyword=${encodeURIComponent(keyword)}&nPage=1&nListCnt=10&szStype=nick`
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Referer': 'https://www.sooplive.co.kr/',
-        'Origin': 'https://www.sooplive.co.kr'
-      }
-    })
-    if (!res.ok) return []
-    const data = await res.json()
-    const list = data?.DATA || []
-    return list.map(item => ({
-      soop_id: item.user_id,
-      name: item.user_nick,
-      balloons: 0,
-      profile_img: soopCdnUrl(item.user_id)
-    }))
-  } catch(e) {
-    console.log('[searchSoop] 실패:', e.message)
-    return []
-  }
-}
-
 // ── 이름으로 멤버 검색 (신규 멤버 soop ID 찾기용) ────
 router.get('/search-by-name', adminOnly, async (req, res) => {
   const { name } = req.query
   if (!name) return res.json({ results: [] })
   try {
-    const keyword = name.toLowerCase().replace(/[^\uAC00-\uD7A3a-z0-9]/g, '')
+    // 특수문자 제거한 순수 한글/영문/숫자만 남긴 키워드
+    const keyword = name.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '').toLowerCase()
+    if (keyword.length < 1) return res.json({ results: [] })
 
-    // 1차: 풍투데이 월별 데이터에서 검색
     const now = new Date()
     const list = await fetchMonthlyAll(now.getFullYear(), now.getMonth() + 1)
     let results = []
     if (list) {
-      results = list
-        .filter(item => {
-          if (!item.n) return false
-          const n = item.n.toLowerCase().replace(/[^\uAC00-\uD7A3a-z0-9]/g, '')
-          return n.includes(keyword) || keyword.includes(n)
-        })
-        .slice(0, 6)
-        .map(item => ({
-          soop_id: item.i,
-          name: item.n,
-          balloons: item.b,
-          profile_img: soopCdnUrl(item.i)
-        }))
-    }
-
-    // 2차: 풍투데이에서 못 찾으면 SOOP 닉네임 검색 API로 폴백
-    if (results.length === 0) {
-      console.log(`[search] "${name}" 풍투데이 결과 없음 → SOOP 검색 시도`)
-      results = await searchSoopByNick(name)
-      // 특수문자 제거한 키워드로도 재시도
-      if (results.length === 0 && keyword !== name.toLowerCase()) {
-        const plainName = name.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '')
-        if (plainName.length >= 2) {
-          results = await searchSoopByNick(plainName)
+      // 완전일치 우선, 그 다음 포함 검색
+      const exact = []
+      const partial = []
+      for (const item of list) {
+        if (!item.n) continue
+        const n = item.n.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '').toLowerCase()
+        if (n === keyword) {
+          exact.push(item)
+        } else if (keyword.length >= 2 && n.includes(keyword)) {
+          partial.push(item)
         }
       }
+      // 완전일치 먼저, 부분일치 최대 5개
+      const merged = [...exact, ...partial].slice(0, 6)
+      results = merged.map(item => ({
+        soop_id: item.i,
+        name: item.n,
+        balloons: item.b,
+        profile_img: soopCdnUrl(item.i)
+      }))
     }
 
+    console.log(`[search] "${name}" (keyword: ${keyword}) → ${results.length}건 (exact: ${results.filter(r=>r.name.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g,'').toLowerCase()===keyword).length})`)
     res.json({ results })
   } catch(e) {
     console.log('[search-by-name] 오류:', e.message)
