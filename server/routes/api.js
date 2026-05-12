@@ -69,6 +69,8 @@ function cleanMemberName(raw) {
 function normalizeName(name) {
   return name
     .replace(/[🥇🥈🥉]/g, '')
+    // 전각문자 → 반각 변환 (！→!, ＠→@, ［SO］등)
+    .replace(/[\uFF01-\uFF5E]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
     .replace(/[\s_\-\.˚°"'`~!@#$%^&*()\[\]{}|\\:;<>?,/♥♡＠]/g, '')
     .toLowerCase()
     .trim()
@@ -449,8 +451,9 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
   const { name } = req.query
   if (!name) return res.json({ results: [] })
   try {
-    // 특수문자 제거한 순수 한글/영문/숫자만 남긴 키워드
-    const keyword = name.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '').toLowerCase()
+    // 대괄호 prefix 제거 ([SO], [BJ] 등) 후 특수문자 제거
+    const cleanName = name.replace(/^\[[^\]]+\]\s*/, '').trim() || name
+    const keyword = cleanName.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '').toLowerCase()
     if (keyword.length < 1) return res.json({ results: [] })
 
     const now = new Date()
