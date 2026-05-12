@@ -62,7 +62,11 @@ function adminOnly(req, res, next) {
 
 // ── yxlinfo 데이터 ────────────────────────────────────
 function cleanMemberName(raw) {
-  return raw.replace(/^[🥇🥈🥉]\s*/, '').replace(/^\s+/, '').trim()
+  return raw
+    .replace(/^[🥇🥈🥉]\s*/, '')
+    .replace(/^[◆◇♦♢■□▲△▶▷●○★☆✦✧※◈]\s*/, '')
+    .replace(/^\s+/, '')
+    .trim()
 }
 
 // 이름 특수문자 제거 후 비교용 정규화
