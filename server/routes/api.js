@@ -10,6 +10,29 @@ import { collectAll, fetchMonthlyAll } from './collector.js'
 
 const router = Router()
 
+// 멤버 이름 앞 특수기호 제거 마이그레이션
+;(function migrateNames() {
+  try {
+    const members = db.prepare('SELECT id, name FROM members').all()
+    const update = db.prepare('UPDATE members SET name=? WHERE id=?')
+    let count = 0
+    for (const m of members) {
+      const cleaned = m.name
+        .replace(/^[\u{1F947}\u{1F948}\u{1F949}]\s*/u, '')
+        .replace(/^[\u25C6\u25C7\u2666\u2662\u25C8\u25A0\u25A1\u25B2\u25B3\u25B6\u25B7\u25CF\u25CB\u2605\u2606\u2726\u2727\u203B]+\s*/, '')
+        .trim()
+      if (cleaned !== m.name) {
+        update.run(cleaned, m.id)
+        console.log('[migration] ' + JSON.stringify(m.name) + ' -> ' + JSON.stringify(cleaned))
+        count++
+      }
+    }
+    console.log('[migration] 완료: ' + count + '명')
+  } catch(e) {
+    console.log('[migration] 오류: ' + e.message)
+  }
+})()
+
 const POONG_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36',
   'Accept': 'application/json, text/plain, */*',
