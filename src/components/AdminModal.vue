@@ -16,9 +16,24 @@
 
         <!-- ── 크루 관리 ── -->
         <div v-if="tab==='crews'">
+          <div class="admin-group-toggle">
+  <span class="admin-group-label">관리 대상</span>
+  <div class="admin-group-pills">
+    <button class="admin-group-pill"
+      :class="{ active: adminGroup === 'excel' }"
+      @click="adminGroup = 'excel'">엑셀크루</button>
+    <button class="admin-group-pill purple"
+      :class="{ active: adminGroup === 'bora' }"
+      @click="adminGroup = 'bora'">보라엑셀크루</button>
+  </div>
+</div>
           <div class="section-title">새 크루 추가</div>
-          <div class="form-row">
-            <input v-model="newCrew.name" placeholder="크루명 (예: 씨나인)" />
+<div class="form-row">
+  <select v-model="newCrew.group_key" style="width:150px; flex-shrink:0;">
+    <option value="excel">엑셀크루</option>
+    <option value="bora">보라엑셀크루</option>
+  </select>
+  <input v-model="newCrew.name" placeholder="크루명 (예: 씨나인)" />
             <div class="color-wrap">
               <input type="color" v-model="newCrew.color" class="color-input" />
               <span class="color-label">색상</span>
@@ -304,10 +319,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { api } from '../composables/useApi.js'
 
-const emit = defineEmits(['close', 'updated', 'battle-toggle'])
+const props = defineProps({ activeGroup: { type: String, default: 'excel' } })
+const adminGroup = ref(props.activeGroup)
+watch(adminGroup, () => load())
 
 const tab = ref('crews')
 const crews = ref([])
@@ -372,7 +389,7 @@ function nextAutoColor() {
   return CREW_COLORS.find(c => !used.includes(c)) || CREW_COLORS[crews.value.length % CREW_COLORS.length]
 }
 
-const newCrew = ref({ name: '', color: '#c84bff', sort_order: 0, logo_url: '' })
+const newCrew = ref({ name: '', color: '#c84bff', sort_order: 0, logo_url: '', group_key: 'excel' })
 const newMember = ref({ crew_id: '', soop_id: '', name: '', sort_order: 0, is_new: false })
 const nickLooking = ref(false)
 const nickFailed = ref(false)
@@ -395,9 +412,10 @@ const filteredMembers = computed(() =>
 
 async function load() {
   try {
-    crews.value = await api.getCrews()
-    members.value = await api.getMembers()
+    crews.value = await api.getCrews(adminGroup.value)
+    members.value = await api.getMembers(adminGroup.value)
     newCrew.value.color = nextAutoColor()
+    newCrew.value.group_key = adminGroup.value
   } catch(e) { alert('로드 실패: ' + e.message) }
 }
 
@@ -730,4 +748,36 @@ onMounted(load)
 .btn-restore { padding: 4px 12px; border-radius: 6px; border: 1px solid var(--border); background: none; color: var(--text3); font-size: 11px; cursor: pointer; }
 .btn-restore:hover:not(:disabled) { color: var(--text); border-color: var(--text3); }
 .btn-restore:disabled { opacity: 0.5; }
+.admin-group-toggle {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; margin-bottom: 16px;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.admin-group-label {
+  font-size: 11px; font-weight: 700; color: var(--text3);
+  letter-spacing: 0.3px;
+}
+.admin-group-pills { display: flex; gap: 6px; }
+.admin-group-pill {
+  padding: 6px 14px; border-radius: 7px;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text2); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; font-family: inherit;
+}
+.admin-group-pill:hover { color: var(--text); }
+.admin-group-pill.active {
+  background: linear-gradient(135deg, #4a9eff, #2563d9);
+  color: #fff; border-color: transparent;
+  box-shadow: 0 2px 8px rgba(74,158,255,0.35);
+}
+.admin-group-pill.purple.active {
+  background: linear-gradient(135deg, #c66bff, #8b3fe0);
+  box-shadow: 0 2px 8px rgba(180,100,240,0.4);
+}
+.muted-tag {
+  font-size: 11px; font-weight: 500; color: var(--text3);
+  margin-left: 6px;
+}
 </style>
