@@ -278,6 +278,7 @@ router.post('/members', adminOnly, async (req, res) => {
   if (!name || name === soop_id) {
     name = info?.nickname || soop_id
   }
+name = cleanMemberName(name)
   const profile_img = info?.profile_img || soopCdnUrl(soop_id)
   try {
     const existing = db.prepare('SELECT id FROM members WHERE soop_id = ?').get(soop_id)
@@ -711,10 +712,11 @@ router.post('/sync-naksoo/apply', adminOnly, async (req, res) => {
       continue
     }
 
-    // 3) 진짜 신규
+// 3) 진짜 신규
     const maxOrder = db.prepare('SELECT MAX(sort_order) as m FROM members WHERE crew_id = ?').get(crew.id)?.m || 0
+    const cleanName = cleanMemberName(m.name)
     db.prepare('INSERT INTO members (soop_id, name, crew_id, sort_order, profile_img, is_active) VALUES (?,?,?,?,?,1)')
-      .run(m.soop_id, m.name, crew.id, maxOrder + 1, m.profile_img || soopCdnUrl(m.soop_id))
+      .run(m.soop_id, cleanName, crew.id, maxOrder + 1, m.profile_img || soopCdnUrl(m.soop_id))
     results.added++
   }
 
