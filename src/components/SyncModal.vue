@@ -20,18 +20,18 @@
       <!-- 변경사항 있음 -->
       <div v-else-if="diff" class="sync-body">
 
-        <!-- 삭제 -->
+<!-- 삭제 -->
         <div v-if="diff.removed.length > 0" class="section">
           <div class="section-title">➖ 삭제 {{ diff.removed.length }}명</div>
-          <div v-for="m in diff.removed" :key="m.soop_id" class="member-row">
+          <div v-for="(m, idx) in diff.removed" :key="m.soop_id" class="member-row">
             <img :src="avatarUrl(m.soop_id)" class="avatar" @error="onImgError" />
             <div class="member-info">
               <span class="mname">{{ m.name }}</span>
               <span class="crew-tag remove">{{ m.crew_name }}</span>
             </div>
+            <button class="x-btn" @click="diff.removed.splice(idx, 1)" title="이 항목 제외">✕</button>
           </div>
         </div>
-
         <!-- 이동 -->
         <div v-if="diff.moved.length > 0" class="section">
           <div class="section-title">🔀 이동 {{ diff.moved.length }}명</div>
@@ -44,13 +44,14 @@
           </div>
         </div>
 
-        <!-- 신규 -->
+<!-- 신규 -->
         <div v-if="diff.added.length > 0" class="section">
           <div class="section-title">➕ 신규 {{ diff.added.length }}명</div>
-          <div v-for="m in diff.added" :key="m.name" class="added-block">
+          <div v-for="(m, idx) in diff.added" :key="m.name" class="added-block">
             <div class="added-top">
               <span class="mname">{{ m.name }}</span>
               <span class="crew-tag add">{{ m.crew_name }}</span>
+              <button class="x-btn" @click="diff.added.splice(idx, 1)" title="이 항목 제외">✕</button>
             </div>
 
             <!-- 검색 중 -->
@@ -245,6 +246,18 @@ onMounted(async () => {
 .crew-tag.remove { background: rgba(255,77,77,0.15); color: #ff6b6b; }
 .crew-tag.move { background: rgba(74,158,255,0.15); color: #4a9eff; }
 .crew-tag.add { background: rgba(107,203,119,0.15); color: #6bcb77; }
+.crew-tag.add { background: rgba(107,203,119,0.15); color: #6bcb77; }
+
+.x-btn {
+  background: none; border: none; color: var(--text3);
+  font-size: 14px; cursor: pointer; padding: 4px 8px;
+  margin-left: auto; font-family: inherit;
+  border-radius: 6px; transition: all 0.15s;
+}
+.x-btn:hover { color: #ff6b6b; background: rgba(255,107,107,0.1); }
+
+.member-row { position: relative; }
+.added-top { position: relative; }
 
 .added-block {
   background: var(--bg4); border-radius: 10px; padding: 10px 12px;
