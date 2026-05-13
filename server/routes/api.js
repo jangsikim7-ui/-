@@ -209,18 +209,19 @@ const CREW_COLORS = ["#ff6b9d","#ffd93d","#6bcb77","#4d96ff","#ff6b6b","#c77dff"
 
 // ── 크루 ──────────────────────────────────────────────
 router.get('/crews', (req, res) => {
-  const crews = db.prepare('SELECT * FROM crews ORDER BY sort_order, id').all()
+  const group = req.query.group || 'excel'
+  const crews = db.prepare('SELECT * FROM crews WHERE group_key = ? ORDER BY sort_order, id').all(group)
   res.json(crews)
 })
 
 router.post('/crews', adminOnly, (req, res) => {
-  const { name, color = '#6366f1', sort_order = 0, logo_url = '', master_soop_id = null } = req.body
+ const { name, color = '#6366f1', sort_order = 0, logo_url = '', master_soop_id = null, group_key = 'excel' } = req.body
   if (!name) return res.status(400).json({ error: 'name required' })
   try {
     const result = db.prepare(
-      'INSERT INTO crews (name, color, logo_url, sort_order, master_soop_id) VALUES (?, ?, ?, ?, ?)'
-    ).run(name, color, logo_url, sort_order, master_soop_id || null)
-    res.json({ id: result.lastInsertRowid, name, color, logo_url, sort_order, master_soop_id })
+      'INSERT INTO crews (name, color, logo_url, sort_order, master_soop_id, group_key) VALUES (?, ?, ?, ?, ?, ?)'
+   ).run(name, color, logo_url, sort_order, master_soop_id || null, group_key)
+    res.json({ id: result.lastInsertRowid, name, color, logo_url, sort_order, master_soop_id, group_key })
   } catch (e) {
     res.status(400).json({ error: '이미 존재하는 크루명입니다' })
   }
@@ -228,9 +229,14 @@ router.post('/crews', adminOnly, (req, res) => {
 
 router.put('/crews/:id', adminOnly, (req, res) => {
   try {
-    const { name, color, sort_order, logo_url = '', master_soop_id = null } = req.body
-    db.prepare('UPDATE crews SET name=?, color=?, sort_order=?, logo_url=?, master_soop_id=? WHERE id=?')
-      .run(name, color, sort_order, logo_url, master_soop_id || null, req.params.id)
+    const { name, color, sort_order, logo_url = '', master_soop_id = null, group_key } = req.body
+    if (group_key) {
+      db.prepare('UPDATE crews SET name=?, color=?, sort_order=?, logo_url=?, master_soop_id=?, group_key=? WHERE id=?')
+        .run(name, color, sort_order, logo_url, master_soop_id || null, group_key, req.params.id)
+    } else {
+      db.prepare('UPDATE crews SET name=?, color=?, sort_order=?, logo_url=?, master_soop_id=? WHERE id=?')
+        .run(name, color, sort_order, logo_url, master_soop_id || null, req.params.id)
+    }
     res.json({ ok: true })
   } catch(e) {
     res.status(400).json({ error: '이미 존재하는 크루명입니다' })
@@ -253,13 +259,17 @@ router.delete('/crews/:id', adminOnly, (req, res) => {
 
 // ── 멤버 ──────────────────────────────────────────────
 router.get('/members', (req, res) => {
-  const members = db.prepare(`
-    SELECT m.*, c.name as crew_name, c.color as crew_color
-    FROM members m
-    JOIN crews c ON m.crew_id = c.id
-    WHERE m.is_active = 1
-    ORDER BY c.sort_order, m.sort_order, m.id
-  `).all()
+  const group = req.query.group
+  const sql = group
+    ? `SELECT m.*, c.name as crew_name, c.color as crew_color
+       FROM members m JOIN crews c ON m.crew_id = c.id
+       WHERE m.is_active = 1 AND c.group_key = ?
+       ORDER BY c.sort_order, m.sort_order, m.id`
+    : `SELECT m.*, c.name as crew_name, c.color as crew_color
+       FROM members m JOIN crews c ON m.crew_id = c.id
+       WHERE m.is_active = 1
+       ORDER BY c.sort_order, m.sort_order, m.id`
+  const members = group ? db.prepare(sql).all(group) : db.prepare(sql).all()
   res.json(members)
 })
 
@@ -327,11 +337,10 @@ router.get('/stats', (req, res) => {
   const now = new Date()
   const year = parseInt(req.query.year) || now.getFullYear()
   const month = parseInt(req.query.month) || (now.getMonth() + 1)
+  const group = req.query.group || 'excel'
   const prevYear = month === 1 ? year - 1 : year
   const prevMonth = month === 1 ? 12 : month - 1
-
-  const allCrews = db.prepare('SELECT * FROM crews ORDER BY sort_order, id').all()
-
+  const allCrews = db.prepare('SELECT * FROM crews WHERE group_key = ? ORDER BY sort_order, id').all(group)
   const rows = db.prepare(`
     SELECT
       m.id, m.soop_id, m.name, m.crew_id, m.sort_order, m.is_new,
@@ -359,10 +368,9 @@ router.get('/stats', (req, res) => {
       ), 0) as yesterday_balloons
     FROM members m
     JOIN crews c ON m.crew_id = c.id
-    WHERE m.is_active = 1
+    WHERE m.is_active = 1 AND c.group_key = ?
     ORDER BY c.sort_order, balloons DESC
-  `).all(year, month, year, month, prevYear, prevMonth, year, month)
-
+  `).all(year, month, year, month, prevYear, prevMonth, year, month, group)
   const crewMap = {}
   for (const crew of allCrews) {
     let master_balloons = 0
@@ -384,7 +392,6 @@ router.get('/stats', (req, res) => {
       members: [], total: 0, prev_total: 0, avg: 0
     }
   }
-
   for (const row of rows) {
     if (!crewMap[row.crew_id]) continue
     crewMap[row.crew_id].members.push({
@@ -401,7 +408,7 @@ router.get('/stats', (req, res) => {
     ...c, avg: c.members.length > 0 ? Math.round(c.total / c.members.length) : 0
   })).sort((a, b) => b.avg - a.avg)
 
-  res.json({ year, month, prevYear, prevMonth, crews })
+res.json({ year, month, prevYear, prevMonth, group, crews })
 })
 
 // ── 뷰어십 통계 ───────────────────────────────────────
@@ -409,11 +416,10 @@ router.get('/viewer-stats', (req, res) => {
   const now = new Date()
   const year = parseInt(req.query.year) || now.getFullYear()
   const month = parseInt(req.query.month) || (now.getMonth() + 1)
+  const group = req.query.group || 'excel'
   const prevYear = month === 1 ? year - 1 : year
   const prevMonth = month === 1 ? 12 : month - 1
-
-  const allCrews = db.prepare('SELECT * FROM crews ORDER BY sort_order, id').all()
-
+  const allCrews = db.prepare('SELECT * FROM crews WHERE group_key = ? ORDER BY sort_order, id').all(group)
   const rows = db.prepare(`
     SELECT
       m.id, m.soop_id, m.name, m.crew_id, m.sort_order, m.is_new,
@@ -436,10 +442,9 @@ router.get('/viewer-stats', (req, res) => {
       ), 0) as yesterday_viewers
     FROM members m
     JOIN crews c ON m.crew_id = c.id
-    WHERE m.is_active = 1
+    WHERE m.is_active = 1 AND c.group_key = ?
     ORDER BY c.sort_order, viewers DESC
-  `).all(year, month, prevYear, prevMonth, year, month)
-
+  `).all(year, month, prevYear, prevMonth, year, month, group)
   const crewMap = {}
   for (const crew of allCrews) {
     crewMap[crew.id] = {
@@ -449,7 +454,6 @@ router.get('/viewer-stats', (req, res) => {
       members: [], total: 0, prev_total: 0, avg: 0
     }
   }
-
   for (const row of rows) {
     if (!crewMap[row.crew_id]) continue
     crewMap[row.crew_id].members.push({
@@ -461,12 +465,10 @@ router.get('/viewer-stats', (req, res) => {
     crewMap[row.crew_id].total += row.viewers
     crewMap[row.crew_id].prev_total += row.prev_viewers
   }
-
   const crews = Object.values(crewMap).map(c => ({
     ...c, avg: c.members.length > 0 ? Math.round(c.total / c.members.length) : 0
   })).sort((a, b) => b.avg - a.avg)
-
-  res.json({ year, month, prevYear, prevMonth, crews })
+  res.json({ year, month, prevYear, prevMonth, group, crews })
 })
 
 // ── 수동 수집 트리거 ─────────────────────────────────

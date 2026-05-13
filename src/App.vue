@@ -35,7 +35,16 @@
         <button v-else class="btn-admin" @click="showLoginModal = true">🔐 관리자</button>
       </div>
     </header>
-
+<div class="group-tabs-wrap">
+  <div class="group-tabs" :data-active="activeGroup">
+    <button class="group-tab" :class="{ active: activeGroup === 'excel' }" @click="setGroup('excel')">
+      <span class="pip pip-excel"></span>엑셀크루
+    </button>
+    <button class="group-tab" :class="{ active: activeGroup === 'bora' }" @click="setGroup('bora')">
+      <span class="pip pip-bora"></span>보라엑셀크루
+    </button>
+  </div>
+</div>
     <!-- 모드 탭 -->
     <div class="mode-tabs">
       <button class="mode-tab" :class="{ active: mode === 'balloon' }" @click="setMode('balloon')">
@@ -128,7 +137,7 @@
       </div>
     </div>
 
-    <AdminModal v-if="showAdmin" @close="showAdmin = false" @updated="loadStats" @battle-toggle="onBattleToggle" />
+    <AdminModal v-if="showAdmin" :active-group="activeGroup" @close="showAdmin = false" @updated="loadStats" @battle-toggle="onBattleToggle" />
     <CrewBattleModal v-if="showBattle" :crews="stats" :mode="mode" @close="showBattle = false" />
     <SyncModal v-if="showSync" @close="showSync = false" @done="loadStats" />
 
@@ -270,14 +279,15 @@ const maxBalloons = computed(() => {
       if (m.balloons > max) max = m.balloons
   return max
 })
-
+const activeGroup = ref('excel')
+function setGroup(g) { activeGroup.value = g; loadStats() }
 async function loadStats() {
   loading.value = true
   error.value = ''
   try {
     const data = mode.value === 'viewer'
-      ? await api.getViewerStats(year.value, month.value)
-      : await api.getStats(year.value, month.value)
+      ? await api.getViewerStats(year.value, month.value, activeGroup.value)
+      : await api.getStats(year.value, month.value, activeGroup.value)
     stats.value = data.crews
     const lc = await api.lastCollected()
     lastCollected.value = lc.last_collected
@@ -577,4 +587,65 @@ onMounted(async () => {
 .fan-card .feat-nm { color: #1a6fb5; }
 [data-theme="dark"] .fan-card .feat-nm { color: #60b4ff; }
 .fan-card .feat-ico { background: rgba(74,158,255,0.12); }
+/* ── 크루 그룹 탭 ─────────────────────────── */
+.group-tabs-wrap {
+  display: flex; justify-content: center;
+  padding: 14px 20px 0; background: var(--bg2);
+}
+.group-tabs {
+  position: relative;
+  display: grid; grid-template-columns: 1fr 1fr;
+  width: 100%; max-width: 420px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 5px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
+}
+.group-tabs::before {
+  content: ""; position: absolute;
+  top: 5px; left: 5px;
+  width: calc(50% - 5px); height: calc(100% - 10px);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #4a9eff 0%, #2563d9 100%);
+  box-shadow: 0 4px 14px rgba(74,158,255,0.4),
+              inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: transform 0.32s cubic-bezier(0.5, 0, 0.2, 1.4),
+              background 0.3s ease,
+              box-shadow 0.3s ease;
+  z-index: 1;
+}
+.group-tabs[data-active="bora"]::before {
+  transform: translateX(100%);
+  background: linear-gradient(135deg, #c66bff 0%, #8b3fe0 100%);
+  box-shadow: 0 4px 14px rgba(180,100,240,0.45),
+              inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.group-tab {
+  position: relative; z-index: 2;
+  background: transparent; border: 0;
+  color: var(--text3);
+  padding: 11px 14px;
+  font-family: inherit; font-size: 14px; font-weight: 700;
+  letter-spacing: -0.3px; cursor: pointer;
+  transition: color 0.25s ease;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px; border-radius: 10px;
+}
+.group-tab:hover { color: var(--text2); }
+.group-tab.active { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
+.pip {
+  width: 8px; height: 8px; border-radius: 50%;
+  display: inline-block; transition: all 0.25s ease;
+}
+.pip-excel { background: #4a9eff; }
+.pip-bora  { background: #c66bff; }
+.group-tab.active .pip {
+  background: #fff;
+  box-shadow: 0 0 10px rgba(255,255,255,0.8);
+}
+@media (max-width: 600px) {
+  .group-tabs-wrap { padding: 10px 10px 0; }
+  .group-tab { font-size: 13px; padding: 10px 8px; }
+}
 </style>

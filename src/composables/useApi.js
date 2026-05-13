@@ -26,14 +26,13 @@ export async function apiFetch(path, options = {}) {
   }
   return res.json()
 }
-export const api = {
-  getStats: (year, month) => apiFetch(`/stats?year=${year}&month=${month}`),
-  getViewerStats: (year, month) => apiFetch(`/viewer-stats?year=${year}&month=${month}`),
-  getCrews: () => apiFetch('/crews'),
+export const api = { getStats: (year, month, group = 'excel') => apiFetch(`/stats?year=${year}&month=${month}&group=${group}`),
+getViewerStats: (year, month, group = 'excel') => apiFetch(`/viewer-stats?year=${year}&month=${month}&group=${group}`),
+getCrews: (group = 'excel') => apiFetch(`/crews?group=${group}`),
   createCrew: (data) => apiFetch('/crews', { method: 'POST', body: data }),
   updateCrew: (id, data) => apiFetch(`/crews/${id}`, { method: 'PUT', body: data }),
   deleteCrew: (id) => apiFetch(`/crews/${id}`, { method: 'DELETE' }),
-  getMembers: () => apiFetch('/members'),
+ getMembers: (group) => apiFetch(group ? `/members?group=${group}` : '/members'),
   createMember: (data) => apiFetch('/members', { method: 'POST', body: data }),
   updateMember: (id, data) => apiFetch(`/members/${id}`, { method: 'PUT', body: data }),
   deleteMember: (id) => apiFetch(`/members/${id}`, { method: 'DELETE' }),
