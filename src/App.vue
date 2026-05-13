@@ -36,12 +36,20 @@
       </div>
     </header>
 <div class="group-tabs-wrap">
-  <div class="group-tabs" :data-active="activeGroup">
-    <button class="group-tab" :class="{ active: activeGroup === 'excel' }" @click="setGroup('excel')">
-      <span class="pip pip-excel"></span>엑셀크루
+  <div class="group-tabs">
+    <button class="group-tab excel-tab" :class="{ active: activeGroup === 'excel' }" @click="setGroup('excel')">
+      <i class="ti ti-users" style="font-size:20px; flex-shrink:0;"></i>
+      <div class="tab-info">
+        <span class="tab-name">엑셀크루</span>
+        <span class="tab-meta">{{ excelCrewCount }}크루 · {{ excelMemberCount }}명</span>
+      </div>
     </button>
-    <button class="group-tab" :class="{ active: activeGroup === 'bora' }" @click="setGroup('bora')">
-      <span class="pip pip-bora"></span>보라엑셀크루
+    <button class="group-tab bora-tab" :class="{ active: activeGroup === 'bora' }" @click="setGroup('bora')">
+      <i class="ti ti-crown" style="font-size:20px; flex-shrink:0;"></i>
+      <div class="tab-info">
+        <span class="tab-name">보라엑셀크루</span>
+        <span class="tab-meta">{{ boraCrewCount }}크루 · {{ boraMemberCount }}명</span>
+      </div>
     </button>
   </div>
 </div>
@@ -280,15 +288,28 @@ const maxBalloons = computed(() => {
   return max
 })
 const activeGroup = ref('excel')
+const excelStats = ref([])
+const boraStats = ref([])
+
+const excelCrewCount = computed(() => excelStats.value.length)
+const excelMemberCount = computed(() => excelStats.value.reduce((s, c) => s + c.members.length, 0))
+const boraCrewCount = computed(() => boraStats.value.length)
+const boraMemberCount = computed(() => boraStats.value.reduce((s, c) => s + c.members.length, 0))
 function setGroup(g) { activeGroup.value = g; loadStats() }
 async function loadStats() {
   loading.value = true
   error.value = ''
   try {
-    const data = mode.value === 'viewer'
-      ? await api.getViewerStats(year.value, month.value, activeGroup.value)
-      : await api.getStats(year.value, month.value, activeGroup.value)
-    stats.value = data.crews
+    const [mainData, excelData, boraData] = await Promise.all([
+      mode.value === 'viewer'
+        ? api.getViewerStats(year.value, month.value, activeGroup.value)
+        : api.getStats(year.value, month.value, activeGroup.value),
+      api.getStats(year.value, month.value, 'excel'),
+      api.getStats(year.value, month.value, 'bora'),
+    ])
+    stats.value = mainData.crews
+    excelStats.value = excelData.crews
+    boraStats.value = boraData.crews
     const lc = await api.lastCollected()
     lastCollected.value = lc.last_collected
   } catch(e) { error.value = '로드 실패: ' + e.message }
@@ -593,59 +614,73 @@ onMounted(async () => {
   padding: 14px 20px 0; background: var(--bg2);
 }
 .group-tabs {
-  position: relative;
-  display: grid; grid-template-columns: 1fr 1fr;
-  width: 100%; max-width: 420px;
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 5px;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
-}
-.group-tabs::before {
-  content: ""; position: absolute;
-  top: 5px; left: 5px;
-  width: calc(50% - 5px); height: calc(100% - 10px);
-  border-radius: 10px;
-  background: linear-gradient(135deg, #4a9eff 0%, #2563d9 100%);
-  box-shadow: 0 4px 14px rgba(74,158,255,0.4),
-              inset 0 1px 0 rgba(255,255,255,0.2);
-  transition: transform 0.32s cubic-bezier(0.5, 0, 0.2, 1.4),
-              background 0.3s ease,
-              box-shadow 0.3s ease;
-  z-index: 1;
-}
-.group-tabs[data-active="bora"]::before {
-  transform: translateX(100%);
-  background: linear-gradient(135deg, #c66bff 0%, #8b3fe0 100%);
-  box-shadow: 0 4px 14px rgba(180,100,240,0.45),
-              inset 0 1px 0 rgba(255,255,255,0.2);
+  display: flex; gap: 8px;
+  width: 100%; max-width: 480px;
 }
 .group-tab {
-  position: relative; z-index: 2;
-  background: transparent; border: 0;
-  color: var(--text3);
-  padding: 11px 14px;
-  font-family: inherit; font-size: 14px; font-weight: 700;
-  letter-spacing: -0.3px; cursor: pointer;
-  transition: color 0.25s ease;
-  display: inline-flex; align-items: center; justify-content: center;
-  gap: 8px; border-radius: 10px;
+  flex: 1; display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--bg3);
+  cursor: pointer; text-align: left; font-family: inherit;
+  position: relative; overflow: hidden;
+  transition: all 0.2s;
 }
-.group-tab:hover { color: var(--text2); }
-.group-tab.active { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.25); }
-.pip {
-  width: 8px; height: 8px; border-radius: 50%;
-  display: inline-block; transition: all 0.25s ease;
+.tab-info { display: flex; flex-direction: column; gap: 3px; }
+.tab-name { font-size: 14px; font-weight: 700; line-height: 1; }
+.tab-meta { font-size: 11px; font-weight: 500; }
+
+[data-theme="dark"] .group-tab { background: #16162a; border-color: #32325a; }
+[data-theme="dark"] .group-tab .tab-name { color: #8888bb; }
+[data-theme="dark"] .group-tab .tab-meta { color: #55557a; }
+[data-theme="dark"] .group-tab i { color: #55557a; }
+
+[data-theme="dark"] .group-tab.active.excel-tab { background: #0d2040; border-color: #4a9eff; }
+[data-theme="dark"] .group-tab.active.excel-tab .tab-name { color: #90c8ff; }
+[data-theme="dark"] .group-tab.active.excel-tab .tab-meta { color: #5590dd; }
+[data-theme="dark"] .group-tab.active.excel-tab i { color: #60aaff; }
+[data-theme="dark"] .group-tab.active.excel-tab::after {
+  content: ''; position: absolute; bottom: 0; left: 12px; right: 12px;
+  height: 3px; background: #4a9eff; border-radius: 2px;
 }
-.pip-excel { background: #4a9eff; }
-.pip-bora  { background: #c66bff; }
-.group-tab.active .pip {
-  background: #fff;
-  box-shadow: 0 0 10px rgba(255,255,255,0.8);
+
+[data-theme="dark"] .group-tab.active.bora-tab { background: #220a38; border-color: #cc66ff; }
+[data-theme="dark"] .group-tab.active.bora-tab .tab-name { color: #ee99ff; }
+[data-theme="dark"] .group-tab.active.bora-tab .tab-meta { color: #9944cc; }
+[data-theme="dark"] .group-tab.active.bora-tab i { color: #cc66ff; }
+[data-theme="dark"] .group-tab.active.bora-tab::after {
+  content: ''; position: absolute; bottom: 0; left: 12px; right: 12px;
+  height: 3px; background: #cc66ff; border-radius: 2px;
 }
+
+[data-theme="light"] .group-tab { background: #eaeaf4; border-color: #c0c0d8; }
+[data-theme="light"] .group-tab .tab-name { color: #7070a0; }
+[data-theme="light"] .group-tab .tab-meta { color: #9090b8; }
+[data-theme="light"] .group-tab i { color: #9090b8; }
+
+[data-theme="light"] .group-tab.active.excel-tab { background: #ddeeff; border-color: #1a60dd; }
+[data-theme="light"] .group-tab.active.excel-tab .tab-name { color: #0a3a99; }
+[data-theme="light"] .group-tab.active.excel-tab .tab-meta { color: #2255bb; }
+[data-theme="light"] .group-tab.active.excel-tab i { color: #1a60dd; }
+[data-theme="light"] .group-tab.active.excel-tab::after {
+  content: ''; position: absolute; bottom: 0; left: 12px; right: 12px;
+  height: 3px; background: #1a60dd; border-radius: 2px;
+}
+
+[data-theme="light"] .group-tab.active.bora-tab { background: #f0deff; border-color: #8822cc; }
+[data-theme="light"] .group-tab.active.bora-tab .tab-name { color: #5a0099; }
+[data-theme="light"] .group-tab.active.bora-tab .tab-meta { color: #7722aa; }
+[data-theme="light"] .group-tab.active.bora-tab i { color: #8822cc; }
+[data-theme="light"] .group-tab.active.bora-tab::after {
+  content: ''; position: absolute; bottom: 0; left: 12px; right: 12px;
+  height: 3px; background: #8822cc; border-radius: 2px;
+}
+
+.pip { display: none; }
+
 @media (max-width: 600px) {
   .group-tabs-wrap { padding: 10px 10px 0; }
-  .group-tab { font-size: 13px; padding: 10px 8px; }
+  .group-tab { font-size: 13px; padding: 10px 12px; gap: 8px; }
+  .tab-name { font-size: 13px; }
 }
 </style>
