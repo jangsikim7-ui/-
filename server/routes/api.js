@@ -23,7 +23,6 @@ const router = Router()
         .replace(/^[\u25C6\u25C7\u2666\u2662\u25C8\u25A0\u25A1\u25B2\u25B3\u25B6\u25B7\u25CF\u25CB\u2605\u2606\u2726\u2727\u203B]+\s*/, '')
         .trim()
       if (cleaned !== m.name) {
-        // 같은 이름의 다른 row(특히 활성)가 이미 있고 이건 비활성이면 → 삭제
         const dupe = db.prepare('SELECT id, is_active FROM members WHERE name=? AND id<>?').get(cleaned, m.id)
         if (dupe && m.is_active === 0) {
           del.run(m.id)
@@ -63,7 +62,6 @@ async function fetchSoopInfo(soopId) {
     const data = await res.json()
     const station = data?.station
     if (!station) { console.log(`[soopInfo] ${soopId} station 없음`); return null }
-    console.log(`[soopInfo] ${soopId} keys:`, Object.keys(station).join(', '))
     const profile_img =
       station.profile_img ||
       station.user_img ||
@@ -71,7 +69,6 @@ async function fetchSoopInfo(soopId) {
       station.station_logo ||
       station.user_id_logo ||
       soopCdnUrl(soopId)
-    console.log(`[soopInfo] ${soopId} nick=${station.user_nick} img=${profile_img}`)
     return { nickname: station.user_nick || null, profile_img }
   } catch(e) { console.log(`[soopInfo] ${soopId} 오류:`, e.message); return null }
 }
@@ -101,22 +98,19 @@ function cleanMemberName(raw) {
     .trim()
 }
 
-// 이름 특수문자 제거 후 비교용 정규화 (이모지/심볼 강화 버전)
+// ⭐ 이름 정규화 — 원본 + NFC 정규화만 추가 (이모지 범위 제거 안 함 → 부작용 방지)
 function normalizeName(name) {
+  if (!name) return ''
   return name
-    // 모든 이모지/심볼 영역 통째로 제거 (메달 🥇🥈🥉 등 surrogate pair 포함)
-    .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
-    .replace(/[\u{2600}-\u{27BF}]/gu, '')
-    // 추가 특수기호들
+    .normalize('NFC')  // ← 유니코드 정규화 (같아 보이는 글자 통일)
+    .replace(/[🥇🥈🥉]/g, '')
     .replace(/[◈◉◆◇♦♢■□▲△▶▷●○★☆✦✧※◊]/g, '')
-    // 전각문자 → 반각 변환 (！→!, ＠→@, ［SO］등)
     .replace(/[\uFF01-\uFF5E]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
     .replace(/[\s_\-\.˚°"'`~!@#$%^&*()\[\]{}|\\:;<>?,/♥♡＠]/g, '')
     .toLowerCase()
     .trim()
 }
 
-// ── yxlinfo 크루명 → 내 크루명 매핑 ──────────────────
 const CREW_NAME_MAP = {
   "GW":       "광우상사",
   "C9":       "씨나인",
@@ -130,34 +124,22 @@ const CREW_NAME_MAP = {
   "Moon A":   "문에이",
 }
 
-// 크루명 정규화: 공백·특수문자 제거 + 소문자 (비교용)
 function normalizeCrewName(name) {
   return name
     .replace(/[\s_\-\.]/g, '')
     .toLowerCase()
 }
 
-// 정규화된 크루명 → 정식 크루명 매핑 (모두 소문자 키)
 const CREW_NORMALIZED_MAP = {
-  // 광우상사
   '광우상사': '광우상사', 'gw': '광우상사', 'gwanwoo': '광우상사', 'gwanwoosangsa': '광우상사',
-  // 씨나인
   '씨나인': '씨나인', 'c9': '씨나인', 'cnine': '씨나인',
-  // YXL
   'yxl': 'YXL',
-  // 이노레이블
   '이노레이블': '이노레이블', 'inolable': '이노레이블', 'inolabel': '이노레이블',
-  // 더케이
   '더케이': '더케이', 'thek': '더케이',
-  // 정선컴퍼니
   '정선컴퍼니': '정선컴퍼니', 'js': '정선컴퍼니', 'jungsun': '정선컴퍼니', 'jungsuncompany': '정선컴퍼니', 'jeongseon': '정선컴퍼니',
-  // 771
   '771': '771',
-  // GD컴퍼니
   'gd컴퍼니': 'GD컴퍼니', 'gd': 'GD컴퍼니', 'gdcompany': 'GD컴퍼니', 'gd컴': 'GD컴퍼니',
-  // 쇼케이
   '쇼케이': '쇼케이', 'showk': '쇼케이',
-  // 문에이
   '문에이': '문에이', 'moona': '문에이',
 }
 
@@ -165,7 +147,6 @@ function mapCrewName(yxlName) {
   return CREW_NAME_MAP[yxlName] || yxlName
 }
 
-// DB 크루명과 yxlinfo 크루명이 같은 크루인지 확인
 function isSameCrew(dbCrewName, yxlCrewName) {
   if (dbCrewName === yxlCrewName) return true
   const dbNorm = normalizeCrewName(dbCrewName)
@@ -493,7 +474,6 @@ router.post('/collect', adminOnly, async (req, res) => {
   collectAll().then(() => clearApiCache()).catch(console.error)
 })
 
-// ── 지난달 수집 트리거 ───────────────────────────────
 router.post('/collect-prev', adminOnly, async (req, res) => {
   const now = new Date()
   const curMonth = now.getMonth() + 1
@@ -521,7 +501,6 @@ router.post('/collect-prev', adminOnly, async (req, res) => {
   } catch(e) { console.error('[collect-prev] 오류:', e.message) }
 })
 
-// ── 마지막 수집 시간 ─────────────────────────────────
 router.get('/last-collected', (req, res) => {
   const row = db.prepare(
     'SELECT fetched_at FROM balloon_snapshots ORDER BY fetched_at DESC LIMIT 1'
@@ -529,7 +508,6 @@ router.get('/last-collected', (req, res) => {
   res.json({ last_collected: row?.fetched_at ?? null })
 })
 
-// ── 이름으로 멤버 검색 (신규 멤버 soop ID 찾기용) ────
 router.get('/search-by-name', adminOnly, async (req, res) => {
   const { name } = req.query
   if (!name) return res.json({ results: [] })
@@ -547,11 +525,8 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
       for (const item of list) {
         if (!item.n) continue
         const n = item.n.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '').toLowerCase()
-        if (n === keyword) {
-          exact.push(item)
-        } else if (keyword.length >= 2 && n.includes(keyword)) {
-          partial.push(item)
-        }
+        if (n === keyword) exact.push(item)
+        else if (keyword.length >= 2 && n.includes(keyword)) partial.push(item)
       }
       const merged = [...exact, ...partial].slice(0, 6)
       results = merged.map(item => ({
@@ -570,7 +545,6 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
   }
 })
 
-// ── yxlinfo 임포트 ───────────────────────────────────
 router.post('/import-naksoo', adminOnly, async (req, res) => {
   const results = { crews_added: 0, crews_skipped: 0, members_matched: 0, members_skipped: 0, members_needs_soop_id: [] }
   const yxlinfoData = await fetchYxlinfoData()
@@ -602,11 +576,12 @@ router.post('/import-naksoo', adminOnly, async (req, res) => {
   res.json({ ok: true, ...results })
 })
 
-// ── yxlinfo 동기화 diff (비활성 멤버 함께 검토) ─────
+// ⭐ yxlinfo 동기화 diff (비활성 멤버 함께 검토 + 디버그 로그) ─────
 router.get('/sync-naksoo/diff', adminOnly, async (req, res) => {
   const yxlinfoData = await fetchYxlinfoData()
   const added = [], removed = [], moved = []
 
+  // yxlinfo 이름 → 크루 매핑 (정규화된 이름 키)
   const nameToCrewMap = {}
   for (const [crewName, names] of Object.entries(yxlinfoData)) {
     for (const name of names) {
@@ -633,43 +608,46 @@ router.get('/sync-naksoo/diff', adminOnly, async (req, res) => {
     allMembersByNorm[normalizeName(r.name)] = r
   }
 
-  // 삭제 / 이동 감지 (활성 멤버 기준)
+  // ── 삭제 / 이동 감지 (활성 멤버 기준) ──
   for (const member of activeMembers) {
     if (!yxlinfoCrewNames.some(n => isSameCrew(member.crew_name, n))) continue
-    const matched = nameToCrewMap[normalizeName(member.name)]
+    const memberNorm = normalizeName(member.name)
+    const matched = nameToCrewMap[memberNorm]
     if (!matched) {
+      console.log(`[diff] REMOVED: "${member.name}" (norm: "${memberNorm}") crew=${member.crew_name}`)
       removed.push({ soop_id: member.soop_id, name: member.name, crew_name: member.crew_name })
     } else if (!isSameCrew(matched.crewName, member.crew_name)) {
+      console.log(`[diff] MOVED: "${member.name}" ${member.crew_name} → ${matched.crewName}`)
       moved.push({ soop_id: member.soop_id, name: member.name, from_crew: member.crew_name, to_crew: matched.crewName })
     }
   }
 
-  // 신규 감지 - 활성/비활성 모두 비교해서 비활성에 같은 사람 있으면 신규 아님
+  // ── 신규 감지 (활성/비활성 모두 비교) ──
   const activeNamesNorm = new Set(activeMembers.map(m => normalizeName(m.name)))
   for (const [crewName, names] of Object.entries(yxlinfoData)) {
     for (const name of names) {
       const norm = normalizeName(name)
-      if (activeNamesNorm.has(norm)) continue  // 이미 활성 → 신규 아님
+      if (activeNamesNorm.has(norm)) continue
 
       const existing = allMembersByNorm[norm]
       if (existing && existing.is_active === 0) {
-        // 비활성 동일 인물 존재 → 신규로 보이지 말고 skip
-        // (apply에서 재활성화 처리)
+        console.log(`[diff] SKIP (inactive exists): "${name}" (norm: "${norm}")`)
         continue
       }
+      console.log(`[diff] ADDED: "${name}" (norm: "${norm}") crew=${crewName}`)
       added.push({ soop_id: null, name, crew_name: crewName })
     }
   }
 
+  console.log(`[diff] 결과: 추가 ${added.length}, 삭제 ${removed.length}, 이동 ${moved.length}`)
   res.json({ added, removed, moved, total: added.length + removed.length + moved.length })
 })
 
-// ── yxlinfo 동기화 apply (비활성/동명이인 재활용) ───
+// ⭐ yxlinfo 동기화 apply (비활성/동명이인 재활용) ───
 router.post('/sync-naksoo/apply', adminOnly, async (req, res) => {
   const { added = [], removed = [], moved = [] } = req.body
   const results = { added: 0, removed: 0, moved: 0, reactivated: 0, skipped_added: 0 }
 
-  // 백업
   try {
     const dbPath = join(__dirname, '../data.db')
     const backupDir = join(__dirname, '../backups')
@@ -680,14 +658,12 @@ router.post('/sync-naksoo/apply', adminOnly, async (req, res) => {
     if (files.length > 5) files.slice(0, files.length - 5).forEach(f => unlinkSync(join(backupDir, f)))
   } catch(e) { console.warn('[backup] 백업 실패:', e.message) }
 
-  // 삭제
   for (const m of removed) {
     if (!m.soop_id) continue
     db.prepare('UPDATE members SET is_active = 0 WHERE soop_id = ?').run(m.soop_id)
     results.removed++
   }
 
-  // 이동
   for (const m of moved) {
     if (!m.soop_id) continue
     const crew = db.prepare('SELECT id FROM crews WHERE name = ?').get(m.to_crew)
@@ -697,11 +673,9 @@ router.post('/sync-naksoo/apply', adminOnly, async (req, res) => {
     }
   }
 
-  // 추가
   for (const m of added) {
     if (!m.soop_id) { results.skipped_added++; continue }
 
-    // 크루 보장
     let crew = db.prepare('SELECT id FROM crews WHERE name = ?').get(m.crew_name)
     if (!crew) {
       const color = CREW_COLORS[db.prepare('SELECT COUNT(*) as c FROM crews').get().c % CREW_COLORS.length]
@@ -722,7 +696,7 @@ router.post('/sync-naksoo/apply', adminOnly, async (req, res) => {
       continue
     }
 
-    // 2) 정규화된 이름이 같은 비활성 멤버 → 같은 사람으로 보고 재활성화
+    // 2) 정규화된 이름이 같은 비활성 멤버 → 재활성화
     const targetNorm = normalizeName(m.name)
     const inactiveMembers = db.prepare('SELECT id, name FROM members WHERE is_active = 0').all()
     const sameNameInactive = inactiveMembers.find(c => normalizeName(c.name) === targetNorm)
@@ -836,7 +810,6 @@ export async function autoImportNaksoo() {
     const yxlinfoData = await fetchYxlinfoData()
     const yxlinfoCrewNames = Object.keys(yxlinfoData)
 
-    // yxlinfo에 없는 크루 비활성화
     const allCrews = db.prepare('SELECT * FROM crews').all()
     for (const crew of allCrews) {
       if (!yxlinfoCrewNames.some(n => isSameCrew(crew.name, n))) {
@@ -856,7 +829,6 @@ export async function autoImportNaksoo() {
       }
       colorIdx++
 
-      // yxlinfo에 없는 멤버 비활성화
       const yxlinfoNamesNorm = new Set(names.map(n => normalizeName(n)))
       const crewMembers = db.prepare('SELECT id, name FROM members WHERE crew_id = ? AND is_active = 1').all(crew.id)
       for (const m of crewMembers) {
@@ -866,7 +838,6 @@ export async function autoImportNaksoo() {
         }
       }
 
-      // 크루 이동 감지
       for (let i = 0; i < names.length; i++) {
         const name = names[i]
         const existing = db.prepare('SELECT id, crew_id FROM members WHERE is_active = 1').all()
