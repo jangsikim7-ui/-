@@ -3,7 +3,7 @@
     <header class="header">
       <div class="hl">
         <div class="logo">⚡ 엑셀크루 시너지표</div>
-        <div class="source">출처: poong.today · 8시간마다 자동 갱신</div>
+        <div class="source">출처: poong.today · 1시간마다 자동 갱신</div>
       </div>
 
       <div class="hc">
@@ -35,24 +35,26 @@
         <button v-else class="btn-admin" @click="showLoginModal = true">🔐 관리자</button>
       </div>
     </header>
-<div class="group-tabs-wrap">
-  <div class="group-tabs">
-    <button class="group-tab excel-tab" :class="{ active: activeGroup === 'excel' }" @click="setGroup('excel')">
-      <i class="ti ti-users" style="font-size:20px; flex-shrink:0;"></i>
-      <div class="tab-info">
-        <span class="tab-name">엑셀크루</span>
-        <span class="tab-meta">{{ excelCrewCount }}크루 · {{ excelMemberCount }}명</span>
+
+    <div class="group-tabs-wrap">
+      <div class="group-tabs">
+        <button class="group-tab excel-tab" :class="{ active: activeGroup === 'excel' }" @click="setGroup('excel')">
+          <i class="ti ti-users" style="font-size:20px; flex-shrink:0;"></i>
+          <div class="tab-info">
+            <span class="tab-name">엑셀크루</span>
+            <span class="tab-meta">{{ excelCrewCount }}크루 · {{ excelMemberCount }}명</span>
+          </div>
+        </button>
+        <button class="group-tab bora-tab" :class="{ active: activeGroup === 'bora' }" @click="setGroup('bora')">
+          <i class="ti ti-crown" style="font-size:20px; flex-shrink:0;"></i>
+          <div class="tab-info">
+            <span class="tab-name">보라엑셀크루</span>
+            <span class="tab-meta">{{ boraCrewCount }}크루 · {{ boraMemberCount }}명</span>
+          </div>
+        </button>
       </div>
-    </button>
-    <button class="group-tab bora-tab" :class="{ active: activeGroup === 'bora' }" @click="setGroup('bora')">
-      <i class="ti ti-crown" style="font-size:20px; flex-shrink:0;"></i>
-      <div class="tab-info">
-        <span class="tab-name">보라엑셀크루</span>
-        <span class="tab-meta">{{ boraCrewCount }}크루 · {{ boraMemberCount }}명</span>
-      </div>
-    </button>
-  </div>
-</div>
+    </div>
+
     <!-- 모드 탭 -->
     <div class="mode-tabs">
       <button class="mode-tab" :class="{ active: mode === 'balloon' }" @click="setMode('balloon')">
@@ -148,52 +150,7 @@
     <AdminModal v-if="showAdmin" :active-group="activeGroup" @close="showAdmin = false" @updated="loadStats" @battle-toggle="onBattleToggle" />
     <CrewBattleModal v-if="showBattle" :crews="stats" :mode="mode" @close="showBattle = false" />
     <SyncModal v-if="showSync" @close="showSync = false" @done="loadStats" />
-
-    <!-- 웰컴 팝업 -->
-    <div v-if="showWelcomePopup" class="popup-overlay" @click.self="closePopup">
-      <div class="popup-box">
-        <button class="popup-x" @click="closePopup">✕</button>
-        <span class="popup-pill">⚡ 엑셀크루 시너지표</span>
-        <p class="popup-ttl">어떤 기능들이<br>있는지 알아봐요</p>
-        <p class="popup-sub">크루별 BJ 데이터를 다양한 방식으로 확인하세요</p>
-        <div class="popup-grid">
-          <div class="popup-feat balloon">
-            <div class="feat-top"><div class="feat-ico">🎈</div><span class="feat-nm">별풍선 순위</span></div>
-            <p class="feat-ds">크루별 월간 별풍선 현황 비교</p>
-          </div>
-          <div class="popup-feat viewer">
-            <div class="feat-top"><div class="feat-ico">👁️</div><span class="feat-nm">뷰어십 순위</span></div>
-            <p class="feat-ds">시청자 수 기준 크루 경쟁력 확인</p>
-          </div>
-          <div class="popup-feat battle">
-            <div class="feat-top"><div class="feat-ico">⚔️</div><span class="feat-nm">크루대결</span></div>
-            <p class="feat-ds">두 크루를 직접 맞대결 비교</p>
-          </div>
-          <div class="popup-feat contact">
-            <div class="feat-top"><div class="feat-ico">📩</div><span class="feat-nm">문의하기</span></div>
-            <p class="feat-ds">오류·수정 요청 바로 전송</p>
-          </div>
-          <div class="popup-feat full gold-card">
-            <div class="feat-top"><div class="feat-ico">👑</div><span class="feat-nm">크루 매출풍</span></div>
-            <p class="feat-ds">엑셀크루 수장 월간 별풍선</p>
-          </div>
-          <div class="popup-feat full fan-card">
-            <div class="feat-top"><div class="feat-ico">🏅</div><span class="feat-nm">이달의 후원자</span></div>
-            <p class="feat-ds">BJ 이름 클릭 시 TOP 10 후원자 확인 가능</p>
-          </div>
-        </div>
-        <div class="popup-auto">
-          <span class="popup-dot"></span>
-          <span>데이터 <strong>4시간마다 자동 갱신</strong></span>
-        </div>
-        <button class="popup-btn" @click="closePopup">확인했어요!</button>
-        <div class="popup-sep"></div>
-        <div class="popup-skip" @click="skipToday = !skipToday">
-          <div class="popup-chk" :class="{ on: skipToday }">✓</div>
-          <span class="popup-sk-lbl">오늘 하루 안 보기</span>
-        </div>
-      </div>
-    </div>
+    <WelcomePopup ref="welcomePopupRef" />
   </div>
 </template>
 
@@ -203,6 +160,7 @@ import CrewCard from './components/CrewCard.vue'
 import AdminModal from './components/AdminModal.vue'
 import CrewBattleModal from './components/CrewBattleModal.vue'
 import SyncModal from './components/SyncModal.vue'
+import WelcomePopup from './components/WelcomePopup.vue'
 import { api, getAdminToken, setAdminToken, clearAdminToken } from './composables/useApi.js'
 
 const now = new Date()
@@ -220,19 +178,10 @@ const showLoginModal = ref(false)
 const loginPassword = ref('')
 const loginError = ref('')
 const collecting = ref(false)
-const collectingPrev = ref(false)
 const updatingProfiles = ref(false)
 
 // 웰컴 팝업
-const showWelcomePopup = ref(false)
-const skipToday = ref(false)
-
-function closePopup() {
-  if (skipToday.value) {
-    localStorage.setItem('popup_hidden_until', new Date().toDateString())
-  }
-  showWelcomePopup.value = false
-}
+const welcomePopupRef = ref(null)
 
 const battleEnabled = ref(localStorage.getItem('battle_enabled') !== 'false')
 
@@ -271,6 +220,7 @@ async function triggerUpdateProfiles() {
   await api.updateProfiles()
   setTimeout(() => { loadStats(); updatingProfiles.value = false }, 15000)
 }
+
 const lastCollected = ref(null)
 const isDark = ref(true)
 
@@ -283,10 +233,11 @@ function toggleTheme() {
 const maxBalloons = computed(() => {
   let max = 0
   for (const crew of stats.value)
-    for (const m of crew.members)
-      if (m.balloons > max) max = m.balloons
+    for (const member of crew.members)
+      if (member.balloons > max) max = member.balloons
   return max
 })
+
 const activeGroup = ref('excel')
 const excelStats = ref([])
 const boraStats = ref([])
@@ -295,7 +246,9 @@ const excelCrewCount = computed(() => excelStats.value.length)
 const excelMemberCount = computed(() => excelStats.value.reduce((s, c) => s + c.members.length, 0))
 const boraCrewCount = computed(() => boraStats.value.length)
 const boraMemberCount = computed(() => boraStats.value.reduce((s, c) => s + c.members.length, 0))
+
 function setGroup(g) { activeGroup.value = g; loadStats() }
+
 async function loadStats() {
   loading.value = true
   error.value = ''
@@ -327,6 +280,7 @@ function prevMonth() {
   else month.value--
   loadStats()
 }
+
 function nextMonth() {
   if (!canGoNext.value) return
   if (month.value === 12) { month.value = 1; year.value++ }
@@ -373,13 +327,10 @@ onMounted(async () => {
 
   if (getAdminToken()) isAdmin.value = true
 
-  const hiddenUntil = localStorage.getItem('popup_hidden_until')
-  if (hiddenUntil !== new Date().toDateString()) {
-    showWelcomePopup.value = true
-  }
+  welcomePopupRef.value?.open()
 
   loadStats()
-  setInterval(loadStats, 8 * 60 * 60 * 1000)
+  setInterval(loadStats, 1 * 60 * 60 * 1000)
 })
 </script>
 
@@ -523,91 +474,6 @@ onMounted(async () => {
   align-content: start; justify-content: center;
 }
 
-/* 웰컴 팝업 */
-.popup-overlay {
-  position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.65);
-  display: flex; align-items: flex-start; justify-content: center;
-  padding-top: 60px; backdrop-filter: blur(6px); overflow-y: auto;
-}
-.popup-box {
-  border-radius: 22px; width: 480px; padding: 28px 26px 22px;
-  position: relative; display: flex; flex-direction: column;
-  background: var(--bg3); border: 0.5px solid var(--border);
-  box-shadow: 0 24px 60px rgba(0,0,0,0.5); margin-bottom: 40px;
-}
-.popup-x {
-  position: absolute; top: 14px; right: 14px;
-  width: 26px; height: 26px; border-radius: 50%; border: none;
-  font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-  background: var(--btn-ghost-bg); color: var(--text3); font-family: inherit;
-}
-.popup-pill {
-  display: inline-flex; align-items: center; font-size: 10px; font-weight: 500;
-  padding: 3px 10px; border-radius: 999px; margin-bottom: 10px;
-  background: var(--bg4); color: var(--text2); border: 0.5px solid var(--border);
-}
-.popup-ttl { font-size: 18px; font-weight: 500; line-height: 1.35; margin-bottom: 5px; color: var(--text); }
-.popup-sub {
-  font-size: 12px; line-height: 1.5; color: var(--text3);
-  padding-bottom: 14px; margin-bottom: 14px; border-bottom: 0.5px solid var(--border);
-}
-.popup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-.popup-feat { border-radius: 12px; padding: 12px 11px 10px; background: var(--bg4); border: 0.5px solid var(--border); }
-.popup-ico { font-size: 19px; display: block; margin-bottom: 6px; line-height: 1; }
-.popup-nm { font-size: 12px; font-weight: 500; margin-bottom: 2px; color: var(--text); }
-.popup-ds { font-size: 10px; line-height: 1.5; color: var(--text3); }
-.popup-auto {
-  display: flex; align-items: center; gap: 8px; border-radius: 10px; padding: 9px 12px; margin-bottom: 12px;
-  font-size: 11px; background: var(--bg4); border: 0.5px solid var(--border); color: var(--text3);
-}
-.popup-dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
-.popup-auto strong { color: var(--text); font-weight: 500; }
-[data-theme="light"] .popup-auto strong { color: #0d6b52; }
-.popup-btn {
-  width: 100%; padding: 12px; border-radius: 12px; border: none; font-size: 13px; font-weight: 700;
-  cursor: pointer; font-family: inherit; margin-bottom: 10px; background: #a09af5; color: #fff; transition: opacity .15s;
-}
-[data-theme="light"] .popup-btn { background: #534AB7; }
-.popup-btn:hover { opacity: .88; }
-.popup-sep { height: 0.5px; background: var(--border); margin-bottom: 10px; }
-.popup-skip { display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; user-select: none; }
-.popup-chk {
-  width: 15px; height: 15px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 700; color: transparent; border: 1.5px solid var(--text3); transition: all .15s;
-}
-.popup-chk.on { background: #7c74e8; border-color: #7c74e8; color: #fff; }
-.popup-sk-lbl { font-size: 11px; font-weight: 500; color: var(--text2); }
-
-@media (max-width: 600px) {
-  .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
-  .pc-only { display: none !important; }
-  .mode-tabs { gap: 6px; padding: 12px 10px 0; }
-  .mode-tab { padding: 7px 14px; font-size: 12px; }
-  .contact-btn { position: static; transform: none; padding: 7px 12px; font-size: 12px; }
-  .contact-btn:hover { transform: translateY(-2px); }
-  .contact-hint { display: none; }
-  .popup-box { width: 90vw; padding: 20px 18px 18px; }
-  .popup-overlay { padding-top: 20px; }
-}
-.feat-top { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; }
-.feat-ico { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
-.feat-nm { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; }
-.feat-ds { font-size: 10px; line-height: 1.6; color: var(--text2); word-break: keep-all; }
-.balloon .feat-ico { background: rgba(255,77,125,0.15); }
-.viewer .feat-ico { background: rgba(74,158,255,0.15); }
-.battle .feat-ico { background: rgba(107,95,255,0.15); }
-.contact .feat-ico { background: rgba(74,201,158,0.15); }
-.full { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; padding: 11px 14px; gap: 12px; }
-.full .feat-top { margin-bottom: 0; flex-shrink: 0; }
-.full .feat-ds { text-align: right; font-size: 10px; }
-.gold-card { background: rgba(255,196,0,0.07); border-color: rgba(255,196,0,0.2); }
-.gold-card .feat-nm { color: #c9960a; }
-[data-theme="dark"] .gold-card .feat-nm { color: #f5c842; }
-.gold-card .feat-ico { background: rgba(255,196,0,0.12); }
-.fan-card { background: rgba(74,158,255,0.07); border-color: rgba(74,158,255,0.2); }
-.fan-card .feat-nm { color: #1a6fb5; }
-[data-theme="dark"] .fan-card .feat-nm { color: #60b4ff; }
-.fan-card .feat-ico { background: rgba(74,158,255,0.12); }
 /* ── 크루 그룹 탭 ─────────────────────────── */
 .group-tabs-wrap {
   display: flex; justify-content: center;
@@ -679,6 +545,13 @@ onMounted(async () => {
 .pip { display: none; }
 
 @media (max-width: 600px) {
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
+  .pc-only { display: none !important; }
+  .mode-tabs { gap: 6px; padding: 12px 10px 0; }
+  .mode-tab { padding: 7px 14px; font-size: 12px; }
+  .contact-btn { position: static; transform: none; padding: 7px 12px; font-size: 12px; }
+  .contact-btn:hover { transform: translateY(-2px); }
+  .contact-hint { display: none; }
   .group-tabs-wrap { padding: 10px 10px 0; }
   .group-tab { font-size: 13px; padding: 10px 12px; gap: 8px; }
   .tab-name { font-size: 13px; }
