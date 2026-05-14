@@ -323,6 +323,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { api } from '../composables/useApi.js'
 
 const props = defineProps({ activeGroup: { type: String, default: 'excel' } })
+const emit = defineEmits(['close', 'updated', 'battle-toggle'])
 const adminGroup = ref(props.activeGroup)
 watch(adminGroup, () => load())
 
@@ -460,7 +461,7 @@ async function addCrew() {
   adding.value = true
   try {
     await api.createCrew({ ...newCrew.value })
-    newCrew.value = { name: '', color: nextAutoColor(), sort_order: 0, logo_url: '' }
+   newCrew.value = { name: '', color: nextAutoColor(), sort_order: 0, logo_url: '', group_key: adminGroup.value }
     await load(); emit('updated')
   } catch(e) { alert(e.message) }
   adding.value = false
