@@ -15,18 +15,24 @@ app.use(compression())
 app.use(cors())
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
-const CACHE_TTL = 1 * 60 * 60 * 1000
+
+// 🔥 캐시 시간 4시간으로 변경 (비용 절감)
+const CACHE_TTL = 4 * 60 * 60 * 1000
 const cache = new Map()
 function apiCache(req, res, next) {
   if (req.headers['x-admin-token']) return next()
   const key = req.originalUrl
   const cached = cache.get(key)
   if (cached && Date.now() - cached.time < CACHE_TTL) {
+    // 캐시 히트시에도 브라우저 캐시 헤더 추가
+    res.set('Cache-Control', 'public, max-age=14400')
     return res.json(cached.data)
   }
   const originalJson = res.json.bind(res)
   res.json = (data) => {
     cache.set(key, { data, time: Date.now() })
+    // 🔥 브라우저 캐시 4시간 (Egress 대폭 절감!)
+    res.set('Cache-Control', 'public, max-age=14400')
     return originalJson(data)
   }
   next()
@@ -62,8 +68,10 @@ app.listen(PORT, () => {
   console.log('서버 실행중: http://localhost:' + PORT)
   fixBase64Profiles()
 })
-cron.schedule('0 * * * *', async () => {
-  console.log('[cron] 1시간 자동 수집 시작')
+
+// 🔥 Cron 4시간마다로 변경 (1시간 → 4시간, 외부 fetch 75% 감소)
+cron.schedule('0 */4 * * *', async () => {
+  console.log('[cron] 4시간 자동 수집 시작')
   await collectAll().catch(console.error)
   clearApiCache()
 })
