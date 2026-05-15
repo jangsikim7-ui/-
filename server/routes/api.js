@@ -856,5 +856,43 @@ export async function autoImportNaksoo() {
     console.log('[autoImport] yxlinfo 동기화 완료')
   } catch(e) { console.warn('[autoImport] 실패:', e.message) }
 }
-
+// 🧹 base64 청소 (확인 후 삭제)
+router.post('/clean-base64', adminOnly, (req, res) => {
+  function soopCdnUrlLocal(soopId) {
+    const prefix = soopId.slice(0, 2).toLowerCase()
+    return `https://profile.img.sooplive.co.kr/LOGO/${prefix}/${soopId}/${soopId}.jpg`
+  }
+  
+  const members = db.prepare(`
+    SELECT id, soop_id, name FROM members 
+    WHERE profile_img LIKE 'data:%'
+  `).all()
+  
+  let cleaned = 0
+  for (const m of members) {
+    const newUrl = soopCdnUrlLocal(m.soop_id)
+    db.prepare('UPDATE members SET profile_img = ? WHERE id = ?').run(newUrl, m.id)
+    cleaned++
+  }
+  
+  res.json({ 청소완료: cleaned, 메시지: `${cleaned}명의 base64 → URL로 변경됨` })
+})
+// 🔍 base64 확인용 (확인 후 삭제)
+router.get('/check-base64', (req, res) => {
+  const totalSize = db.prepare(`
+    SELECT 
+      COUNT(*) as total_members,
+      SUM(length(profile_img)) as total_bytes,
+      SUM(CASE WHEN profile_img LIKE 'data:%' THEN 1 ELSE 0 END) as base64_count,
+      SUM(CASE WHEN profile_img LIKE 'data:%' THEN length(profile_img) ELSE 0 END) as base64_bytes
+    FROM members
+  `).get()
+  
+  res.json({
+    전체_멤버: totalSize.total_members,
+    전체_프사_용량_KB: Math.round((totalSize.total_bytes || 0) / 1024),
+    base64로_저장된_멤버: totalSize.base64_count,
+    base64_총_용량_KB: Math.round((totalSize.base64_bytes || 0) / 1024),
+  })
+})
 export default router
