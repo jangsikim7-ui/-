@@ -3,7 +3,7 @@
     <header class="header">
       <div class="hl">
         <div class="logo">⚡ 엑셀크루 시너지표</div>
-        <div class="source">출처: poong.today · 1시간마다 자동 갱신</div>
+        <div class="source">출처: poong.today · 4시간마다 자동 갱신</div>
       </div>
 
       <div class="hc">
@@ -155,7 +155,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CrewCard from './components/CrewCard.vue'
 import AdminModal from './components/AdminModal.vue'
 import CrewBattleModal from './components/CrewBattleModal.vue'
@@ -249,22 +249,46 @@ const boraMemberCount = computed(() => boraStats.value.reduce((s, c) => s + c.me
 
 function setGroup(g) { activeGroup.value = g; loadStats() }
 
+// 🔥 최적화: 메인 그룹만 호출, 다른 그룹은 처음 한 번만
 async function loadStats() {
   loading.value = true
   error.value = ''
   try {
-    const [mainData, excelData, boraData] = await Promise.all([
-      mode.value === 'viewer'
-        ? api.getViewerStats(year.value, month.value, activeGroup.value)
-        : api.getStats(year.value, month.value, activeGroup.value),
-      api.getStats(year.value, month.value, 'excel'),
-      api.getStats(year.value, month.value, 'bora'),
-    ])
+    // 1) 메인 데이터 호출 (현재 보고 있는 그룹 + 모드)
+    const mainData = await (mode.value === 'viewer'
+      ? api.getViewerStats(year.value, month.value, activeGroup.value)
+      : api.getStats(year.value, month.value, activeGroup.value))
     stats.value = mainData.crews
-    excelStats.value = excelData.crews
-    boraStats.value = boraData.crews
-    const lc = await api.lastCollected()
-    lastCollected.value = lc.last_collected
+
+    // 2) 메인 데이터는 별풍선 모드면 그대로 캐시용으로 저장
+    if (mode.value === 'balloon') {
+      if (activeGroup.value === 'excel') {
+        excelStats.value = mainData.crews
+      } else {
+        boraStats.value = mainData.crews
+      }
+    }
+
+    // 3) 다른 그룹 데이터는 처음 한 번만 받음 (탭 카운트 표시용)
+    if (activeGroup.value === 'excel' && boraStats.value.length === 0) {
+      try {
+        const boraData = await api.getStats(year.value, month.value, 'bora')
+        boraStats.value = boraData.crews
+      } catch(e) { /* 무시 */ }
+    } else if (activeGroup.value === 'bora' && excelStats.value.length === 0) {
+      try {
+        const excelData = await api.getStats(year.value, month.value, 'excel')
+        excelStats.value = excelData.crews
+      } catch(e) { /* 무시 */ }
+    }
+
+    // 4) lastCollected는 자주 안 받아도 됨 (페이지 첫 로드시만)
+    if (!lastCollected.value) {
+      try {
+        const lc = await api.lastCollected()
+        lastCollected.value = lc.last_collected
+      } catch(e) { /* 무시 */ }
+    }
   } catch(e) { error.value = '로드 실패: ' + e.message }
   loading.value = false
 }
@@ -278,6 +302,9 @@ function prevMonth() {
   if (!canGoPrev.value) return
   if (month.value === 1) { month.value = 12; year.value-- }
   else month.value--
+  // 월 바뀌면 캐시 비우기 (다른 월 데이터 필요)
+  excelStats.value = []
+  boraStats.value = []
   loadStats()
 }
 
@@ -285,6 +312,9 @@ function nextMonth() {
   if (!canGoNext.value) return
   if (month.value === 12) { month.value = 1; year.value++ }
   else month.value++
+  // 월 바뀌면 캐시 비우기 (다른 월 데이터 필요)
+  excelStats.value = []
+  boraStats.value = []
   loadStats()
 }
 
@@ -320,6 +350,26 @@ function formatTime(dt) {
   return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
+// 🔥 자동 새로고침 + 페이지 가시성 체크 (탭이 백그라운드면 안 함)
+let autoRefreshTimer = null
+
+function startAutoRefresh() {
+  // 4시간마다 자동 새로고침 (1시간 → 4시간)
+  autoRefreshTimer = setInterval(() => {
+    // 페이지가 보이고 있을 때만 새로고침 (백그라운드 탭이면 스킵)
+    if (!document.hidden) {
+      loadStats()
+    }
+  }, 4 * 60 * 60 * 1000)
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer)
+    autoRefreshTimer = null
+  }
+}
+
 onMounted(async () => {
   const saved = localStorage.getItem('theme') || 'dark'
   isDark.value = saved === 'dark'
@@ -330,7 +380,11 @@ onMounted(async () => {
   welcomePopupRef.value?.open()
 
   loadStats()
-  setInterval(loadStats, 1 * 60 * 60 * 1000)
+  startAutoRefresh()
+})
+
+onUnmounted(() => {
+  stopAutoRefresh()
 })
 </script>
 
