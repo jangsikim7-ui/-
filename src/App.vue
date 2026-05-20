@@ -77,7 +77,7 @@
         📩 문의하기
       </a>
 
-      <button class="capture-btn-tab" @click="captureScreen" :disabled="capturing">
+      <button v-if="isAdmin" class="capture-btn-tab" @click="captureScreen" :disabled="capturing">
         {{ capturing ? '⏳ 캡처중...' : '📷 전체화면캡처' }}
       </button>
     </div>
@@ -395,12 +395,21 @@ async function captureScreen() {
       backgroundColor: bgColor,
       useCORS: true,
       allowTaint: false,
-      scrollX: 0,
-      scrollY: 0,
+      scrollX: -window.scrollX,
+      scrollY: -window.scrollY,
+      scale: 2,
       width: target.scrollWidth,
       height: target.scrollHeight,
-      windowWidth: target.scrollWidth,
-      windowHeight: target.scrollHeight,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+      onclone: (doc) => {
+        // 텍스트 잘림 방지
+        doc.querySelectorAll('*').forEach(el => {
+          const s = el.style
+          if (s.overflow === 'hidden') s.overflow = 'visible'
+          s.whiteSpace = 'nowrap'
+        })
+      }
     })
 
     // 4) 원본 src 복원
