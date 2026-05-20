@@ -163,7 +163,8 @@
 </template>
 
 <script setup>
-import domtoimage from 'dom-to-image-more'
+
+import html2canvas from 'html2canvas'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CrewCard from './components/CrewCard.vue'
 import AdminModal from './components/AdminModal.vue'
@@ -389,24 +390,23 @@ async function captureScreen() {
       new Promise(r => setTimeout(r, 2000))
     ])
 
-    // 3) 캡처 (외부 CSS 건너뜀 → 속도 대폭 개선)
-    const dataUrl = await domtoimage.toPng(target, {
-      bgcolor: bgColor,
+    // 3) html2canvas로 캡처 (빠름)
+    const canvas = await html2canvas(target, {
+      backgroundColor: bgColor,
+      useCORS: true,
+      allowTaint: false,
+      scrollX: 0,
+      scrollY: 0,
       width: target.scrollWidth,
       height: target.scrollHeight,
-      cacheBust: false,
-      filter: (node) => {
-        if (node.tagName === 'LINK' && node.href && (
-          node.href.includes('googleapis.com') ||
-          node.href.includes('jsdelivr.net')
-        )) return false
-        return true
-      }
+      windowWidth: target.scrollWidth,
+      windowHeight: target.scrollHeight,
     })
 
     // 4) 원본 src 복원
     imgs.forEach((img, i) => { img.src = origSrcs[i] })
 
+    const dataUrl = canvas.toDataURL('image/png')
     const d = new Date()
     const filename = `synergy-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}.png`
 
