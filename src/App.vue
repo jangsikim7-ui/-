@@ -381,21 +381,27 @@ async function captureScreen() {
       }
     })
 
-    // 2) 이미지 로딩 대기
-    // 최대 2초만 대기
-await Promise.race([
-  Promise.all([...imgs].map(img =>
-    img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r })
-  )),
-  new Promise(r => setTimeout(r, 2000))
-])
+    // 2) 이미지 로딩 대기 (최대 2초)
+    await Promise.race([
+      Promise.all([...imgs].map(img =>
+        img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r })
+      )),
+      new Promise(r => setTimeout(r, 2000))
+    ])
 
-    // 3) 캡처
+    // 3) 캡처 (외부 CSS 건너뜀 → 속도 대폭 개선)
     const dataUrl = await domtoimage.toPng(target, {
       bgcolor: bgColor,
       width: target.scrollWidth,
       height: target.scrollHeight,
       cacheBust: false,
+      filter: (node) => {
+        if (node.tagName === 'LINK' && node.href && (
+          node.href.includes('googleapis.com') ||
+          node.href.includes('jsdelivr.net')
+        )) return false
+        return true
+      }
     })
 
     // 4) 원본 src 복원
@@ -420,7 +426,7 @@ await Promise.race([
       showToast('💾 파일로 저장됐어요! (' + filename + ')', 'warn')
     }
   } catch(e) {
-    showToast('❌ 캡처 실패: ' + (e?.message || ''), 'error')
+    showToast('❌ 캡처 실패: ' + (e?.message || ')', 'error')
   }
   capturing.value = false
 }
