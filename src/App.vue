@@ -382,9 +382,13 @@ async function captureScreen() {
     })
 
     // 2) 이미지 로딩 대기
-    await Promise.all([...imgs].map(img =>
-      img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r })
-    ))
+    // 최대 2초만 대기
+await Promise.race([
+  Promise.all([...imgs].map(img =>
+    img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r })
+  )),
+  new Promise(r => setTimeout(r, 2000))
+])
 
     // 3) 캡처
     const dataUrl = await domtoimage.toPng(target, {
