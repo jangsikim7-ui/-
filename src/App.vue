@@ -76,6 +76,11 @@
       >
         📩 문의하기
       </a>
+
+      <!-- ✅ 추가: 캡처 버튼 -->
+      <button class="capture-btn-tab" @click="captureScreen" :disabled="capturing">
+        {{ capturing ? '⏳' : '📷 전체화면캡처' }}
+      </button>
     </div>
 
     <!-- 범례 -->
@@ -96,6 +101,9 @@
       <span class="contact-hint">데이터 수정 및 오류 제보는 문의하기 눌러주세요</span>
     </div>
 
+    <!-- ✅ 추가: 캡처 토스트 -->
+    <div v-if="captureToast" class="capture-toast" :class="captureToastType">{{ captureToast }}</div>
+
     <!-- 로딩 -->
     <div v-if="loading" class="state">
       <div class="spin"/><span>불러오는 중...</span>
@@ -112,20 +120,22 @@
       <button class="btn-admin" style="margin-top:14px" @click="showAdmin = true">⚙️ 관리 열기</button>
     </div>
 
-    <!-- 크루 그리드 -->
-    <main v-else class="grid">
-      <CrewCard
-        v-for="(crew, i) in stats"
-        :key="crew.id"
-        :crew="crew"
-        :maxBalloons="maxBalloons"
-        :rank="i + 1"
-        :isDark="isDark"
-        :mode="mode"
-        :year="year"
-        :month="month"
-      />
-    </main>
+    <!-- ✅ 수정: 크루 그리드를 captureTarget ref로 감쌈 -->
+    <div ref="captureTarget">
+      <main v-if="!loading && stats.length > 0" class="grid">
+        <CrewCard
+          v-for="(crew, i) in stats"
+          :key="crew.id"
+          :crew="crew"
+          :maxBalloons="maxBalloons"
+          :rank="i + 1"
+          :isDark="isDark"
+          :mode="mode"
+          :year="year"
+          :month="month"
+        />
+      </main>
+    </div>
 
     <!-- 관리자 로그인 모달 -->
     <div v-if="showLoginModal" class="login-overlay" @click.self="showLoginModal=false">
@@ -155,6 +165,8 @@
 </template>
 
 <script setup>
+// ✅ 추가: dom-to-image-more import
+import domtoimage from 'dom-to-image-more'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CrewCard from './components/CrewCard.vue'
 import AdminModal from './components/AdminModal.vue'
@@ -179,6 +191,12 @@ const loginPassword = ref('')
 const loginError = ref('')
 const collecting = ref(false)
 const updatingProfiles = ref(false)
+
+// ✅ 추가: 캡처 관련 변수
+const capturing = ref(false)
+const captureToast = ref('')
+const captureToastType = ref('success')
+const captureTarget = ref(null)
 
 // 웰컴 팝업
 const welcomePopupRef = ref(null)
@@ -302,7 +320,6 @@ function prevMonth() {
   if (!canGoPrev.value) return
   if (month.value === 1) { month.value = 12; year.value-- }
   else month.value--
-  // 월 바뀌면 캐시 비우기 (다른 월 데이터 필요)
   excelStats.value = []
   boraStats.value = []
   loadStats()
@@ -312,7 +329,6 @@ function nextMonth() {
   if (!canGoNext.value) return
   if (month.value === 12) { month.value = 1; year.value++ }
   else month.value++
-  // 월 바뀌면 캐시 비우기 (다른 월 데이터 필요)
   excelStats.value = []
   boraStats.value = []
   loadStats()
@@ -350,13 +366,51 @@ function formatTime(dt) {
   return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
+// ✅ 추가: 토스트 함수
+function showToast(msg, type = 'success') {
+  captureToast.value = msg
+  captureToastType.value = type
+  setTimeout(() => { captureToast.value = '' }, 3000)
+}
+
+// ✅ 추가: 캡처 함수
+async function captureScreen() {
+  if (capturing.value) return
+  capturing.value = true
+  try {
+    const target = captureTarget.value || document.querySelector('.app')
+    const bgColor = isDark.value ? '#0d1117' : '#f8fafc'
+    const dataUrl = await domtoimage.toPng(target, {
+      bgcolor: bgColor,
+      width: target.scrollWidth,
+      height: target.scrollHeight,
+      cacheBust: true,
+    })
+    const d = new Date()
+    const filename = `synergy-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}.png`
+    const a = document.createElement('a')
+    a.href = dataUrl
+    a.download = filename
+    a.click()
+    try {
+      const res = await fetch(dataUrl)
+      const blob = await res.blob()
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+      showToast('📋 클립보드 복사 + 파일 저장됐어요!')
+    } catch {
+      showToast('💾 파일로 저장됐어요! (' + filename + ')', 'warn')
+    }
+  } catch(e) {
+    showToast('❌ 캡처 실패: ' + (e?.message || ''), 'error')
+  }
+  capturing.value = false
+}
+
 // 🔥 자동 새로고침 + 페이지 가시성 체크 (탭이 백그라운드면 안 함)
 let autoRefreshTimer = null
 
 function startAutoRefresh() {
-  // 4시간마다 자동 새로고침 (1시간 → 4시간)
   autoRefreshTimer = setInterval(() => {
-    // 페이지가 보이고 있을 때만 새로고침 (백그라운드 탭이면 스킵)
     if (!document.hidden) {
       loadStats()
     }
@@ -598,6 +652,31 @@ onUnmounted(() => {
 
 .pip { display: none; }
 
+/* ✅ 추가: 캡처 버튼 스타일 */
+.capture-btn-tab {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg, #4cd964, #2ecc71);
+  color: #fff; padding: 8px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 700; border: none; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(76,217,100,0.3);
+  white-space: nowrap; transition: all 0.2s; font-family: inherit;
+}
+.capture-btn-tab:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(76,217,100,0.5); }
+.capture-btn-tab:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ✅ 추가: 토스트 스타일 */
+.capture-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 700;
+  z-index: 9999; pointer-events: none;
+}
+.capture-toast.success { background: #1e3a1e; color: #4cd964; border: 1px solid #4cd96440; }
+.capture-toast.warn { background: #3a2e1e; color: #f5a623; border: 1px solid #f5a62340; }
+.capture-toast.error { background: #3a1e1e; color: #ff6b6b; border: 1px solid #ff6b6b40; }
+[data-theme="light"] .capture-toast.success { background: #e8f5e9; color: #1e7e34; border: 1px solid #1e7e3440; }
+[data-theme="light"] .capture-toast.warn { background: #fff8e1; color: #c8860f; border: 1px solid #c8860f40; }
+[data-theme="light"] .capture-toast.error { background: #fdecea; color: #c62828; border: 1px solid #c6282840; }
+
 @media (max-width: 600px) {
   .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
   .pc-only { display: none !important; }
@@ -609,5 +688,6 @@ onUnmounted(() => {
   .group-tabs-wrap { padding: 10px 10px 0; }
   .group-tab { font-size: 13px; padding: 10px 12px; gap: 8px; }
   .tab-name { font-size: 13px; }
+  .capture-btn-tab { padding: 7px 10px; font-size: 12px; }
 }
 </style>
