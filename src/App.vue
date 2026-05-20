@@ -77,9 +77,8 @@
         📩 문의하기
       </a>
 
-      <!-- ✅ 추가: 캡처 버튼 -->
       <button class="capture-btn-tab" @click="captureScreen" :disabled="capturing">
-        {{ capturing ? '⏳' : '📷 전체화면캡처' }}
+        {{ capturing ? '⏳ 캡처중...' : '📷 전체화면캡처' }}
       </button>
     </div>
 
@@ -101,7 +100,7 @@
       <span class="contact-hint">데이터 수정 및 오류 제보는 문의하기 눌러주세요</span>
     </div>
 
-    <!-- ✅ 추가: 캡처 토스트 -->
+    <!-- 캡처 토스트 (상단 고정) -->
     <div v-if="captureToast" class="capture-toast" :class="captureToastType">{{ captureToast }}</div>
 
     <!-- 로딩 -->
@@ -120,7 +119,6 @@
       <button class="btn-admin" style="margin-top:14px" @click="showAdmin = true">⚙️ 관리 열기</button>
     </div>
 
-    <!-- ✅ 수정: 크루 그리드를 captureTarget ref로 감쌈 -->
     <div ref="captureTarget">
       <main v-if="!loading && stats.length > 0" class="grid">
         <CrewCard
@@ -165,7 +163,6 @@
 </template>
 
 <script setup>
-// ✅ 추가: dom-to-image-more import
 import domtoimage from 'dom-to-image-more'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CrewCard from './components/CrewCard.vue'
@@ -174,6 +171,8 @@ import CrewBattleModal from './components/CrewBattleModal.vue'
 import SyncModal from './components/SyncModal.vue'
 import WelcomePopup from './components/WelcomePopup.vue'
 import { api, getAdminToken, setAdminToken, clearAdminToken } from './composables/useApi.js'
+
+const BASE = import.meta.env.VITE_API_URL || '/api'
 
 const now = new Date()
 const year = ref(now.getFullYear())
@@ -192,13 +191,11 @@ const loginError = ref('')
 const collecting = ref(false)
 const updatingProfiles = ref(false)
 
-// ✅ 추가: 캡처 관련 변수
 const capturing = ref(false)
 const captureToast = ref('')
 const captureToastType = ref('success')
 const captureTarget = ref(null)
 
-// 웰컴 팝업
 const welcomePopupRef = ref(null)
 
 const battleEnabled = ref(localStorage.getItem('battle_enabled') !== 'false')
@@ -267,18 +264,15 @@ const boraMemberCount = computed(() => boraStats.value.reduce((s, c) => s + c.me
 
 function setGroup(g) { activeGroup.value = g; loadStats() }
 
-// 🔥 최적화: 메인 그룹만 호출, 다른 그룹은 처음 한 번만
 async function loadStats() {
   loading.value = true
   error.value = ''
   try {
-    // 1) 메인 데이터 호출 (현재 보고 있는 그룹 + 모드)
     const mainData = await (mode.value === 'viewer'
       ? api.getViewerStats(year.value, month.value, activeGroup.value)
       : api.getStats(year.value, month.value, activeGroup.value))
     stats.value = mainData.crews
 
-    // 2) 메인 데이터는 별풍선 모드면 그대로 캐시용으로 저장
     if (mode.value === 'balloon') {
       if (activeGroup.value === 'excel') {
         excelStats.value = mainData.crews
@@ -287,7 +281,6 @@ async function loadStats() {
       }
     }
 
-    // 3) 다른 그룹 데이터는 처음 한 번만 받음 (탭 카운트 표시용)
     if (activeGroup.value === 'excel' && boraStats.value.length === 0) {
       try {
         const boraData = await api.getStats(year.value, month.value, 'bora')
@@ -300,7 +293,6 @@ async function loadStats() {
       } catch(e) { /* 무시 */ }
     }
 
-    // 4) lastCollected는 자주 안 받아도 됨 (페이지 첫 로드시만)
     if (!lastCollected.value) {
       try {
         const lc = await api.lastCollected()
@@ -366,35 +358,58 @@ function formatTime(dt) {
   return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
 }
 
-// ✅ 추가: 토스트 함수
 function showToast(msg, type = 'success') {
   captureToast.value = msg
   captureToastType.value = type
   setTimeout(() => { captureToast.value = '' }, 3000)
 }
 
-// ✅ 추가: 캡처 함수
 async function captureScreen() {
   if (capturing.value) return
   capturing.value = true
   try {
     const target = captureTarget.value || document.querySelector('.app')
     const bgColor = isDark.value ? '#0d1117' : '#f8fafc'
+
+    // 1) 캡처 전: 모든 img src를 프록시 URL로 교체
+    const imgs = target.querySelectorAll('img')
+    const origSrcs = []
+    imgs.forEach((img, i) => {
+      origSrcs[i] = img.src
+      if (img.src && !img.src.startsWith('data:')) {
+        img.src = `${BASE}/proxy-img?url=${encodeURIComponent(img.src)}`
+      }
+    })
+
+    // 2) 이미지 로딩 대기
+    await Promise.all([...imgs].map(img =>
+      img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r })
+    ))
+
+    // 3) 캡처
     const dataUrl = await domtoimage.toPng(target, {
       bgcolor: bgColor,
       width: target.scrollWidth,
       height: target.scrollHeight,
-      cacheBust: true,
+      cacheBust: false,
     })
+
+    // 4) 원본 src 복원
+    imgs.forEach((img, i) => { img.src = origSrcs[i] })
+
     const d = new Date()
     const filename = `synergy-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}.png`
+
+    // 5) 파일 저장
     const a = document.createElement('a')
     a.href = dataUrl
     a.download = filename
     a.click()
+
+    // 6) 클립보드 복사
     try {
-      const res = await fetch(dataUrl)
-      const blob = await res.blob()
+      const r = await fetch(dataUrl)
+      const blob = await r.blob()
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
       showToast('📋 클립보드 복사 + 파일 저장됐어요!')
     } catch {
@@ -406,7 +421,6 @@ async function captureScreen() {
   capturing.value = false
 }
 
-// 🔥 자동 새로고침 + 페이지 가시성 체크 (탭이 백그라운드면 안 함)
 let autoRefreshTimer = null
 
 function startAutoRefresh() {
@@ -652,7 +666,6 @@ onUnmounted(() => {
 
 .pip { display: none; }
 
-/* ✅ 추가: 캡처 버튼 스타일 */
 .capture-btn-tab {
   display: inline-flex; align-items: center; gap: 6px;
   background: linear-gradient(135deg, #4cd964, #2ecc71);
@@ -664,12 +677,14 @@ onUnmounted(() => {
 .capture-btn-tab:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(76,217,100,0.5); }
 .capture-btn-tab:disabled { opacity: 0.5; cursor: not-allowed; }
 
-/* ✅ 추가: 토스트 스타일 */
+/* 토스트 - 상단 고정 */
 .capture-toast {
-  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
   padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 700;
   z-index: 9999; pointer-events: none;
+  animation: toastIn 0.2s ease;
 }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
 .capture-toast.success { background: #1e3a1e; color: #4cd964; border: 1px solid #4cd96440; }
 .capture-toast.warn { background: #3a2e1e; color: #f5a623; border: 1px solid #f5a62340; }
 .capture-toast.error { background: #3a1e1e; color: #ff6b6b; border: 1px solid #ff6b6b40; }
