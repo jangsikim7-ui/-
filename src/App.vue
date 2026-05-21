@@ -435,7 +435,7 @@ async function captureScreen() {
       showToast('💾 파일로 저장됐어요! (' + filename + ')', 'warn')
     }
   } catch(e) {
-    showToast('❌ 캡처 실패: ' + (e?.message || ')', 'error')
+    showToast('❌ 캡처 실패: ' + (e?.message || ''), 'error')
   }
   capturing.value = false
 }
