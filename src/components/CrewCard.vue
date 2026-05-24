@@ -15,6 +15,9 @@
         <div class="avg-block">
           <span class="avg-label">{{ mode === "viewer" ? "평균 시청자" : "평균 별풍선" }}</span>
           <span class="avg-val">{{ fmt(crew.avg) }}</span>
+          <span v-if="crew.avg_member_count !== undefined && crew.avg_member_count < crew.members.length" class="avg-note">
+            {{ crew.avg_member_count }}명 기준
+          </span>
         </div>
       </div>
     </div>
@@ -54,7 +57,8 @@
           <div class="minfo">
             <div class="mname-row">
               <span class="mname">{{ m.name }}</span>
-              <span v-if="m.is_new" class="new-badge">NEW</span>
+              <span v-if="isNew(m)" class="new-badge">NEW</span>
+              <span v-if="m.balloons === 0" class="avg-exclude-badge">평균포함 X</span>
             </div>
           </div>
 
@@ -159,6 +163,14 @@ function tierColor(n) {
   }
   if (n>=1300000) return '#ff4d7d'; if (n>=1000000) return '#f5a623'; if (n>=700000) return '#4cd964'; if (n>=400000) return '#4a9eff'; return '#666680'
 }
+function isNew(m) {
+  if (!m.is_new) return false
+  if (!m.joined_at) return true
+  const joined = new Date(m.joined_at)
+  const now = new Date()
+  const diffDays = (now - joined) / (1000 * 60 * 60 * 24)
+  return diffDays <= 14
+}
 function onImgError(e, soopId) {
   const prefix = soopId.slice(0, 2).toLowerCase()
   const cdn = `https://profile.img.sooplive.co.kr/LOGO/${prefix}/${soopId}/${soopId}.jpg`
@@ -247,6 +259,8 @@ function onImgError(e, soopId) {
 .mname-row { display: flex; align-items: center; gap: 4px; }
 .mname { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .new-badge { font-size: 8px; font-weight: 800; color: #fff; background: #ff4d7d; padding: 1px 4px; border-radius: 4px; flex-shrink: 0; }
+.avg-exclude-badge { font-size: 8px; font-weight: 700; color: #888; background: rgba(128,128,128,0.15); padding: 1px 4px; border-radius: 4px; flex-shrink: 0; }
+.avg-note { font-size: 10px; color: var(--text3); font-weight: 500; margin-top: 1px; }
 .mright { display: flex; flex-direction: column; align-items: flex-end; gap: 0; flex-shrink: 0; }
 .mval { font-size: 13px; font-weight: 800; letter-spacing: -0.4px; line-height: 1; }
 .mdaily-badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 400; margin-top: 7px; letter-spacing: -0.2px; line-height: 1.4; color: #ff3b3b; }

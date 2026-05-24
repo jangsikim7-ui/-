@@ -25,6 +25,11 @@ try {
   db.exec('ALTER TABLE crews ADD COLUMN master_soop_id TEXT DEFAULT NULL')
   console.log('[db] crews.master_soop_id 컬럼 추가됨')
 } catch(e) { /* 이미 있으면 무시 */ }
+// 마이그레이션: joined_at 컬럼 추가 (신입 뱃지 2주 자동 처리용)
+try {
+  db.exec("ALTER TABLE members ADD COLUMN joined_at TEXT DEFAULT NULL")
+  console.log('[db] members.joined_at 컬럼 추가됨')
+} catch(e) { /* 이미 있으면 무시 */ }
 // 마이그레이션: 중복 데이터 제거
 try {
   db.exec(`
