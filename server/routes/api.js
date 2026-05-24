@@ -895,7 +895,4 @@ router.get('/check-base64', (req, res) => {
     base64_총_용량_KB: Math.round((totalSize.base64_bytes || 0) / 1024),
   })
 })
-router.get('/download-db', (req, res) => {
-  res.download('/app/data/data.db', 'data.db')
-})
 export default router
