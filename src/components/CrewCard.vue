@@ -15,9 +15,7 @@
         <div class="avg-block">
           <span class="avg-label">{{ mode === "viewer" ? "평균 시청자" : "평균 별풍선" }}</span>
           <span class="avg-val">{{ fmt(crew.avg) }}</span>
-          <span v-if="crew.avg_member_count !== undefined && crew.avg_member_count < crew.members.length" class="avg-note">
-            {{ crew.avg_member_count }}명 기준
-          </span>
+
         </div>
       </div>
     </div>
@@ -259,8 +257,18 @@ function onImgError(e, soopId) {
 .mname-row { display: flex; align-items: center; gap: 4px; }
 .mname { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .new-badge { font-size: 8px; font-weight: 800; color: #fff; background: #ff4d7d; padding: 1px 4px; border-radius: 4px; flex-shrink: 0; }
-.avg-exclude-badge { font-size: 8px; font-weight: 700; color: #888; background: rgba(128,128,128,0.15); padding: 1px 4px; border-radius: 4px; flex-shrink: 0; }
-.avg-note { font-size: 10px; color: var(--text3); font-weight: 500; margin-top: 1px; }
+.avg-exclude-badge {
+  font-size: 8px; font-weight: 800; color: #ff6b35;
+  background: rgba(255, 107, 53, 0.15);
+  border: 1px solid rgba(255, 107, 53, 0.35);
+  padding: 1px 5px; border-radius: 4px; flex-shrink: 0;
+  letter-spacing: 0.2px;
+}
+[data-theme="light"] .avg-exclude-badge {
+  color: #d44000;
+  background: rgba(212, 64, 0, 0.1);
+  border-color: rgba(212, 64, 0, 0.3);
+}
 .mright { display: flex; flex-direction: column; align-items: flex-end; gap: 0; flex-shrink: 0; }
 .mval { font-size: 13px; font-weight: 800; letter-spacing: -0.4px; line-height: 1; }
 .mdaily-badge { display: inline-flex; align-items: center; font-size: 10px; font-weight: 400; margin-top: 7px; letter-spacing: -0.2px; line-height: 1.4; color: #ff3b3b; }
