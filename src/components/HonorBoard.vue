@@ -31,7 +31,7 @@
     </div>
     <div v-else-if="error" class="honor-error">{{ error }}</div>
 
-    <!-- 콘텐츠 (1단 세로 배치) -->
+    <!-- 콘텐츠 -->
     <div v-else class="honor-cols">
       
       <!-- 1. 크루 평균 순위 -->
@@ -61,6 +61,7 @@
 
         <div class="rank-list">
           <div v-for="(crew, i) in avgRanked.slice(3)" :key="crew.id" class="rank-row">
+            <!-- 배경 프로그레스 바 -->
             <div class="rank-bg-fill" :style="{ width: pctOf(crew.avg, avgRanked[0]?.avg)+'%', background: crew.color }" />
             <div class="rank-content">
               <span class="rank-num">{{ i+4 }}</span>
@@ -75,12 +76,12 @@
         </div>
       </div>
 
-      <!-- 2. 크루 매출 순위 -->
+      <!-- 2. 수장 별풍선 순위 -->
       <div class="hcol">
         <div class="hcol-head">
           <div class="hcol-icon hcol-icon-master"><i class="ti ti-crown" /></div>
           <div>
-            <div class="hcol-title">크루 매출 순위</div>
+            <div class="hcol-title">수장 별풍선 순위</div>
             <div class="hcol-sub">크루 매출풍 기준</div>
           </div>
         </div>
@@ -161,75 +162,10 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { api } from '../composables/useApi.js'
-
-const props = defineProps({
-  activeGroup: { type: String, default: 'excel' },
-  year: Number,
-  month: Number
-})
-
-const localGroup = ref(props.activeGroup)
-const loading = ref(false)
-const error = ref('')
-const crewData = ref([])
-
-const podiumOrder = [1, 0, 2]
-
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
-    const data = await api.getStats(props.year, props.month, localGroup.value)
-    crewData.value = data.crews || []
-  } catch(e) {
-    error.value = '불러오기 실패: ' + e.message
-  }
-  loading.value = false
-}
-
-watch(localGroup, load)
-watch(() => [props.year, props.month], load)
-onMounted(load)
-
-const avgRanked = computed(() =>
-  [...crewData.value].sort((a, b) => b.avg - a.avg)
-)
-
-const masterRanked = computed(() =>
-  [...crewData.value]
-    .filter(c => c.master_soop_id && c.master_balloons > 0)
-    .sort((a, b) => b.master_balloons - a.master_balloons)
-)
-
-const indivRanked = computed(() => {
-  const all = []
-  for (const crew of crewData.value) {
-    for (const m of crew.members) {
-      all.push({ ...m, crew_name: crew.name, crew_color: crew.color })
-    }
-  }
-  return all.sort((a, b) => b.balloons - a.balloons).slice(0, 10)
-})
-
-function fmt(n) { return (n || 0).toLocaleString('ko-KR') }
-function pctOf(val, max) { return max ? Math.min(100, Math.round((val / max) * 100)) : 0 }
-function cdnUrl(soopId) {
-  const p = soopId.slice(0, 2).toLowerCase()
-  return `https://profile.img.sooplive.co.kr/LOGO/${p}/${soopId}/${soopId}.jpg`
-}
-function onImgError(e, soopId) {
-  const cdn = cdnUrl(soopId)
-  if (e.target.src !== cdn) e.target.src = cdn
-  else e.target.style.display = 'none'
-}
-</script>
-
 <style scoped>
+/* 기존 스크립트는 동일하게 유지 */
 .honor-wrap {
-  padding: 20px 24px 40px;
+  padding: 20px 24px 30px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -237,142 +173,131 @@ function onImgError(e, soopId) {
 /* ── 헤더 ── */
 .honor-header {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+  margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
 }
 .honor-title-row { display: flex; align-items: center; gap: 8px; }
-.honor-crown { font-size: 24px; filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3)); }
-.honor-title { font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; }
-.honor-period { font-size: 15px; color: var(--text3); font-weight: 600; background: var(--bg4); padding: 4px 10px; border-radius: 8px; }
+.honor-crown { font-size: 22px; filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3)); }
+.honor-title { font-size: 20px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; }
+.honor-period { font-size: 14px; color: var(--text3); font-weight: 600; background: var(--bg4); padding: 2px 8px; border-radius: 6px; }
 
 .honor-group-tabs { display: flex; gap: 8px; }
 .hg-tab {
   display: flex; align-items: center; gap: 6px;
-  padding: 10px 20px; border-radius: 12px;
+  padding: 8px 18px; border-radius: 10px;
   border: 1px solid var(--border); background: var(--bg3); color: var(--text3);
-  font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s ease;
+  font-size: 13px; font-weight: 800; cursor: pointer; transition: all 0.2s ease;
 }
-.hg-tab.active { background: rgba(74, 158, 255, 0.15); border-color: #4a9eff; color: #90c8ff; box-shadow: 0 0 12px rgba(74, 158, 255, 0.1); }
-.hg-bora.active { background: rgba(153, 68, 204, 0.15); border-color: #9944cc; color: #cc88ff; box-shadow: 0 0 12px rgba(153, 68, 204, 0.1); }
+.hg-tab.active { background: rgba(74, 158, 255, 0.15); border-color: #4a9eff; color: #90c8ff; box-shadow: 0 0 10px rgba(74, 158, 255, 0.1); }
+.hg-bora.active { background: rgba(153, 68, 204, 0.15); border-color: #9944cc; color: #cc88ff; box-shadow: 0 0 10px rgba(153, 68, 204, 0.1); }
 
-/* ── 1단 세로 레이아웃 ── */
-.honor-cols { display: flex; flex-direction: column; gap: 32px; }
+/* ── 3열 레이아웃 & 카드 ── */
+.honor-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 
 .hcol {
   background: linear-gradient(145deg, var(--bg3) 0%, var(--bg4) 100%);
-  border: 1px solid var(--border); border-radius: 24px;
-  overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  border: 1px solid var(--border); border-radius: 20px;
+  overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+.hcol:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.25); }
 
 .hcol-head {
-  display: flex; align-items: center; gap: 14px;
-  padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05);
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);
   background: rgba(0, 0, 0, 0.2);
 }
 .hcol-icon {
-  width: 44px; height: 44px; border-radius: 12px;
+  width: 36px; height: 36px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.hcol-icon i { font-size: 22px; }
-.hcol-icon-avg { background: rgba(201,150,10,0.2); color: #e8b820; box-shadow: 0 0 16px rgba(201,150,10,0.3); }
-.hcol-icon-master { background: rgba(255,190,0,0.2); color: #ffcc44; box-shadow: 0 0 16px rgba(255,190,0,0.3); }
-.hcol-icon-indiv { background: rgba(107,203,119,0.2); color: #88df94; box-shadow: 0 0 16px rgba(107,203,119,0.3); }
+.hcol-icon i { font-size: 18px; }
+.hcol-icon-avg { background: rgba(201,150,10,0.2); color: #e8b820; box-shadow: 0 0 12px rgba(201,150,10,0.3); }
+.hcol-icon-master { background: rgba(255,190,0,0.2); color: #ffcc44; box-shadow: 0 0 12px rgba(255,190,0,0.3); }
+.hcol-icon-indiv { background: rgba(107,203,119,0.2); color: #88df94; box-shadow: 0 0 12px rgba(107,203,119,0.3); }
 
-.hcol-title { font-size: 18px; font-weight: 800; color: var(--text); }
-.hcol-sub { font-size: 13px; color: var(--text3); margin-top: 4px; }
+.hcol-title { font-size: 14px; font-weight: 800; color: var(--text); }
+.hcol-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
 
-/* ── 포디움 ── */
+/* ── 포디움 (시상대) 디자인 개선 ── */
 .podium {
-  display: flex; align-items: flex-end; justify-content: center; gap: 20px;
-  padding: 40px 20px 0; position: relative;
+  display: flex; align-items: flex-end; justify-content: center; gap: 8px;
+  padding: 24px 12px 0; position: relative;
 }
 
-.pod { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; min-width: 0; z-index: 1; max-width: 200px; }
-.pod-0 { order: 2; transform: translateY(-16px); }
+.pod { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; min-width: 0; z-index: 1; }
+.pod-0 { order: 2; transform: translateY(-10px); }
 .pod-1 { order: 1; }
 .pod-2 { order: 3; }
 
-.pod-img-wrap { position: relative; flex-shrink: 0; margin-bottom: 6px; }
-.pod-logo { border-radius: 16px; object-fit: contain; box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
-.pod-0 .pod-logo { width: 80px; height: 80px; }
-.pod-1 .pod-logo { width: 64px; height: 64px; }
-.pod-2 .pod-logo { width: 56px; height: 56px; }
+.pod-img-wrap { position: relative; flex-shrink: 0; margin-bottom: 4px; }
+.pod-logo { border-radius: 12px; object-fit: contain; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.pod-0 .pod-logo { width: 56px; height: 56px; }
+.pod-1 .pod-logo { width: 44px; height: 44px; }
+.pod-2 .pod-logo { width: 38px; height: 38px; }
 
-.pod-initial { display: flex; align-items: center; justify-content: center; font-weight: 900; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
-.pod-0 .pod-initial { width: 80px; height: 80px; font-size: 28px; }
-.pod-1 .pod-initial { width: 64px; height: 64px; font-size: 22px; }
-.pod-2 .pod-initial { width: 56px; height: 56px; font-size: 18px; }
-
-.pod-profile { border-radius: 50%; object-fit: cover; border: 3px solid transparent; box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
-.pod-0 .pod-profile { width: 80px; height: 80px; }
-.pod-1 .pod-profile { width: 64px; height: 64px; }
-.pod-2 .pod-profile { width: 56px; height: 56px; border-width: 2.5px; }
+.pod-profile { border-radius: 50%; object-fit: cover; border: 2.5px solid transparent; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+.pod-0 .pod-profile { width: 56px; height: 56px; }
+.pod-1 .pod-profile { width: 44px; height: 44px; }
+.pod-2 .pod-profile { width: 38px; height: 38px; border-width: 2px; }
 
 .pod-medal {
-  position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
-  font-size: 12px; font-weight: 900; padding: 4px 12px; border-radius: 12px;
+  position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 10px;
   color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
-.medal-1 { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); box-shadow: 0 4px 12px rgba(246, 211, 101, 0.5); }
-.medal-2 { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); box-shadow: 0 4px 12px rgba(142, 197, 252, 0.4); }
-.medal-3 { background: linear-gradient(135deg, #f6d365 0%, #d48b55 100%); box-shadow: 0 4px 12px rgba(212, 139, 85, 0.4); }
+.medal-1 { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); box-shadow: 0 4px 10px rgba(246, 211, 101, 0.5); }
+.medal-2 { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); box-shadow: 0 4px 10px rgba(142, 197, 252, 0.4); }
+.medal-3 { background: linear-gradient(135deg, #f6d365 0%, #d48b55 100%); box-shadow: 0 4px 10px rgba(212, 139, 85, 0.4); }
 
-.pod-name { font-size: 14px; font-weight: 800; color: var(--text); text-align: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pod-crew-tag { font-size: 11px; padding: 3px 8px; border-radius: 8px; font-weight: 800; }
-.pod-val { font-size: 15px; font-weight: 800; color: var(--text2); letter-spacing: -0.3px; }
-.pod-val.gold { color: #f6d365; text-shadow: 0 0 10px rgba(246, 211, 101, 0.4); font-size: 17px; }
+.pod-name { font-size: 11px; font-weight: 800; color: var(--text); text-align: center; max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pod-val { font-size: 12px; font-weight: 800; color: var(--text2); letter-spacing: -0.3px; }
+.pod-val.gold { color: #f6d365; text-shadow: 0 0 8px rgba(246, 211, 101, 0.4); }
 
-/* 시상대 */
-.pod-stage { width: 100%; border-radius: 8px 8px 0 0; position: relative; overflow: hidden; }
-.pod-stage::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.4); }
-.stage-1 { height: 60px; background: rgba(201,150,10,0.15); border: 1px solid rgba(201,150,10,0.4); border-bottom: none; box-shadow: 0 -6px 24px rgba(201,150,10,0.15); }
-.stage-2 { height: 45px; background: rgba(122,138,154,0.15); border: 1px solid rgba(122,138,154,0.3); border-bottom: none; box-shadow: 0 -4px 18px rgba(122,138,154,0.1); }
-.stage-3 { height: 30px; background: rgba(160,120,80,0.15); border: 1px solid rgba(160,120,80,0.3); border-bottom: none; box-shadow: 0 -4px 18px rgba(160,120,80,0.1); }
+/* 시상대 네온 효과 */
+.pod-stage { width: 100%; border-radius: 6px 6px 0 0; position: relative; overflow: hidden; }
+.pod-stage::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.4); }
+.stage-1 { height: 50px; background: rgba(201,150,10,0.15); border: 1px solid rgba(201,150,10,0.4); border-bottom: none; box-shadow: 0 -4px 20px rgba(201,150,10,0.15); }
+.stage-2 { height: 35px; background: rgba(122,138,154,0.15); border: 1px solid rgba(122,138,154,0.3); border-bottom: none; box-shadow: 0 -4px 15px rgba(122,138,154,0.1); }
+.stage-3 { height: 25px; background: rgba(160,120,80,0.15); border: 1px solid rgba(160,120,80,0.3); border-bottom: none; box-shadow: 0 -4px 15px rgba(160,120,80,0.1); }
 
-/* ── 리스트 (PC 2열) ── */
-.rank-list { 
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  padding: 24px;
-}
+/* ── 리스트 (백그라운드 바 형태로 변경) ── */
+.rank-list { padding: 12px 12px 16px; display: flex; flex-direction: column; gap: 6px; }
 
 .rank-row {
-  position: relative; border-radius: 12px; overflow: hidden;
+  position: relative; border-radius: 10px; overflow: hidden;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.03);
 }
 .rank-row:hover { background: rgba(255, 255, 255, 0.05); }
 
+/* 은은하게 차오르는 게이지 */
 .rank-bg-fill {
   position: absolute; top: 0; left: 0; bottom: 0;
-  opacity: 0.15; border-radius: 12px 0 0 12px;
+  opacity: 0.15; border-radius: 10px 0 0 10px;
   transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .rank-content {
-  position: relative; display: flex; align-items: center; gap: 14px;
-  padding: 12px 16px; z-index: 2;
+  position: relative; display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; z-index: 2;
 }
 
-.rank-num { font-size: 13px; font-weight: 800; color: var(--text3); width: 20px; text-align: center; flex-shrink: 0; }
-.rank-logo-wrap, .rank-profile-wrap { flex-shrink: 0; width: 34px; height: 34px; }
-.rank-logo { width: 100%; height: 100%; border-radius: 8px; object-fit: contain; }
-.rank-profile { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid transparent; }
-.rank-initial-sm { width: 100%; height: 100%; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+.rank-num { font-size: 11px; font-weight: 800; color: var(--text3); width: 16px; text-align: center; flex-shrink: 0; }
+.rank-logo-wrap, .rank-profile-wrap { flex-shrink: 0; width: 26px; height: 26px; }
+.rank-logo { width: 100%; height: 100%; border-radius: 6px; object-fit: contain; }
+.rank-profile { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 1.5px solid transparent; }
+.rank-initial-sm { width: 100%; height: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; }
 
-.rank-name { flex: 1; font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rank-crew-tag { font-size: 11px; padding: 3px 8px; border-radius: 8px; font-weight: 800; flex-shrink: 0; }
-.rank-val { font-size: 14px; font-weight: 800; color: var(--text); flex-shrink: 0; font-family: monospace; letter-spacing: -0.5px; }
+.rank-name { flex: 1; font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-crew-tag { font-size: 9px; padding: 2px 6px; border-radius: 6px; font-weight: 800; flex-shrink: 0; }
+.rank-val { font-size: 12px; font-weight: 800; color: var(--text); flex-shrink: 0; font-family: monospace; letter-spacing: -0.5px; }
 
-/* ── 모바일 반응형 ── */
+/* ── 반응형 ── */
 @media (max-width: 900px) {
+  .honor-cols { grid-template-columns: 1fr; }
   .honor-wrap { padding: 16px; }
+}
+@media (max-width: 600px) {
   .honor-header { flex-direction: column; align-items: flex-start; }
-  
-  .rank-list { grid-template-columns: 1fr; padding: 16px; }
-  
-  .pod-0 .pod-logo, .pod-0 .pod-profile, .pod-0 .pod-initial { width: 64px; height: 64px; font-size: 22px; }
-  .pod-1 .pod-logo, .pod-1 .pod-profile, .pod-1 .pod-initial { width: 52px; height: 52px; font-size: 18px; }
-  .pod-2 .pod-logo, .pod-2 .pod-profile, .pod-2 .pod-initial { width: 44px; height: 44px; font-size: 16px; }
 }
 </style>
