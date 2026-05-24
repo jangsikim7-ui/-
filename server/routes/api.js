@@ -814,6 +814,12 @@ router.post('/update-profiles', adminOnly, async (req, res) => {
 })
 
 
+// ── 임시 DB 다운로드 (사용 후 삭제) ──────────────────
+router.get('/download-db', adminOnly, (req, res) => {
+  const dbPath = process.env.DB_PATH || '/app/data/data.db'
+  res.download(dbPath, 'data.db')
+})
+
 // ── 요약 순위 (하단 섹션용) ──────────────────────────
 router.get('/summary', (req, res) => {
   const now = new Date()
