@@ -100,7 +100,7 @@
       <span class="contact-hint">데이터 수정 및 오류 제보는 문의하기 눌러주세요</span>
     </div>
 
-    <!-- 캡처 토스트 -->
+    <!-- 캡처 토스트 (상단 고정) -->
     <div v-if="captureToast" class="capture-toast" :class="captureToastType">{{ captureToast }}</div>
 
     <!-- 로딩 -->
@@ -133,71 +133,6 @@
           :month="month"
         />
       </main>
-
-      <!-- ── 하단 요약 섹션 ── -->
-      <section v-if="!loading && mode === 'balloon' && summary" class="summary-section">
-        <div class="summary-header">
-          <span class="summary-icon">🏆</span>
-          <span class="summary-title">{{ year }}년 {{ String(month).padStart(2,'0') }}월 순위 요약</span>
-          <span class="summary-group-badge" :class="activeGroup === 'bora' ? 'bora' : 'excel'">
-            {{ activeGroup === 'bora' ? '보라엑셀' : '엑셀크루' }}
-          </span>
-        </div>
-
-        <div class="summary-grid">
-          <!-- 평균 풍선 크루 순위 -->
-          <div class="summary-card">
-            <div class="summary-card-label">
-              <span class="label-icon">📊</span> 평균 풍선 크루 순위
-            </div>
-            <div class="rank-list">
-              <div v-for="c in summary.avgRanking" :key="c.id" class="rank-row">
-                <span class="rk-num" :class="['rk-'+c.rank]">{{ c.rank }}</span>
-                <span class="rk-dot" :style="{background: c.color}"></span>
-                <span class="rk-name">{{ c.name }}</span>
-                <span class="rk-val">{{ c.avg.toLocaleString() }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 크루 총매출 순위 -->
-          <div class="summary-card">
-            <div class="summary-card-label">
-              <span class="label-icon">💰</span> 크루 총매출 순위
-            </div>
-            <div class="rank-list">
-              <div v-for="c in summary.totalRanking" :key="c.id" class="rank-row">
-                <span class="rk-num" :class="['rk-'+c.rank]">{{ c.rank }}</span>
-                <span class="rk-dot" :style="{background: c.color}"></span>
-                <span class="rk-name">{{ c.name }}</span>
-                <span class="rk-val">{{ c.total.toLocaleString() }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 개인 TOP 10 -->
-        <div class="summary-card top10-card">
-          <div class="summary-card-label">
-            <span class="label-icon">👑</span> 개인 TOP 10
-          </div>
-          <div class="top10-list">
-            <div v-for="m in summary.top10" :key="m.id" class="top10-row">
-              <span class="rk-num" :class="['rk-'+m.rank]">{{ m.rank }}</span>
-              <img :src="m.profile_img" class="top10-thumb" @error="e=>e.target.style.display='none'" />
-              <span
-                class="top10-crew-tag"
-                :style="{background: m.crew_color + '28', color: m.crew_color, borderColor: m.crew_color + '55'}"
-              >{{ m.crew_name }}</span>
-              <span class="top10-name">
-                {{ m.name }}
-                <span v-if="m.is_new" class="new-chip">NEW</span>
-              </span>
-              <span class="top10-val">{{ m.balloons.toLocaleString() }}</span>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
 
     <!-- 관리자 로그인 모달 -->
@@ -256,7 +191,6 @@ const loginPassword = ref('')
 const loginError = ref('')
 const collecting = ref(false)
 const updatingProfiles = ref(false)
-const summary = ref(null)
 
 const capturing = ref(false)
 const captureToast = ref('')
@@ -366,16 +300,6 @@ async function loadStats() {
         lastCollected.value = lc.last_collected
       } catch(e) { /* 무시 */ }
     }
-
-    // 요약 데이터 로드 (별풍선 모드일 때만)
-    if (mode.value === 'balloon') {
-      try {
-        summary.value = await api.getSummary(year.value, month.value, activeGroup.value)
-      } catch(e) { summary.value = null }
-    } else {
-      summary.value = null
-    }
-
   } catch(e) { error.value = '로드 실패: ' + e.message }
   loading.value = false
 }
@@ -447,6 +371,8 @@ async function captureScreen() {
   try {
     const target = captureTarget.value || document.querySelector('.app')
     const bgColor = isDark.value ? '#0d1117' : '#f8fafc'
+
+    // 1) 캡처 전: 모든 img src를 프록시 URL로 교체
     const imgs = target.querySelectorAll('img')
     const origSrcs = []
     imgs.forEach((img, i) => {
@@ -455,19 +381,29 @@ async function captureScreen() {
         img.src = `${BASE}/proxy-img?url=${encodeURIComponent(img.src)}`
       }
     })
+
+    // 2) 이미지 로딩 대기 (최대 2초)
     await Promise.race([
       Promise.all([...imgs].map(img =>
         img.complete ? Promise.resolve() : new Promise(r => { img.onload = r; img.onerror = r })
       )),
       new Promise(r => setTimeout(r, 2000))
     ])
+
+    // 3) html2canvas로 캡처 (빠름)
     const canvas = await html2canvas(target, {
-      backgroundColor: bgColor, useCORS: true, allowTaint: false,
-      scrollX: -window.scrollX, scrollY: -window.scrollY, scale: 2,
-      width: target.scrollWidth, height: target.scrollHeight,
+      backgroundColor: bgColor,
+      useCORS: true,
+      allowTaint: false,
+      scrollX: -window.scrollX,
+      scrollY: -window.scrollY,
+      scale: 2,
+      width: target.scrollWidth,
+      height: target.scrollHeight,
       windowWidth: document.documentElement.scrollWidth,
       windowHeight: document.documentElement.scrollHeight,
       onclone: (doc) => {
+        // 텍스트 잘림 방지
         doc.querySelectorAll('*').forEach(el => {
           const s = el.style
           if (s.overflow === 'hidden') s.overflow = 'visible'
@@ -475,12 +411,21 @@ async function captureScreen() {
         })
       }
     })
+
+    // 4) 원본 src 복원
     imgs.forEach((img, i) => { img.src = origSrcs[i] })
+
     const dataUrl = canvas.toDataURL('image/png')
     const d = new Date()
     const filename = `synergy-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}.png`
+
+    // 5) 파일 저장
     const a = document.createElement('a')
-    a.href = dataUrl; a.download = filename; a.click()
+    a.href = dataUrl
+    a.download = filename
+    a.click()
+
+    // 6) 클립보드 복사
     try {
       const r = await fetch(dataUrl)
       const blob = await r.blob()
@@ -499,20 +444,28 @@ let autoRefreshTimer = null
 
 function startAutoRefresh() {
   autoRefreshTimer = setInterval(() => {
-    if (!document.hidden) loadStats()
+    if (!document.hidden) {
+      loadStats()
+    }
   }, 4 * 60 * 60 * 1000)
 }
 
 function stopAutoRefresh() {
-  if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null }
+  if (autoRefreshTimer) {
+    clearInterval(autoRefreshTimer)
+    autoRefreshTimer = null
+  }
 }
 
 onMounted(async () => {
   const saved = localStorage.getItem('theme') || 'dark'
   isDark.value = saved === 'dark'
   document.documentElement.setAttribute('data-theme', saved)
+
   if (getAdminToken()) isAdmin.value = true
+
   welcomePopupRef.value?.open()
+
   loadStats()
   startAutoRefresh()
 })
@@ -662,7 +615,7 @@ onUnmounted(() => {
   align-content: start; justify-content: center;
 }
 
-/* ── 크루 그룹 탭 ── */
+/* ── 크루 그룹 탭 ─────────────────────────── */
 .group-tabs-wrap {
   display: flex; justify-content: center;
   padding: 14px 20px 0; background: var(--bg2);
@@ -688,6 +641,7 @@ onUnmounted(() => {
 [data-theme="dark"] .group-tab .tab-name { color: #8888bb; }
 [data-theme="dark"] .group-tab .tab-meta { color: #55557a; }
 [data-theme="dark"] .group-tab i { color: #55557a; }
+
 [data-theme="dark"] .group-tab.active.excel-tab { background: #0d2040; border-color: #4a9eff; }
 [data-theme="dark"] .group-tab.active.excel-tab .tab-name { color: #90c8ff; }
 [data-theme="dark"] .group-tab.active.excel-tab .tab-meta { color: #5590dd; }
@@ -696,6 +650,7 @@ onUnmounted(() => {
   content: ''; position: absolute; bottom: 0; left: 12px; right: 12px;
   height: 3px; background: #4a9eff; border-radius: 2px;
 }
+
 [data-theme="dark"] .group-tab.active.bora-tab { background: #220a38; border-color: #cc66ff; }
 [data-theme="dark"] .group-tab.active.bora-tab .tab-name { color: #ee99ff; }
 [data-theme="dark"] .group-tab.active.bora-tab .tab-meta { color: #9944cc; }
@@ -704,10 +659,12 @@ onUnmounted(() => {
   content: ''; position: absolute; bottom: 0; left: 12px; right: 12px;
   height: 3px; background: #cc66ff; border-radius: 2px;
 }
+
 [data-theme="light"] .group-tab { background: #eaeaf4; border-color: #c0c0d8; }
 [data-theme="light"] .group-tab .tab-name { color: #7070a0; }
 [data-theme="light"] .group-tab .tab-meta { color: #9090b8; }
 [data-theme="light"] .group-tab i { color: #9090b8; }
+
 [data-theme="light"] .group-tab.active.excel-tab { background: #ddeeff; border-color: #1a60dd; }
 [data-theme="light"] .group-tab.active.excel-tab .tab-name { color: #0a3a99; }
 [data-theme="light"] .group-tab.active.excel-tab .tab-meta { color: #2255bb; }
@@ -716,6 +673,7 @@ onUnmounted(() => {
   content: ''; position: absolute; bottom: 0; left: 12px; right: 12px;
   height: 3px; background: #1a60dd; border-radius: 2px;
 }
+
 [data-theme="light"] .group-tab.active.bora-tab { background: #f0deff; border-color: #8822cc; }
 [data-theme="light"] .group-tab.active.bora-tab .tab-name { color: #5a0099; }
 [data-theme="light"] .group-tab.active.bora-tab .tab-meta { color: #7722aa; }
@@ -724,6 +682,8 @@ onUnmounted(() => {
   content: ''; position: absolute; bottom: 0; left: 12px; right: 12px;
   height: 3px; background: #8822cc; border-radius: 2px;
 }
+
+.pip { display: none; }
 
 .capture-btn-tab {
   display: inline-flex; align-items: center; gap: 6px;
@@ -736,6 +696,7 @@ onUnmounted(() => {
 .capture-btn-tab:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(76,217,100,0.5); }
 .capture-btn-tab:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* 토스트 - 상단 고정 */
 .capture-toast {
   position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
   padding: 10px 20px; border-radius: 10px; font-size: 13px; font-weight: 700;
@@ -750,123 +711,6 @@ onUnmounted(() => {
 [data-theme="light"] .capture-toast.warn { background: #fff8e1; color: #c8860f; border: 1px solid #c8860f40; }
 [data-theme="light"] .capture-toast.error { background: #fdecea; color: #c62828; border: 1px solid #c6282840; }
 
-/* ── 하단 요약 섹션 ── */
-.summary-section {
-  margin: 0 22px 32px;
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-}
-
-[data-theme="dark"] .summary-section { background: #10101e; border-color: #2a2a4a; }
-[data-theme="light"] .summary-section { background: #f4f5fb; border-color: #d0d2e8; }
-
-.summary-header {
-  display: flex; align-items: center; gap: 10px;
-  padding: 18px 22px 14px;
-  border-bottom: 1px solid var(--border);
-}
-
-[data-theme="dark"] .summary-header { border-color: #2a2a4a; }
-[data-theme="light"] .summary-header { border-color: #d0d2e8; }
-
-.summary-icon { font-size: 20px; }
-.summary-title {
-  font-size: 15px; font-weight: 800; color: var(--text); flex: 1;
-}
-
-.summary-group-badge {
-  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
-}
-.summary-group-badge.excel {
-  background: rgba(74,158,255,0.15); color: #4a9eff; border: 1px solid rgba(74,158,255,0.3);
-}
-.summary-group-badge.bora {
-  background: rgba(180,80,255,0.15); color: #cc66ff; border: 1px solid rgba(180,80,255,0.3);
-}
-
-.summary-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 0;
-}
-
-.summary-card {
-  padding: 18px 20px;
-}
-.summary-grid .summary-card:first-child {
-  border-right: 1px solid var(--border);
-}
-[data-theme="dark"] .summary-grid .summary-card:first-child { border-color: #2a2a4a; }
-[data-theme="light"] .summary-grid .summary-card:first-child { border-color: #d0d2e8; }
-
-.top10-card {
-  border-top: 1px solid var(--border);
-  padding: 18px 20px;
-}
-[data-theme="dark"] .top10-card { border-color: #2a2a4a; }
-[data-theme="light"] .top10-card { border-color: #d0d2e8; }
-
-.summary-card-label {
-  font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-  color: var(--text3); margin-bottom: 12px; display: flex; align-items: center; gap: 5px;
-}
-.label-icon { font-size: 13px; }
-
-/* 순위 공통 */
-.rank-list { display: flex; flex-direction: column; gap: 4px; }
-.rank-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px; border-radius: 10px; transition: background 0.15s;
-}
-[data-theme="dark"] .rank-row:hover { background: #1e1e36; }
-[data-theme="light"] .rank-row:hover { background: #e8eaf8; }
-
-.rk-num {
-  font-size: 14px; font-weight: 800; min-width: 20px; text-align: center;
-  color: var(--text3);
-}
-.rk-1 { color: #f5c842; }
-.rk-2 { color: #aaaaaa; }
-.rk-3 { color: #cc8844; }
-
-.rk-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-.rk-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--text); }
-.rk-val { font-size: 13px; font-weight: 700; color: var(--text2); font-variant-numeric: tabular-nums; }
-
-/* TOP 10 */
-.top10-list {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
-}
-.top10-row {
-  display: flex; align-items: center; gap: 9px;
-  padding: 8px 12px; border-radius: 10px; transition: background 0.15s;
-}
-[data-theme="dark"] .top10-row:hover { background: #1e1e36; }
-[data-theme="light"] .top10-row:hover { background: #e8eaf8; }
-
-.top10-thumb {
-  width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
-  border: 1.5px solid var(--border);
-}
-.top10-crew-tag {
-  font-size: 10px; font-weight: 700; padding: 2px 7px;
-  border-radius: 999px; border: 1px solid; white-space: nowrap; flex-shrink: 0;
-}
-.top10-name {
-  flex: 1; font-size: 13px; font-weight: 600; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  display: flex; align-items: center; gap: 5px;
-}
-.top10-val {
-  font-size: 12px; font-weight: 700; color: var(--text2);
-  font-variant-numeric: tabular-nums; white-space: nowrap;
-}
-
-.new-chip {
-  font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 999px;
-  background: rgba(255,75,143,0.18); color: #ff4b8f;
-  border: 1px solid rgba(255,75,143,0.35); letter-spacing: 0.05em; flex-shrink: 0;
-}
-
 @media (max-width: 600px) {
   .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
   .pc-only { display: none !important; }
@@ -879,10 +723,5 @@ onUnmounted(() => {
   .group-tab { font-size: 13px; padding: 10px 12px; gap: 8px; }
   .tab-name { font-size: 13px; }
   .capture-btn-tab { padding: 7px 10px; font-size: 12px; }
-  .summary-section { margin: 0 10px 20px; border-radius: 14px; }
-  .summary-grid { grid-template-columns: 1fr; }
-  .summary-grid .summary-card:first-child { border-right: none; border-bottom: 1px solid var(--border); }
-  .top10-list { grid-template-columns: 1fr; }
-  .top10-crew-tag { display: none; }
 }
 </style>

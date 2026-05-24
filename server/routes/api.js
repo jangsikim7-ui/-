@@ -291,16 +291,13 @@ router.post('/members', adminOnly, async (req, res) => {
 name = cleanMemberName(name)
   const profile_img = info?.profile_img || soopCdnUrl(soop_id)
   try {
-    const existing = db.prepare('SELECT id, joined_at FROM members WHERE soop_id = ?').get(soop_id)
-    const joinedAt = new Date().toISOString()
-    // joined_at 컬럼 없으면 추가 (마이그레이션)
-    try { db.exec('ALTER TABLE members ADD COLUMN joined_at TEXT') } catch(e) {}
+    const existing = db.prepare('SELECT id FROM members WHERE soop_id = ?').get(soop_id)
     if (existing) {
-      db.prepare('UPDATE members SET crew_id=?, name=?, sort_order=?, is_active=1, profile_img=?, joined_at=COALESCE(joined_at, ?) WHERE soop_id=?')
-        .run(crew_id, name, sort_order, profile_img, joinedAt, soop_id)
+      db.prepare('UPDATE members SET crew_id=?, name=?, sort_order=?, is_new=?, is_active=1, profile_img=? WHERE soop_id=?')
+        .run(crew_id, name, sort_order, is_new ? 1 : 0, profile_img, soop_id)
     } else {
-      db.prepare('INSERT INTO members (crew_id, soop_id, name, sort_order, profile_img, joined_at) VALUES (?, ?, ?, ?, ?, ?)')
-        .run(crew_id, soop_id, name, sort_order, profile_img, joinedAt)
+      db.prepare('INSERT INTO members (crew_id, soop_id, name, sort_order, is_new, profile_img) VALUES (?, ?, ?, ?, ?, ?)')
+        .run(crew_id, soop_id, name, sort_order, is_new ? 1 : 0, profile_img)
     }
     const now = new Date()
     const year = now.getFullYear()
@@ -331,7 +328,7 @@ router.put('/members/:id', adminOnly, (req, res) => {
 })
 
 router.delete('/members/:id', adminOnly, (req, res) => {
-  db.prepare('UPDATE members SET is_active=0 WHERE id=?').run(req.params.id)
+  db.prepare('DELETE FROM members WHERE id=?').run(req.params.id)
   res.json({ ok: true })
 })
 
@@ -346,8 +343,7 @@ router.get('/stats', (req, res) => {
   const allCrews = db.prepare('SELECT * FROM crews WHERE group_key = ? ORDER BY sort_order, id').all(group)
   const rows = db.prepare(`
     SELECT
-      m.id, m.soop_id, m.name, m.crew_id, m.sort_order,
-      CASE WHEN m.joined_at IS NOT NULL AND (julianday('now') - julianday(m.joined_at)) <= 14 THEN 1 ELSE 0 END as is_new,
+      m.id, m.soop_id, m.name, m.crew_id, m.sort_order, m.is_new,
       COALESCE(m.profile_img, '') as profile_img,
       c.name as crew_name, c.color as crew_color, c.logo_url as crew_logo, c.sort_order as crew_order,
       COALESCE((
@@ -811,69 +807,6 @@ router.post('/update-profiles', adminOnly, async (req, res) => {
     await new Promise(r => setTimeout(r, 300))
   }
   console.log('[profile] 일괄 업데이트 완료')
-})
-
-
-// ── 요약 순위 (하단 섹션용) ──────────────────────────
-router.get('/summary', (req, res) => {
-  const now = new Date()
-  const year = parseInt(req.query.year) || now.getFullYear()
-  const month = parseInt(req.query.month) || (now.getMonth() + 1)
-  const group = req.query.group || 'excel'
-
-  const allCrews = db.prepare('SELECT * FROM crews WHERE group_key = ? ORDER BY sort_order, id').all(group)
-
-  const crewMap = {}
-  for (const crew of allCrews) {
-    let master_balloons = 0
-    if (crew.master_soop_id) {
-      const snap = db.prepare('SELECT total_balloons FROM balloon_snapshots WHERE soop_id=? AND year=? AND month=? ORDER BY fetched_at DESC LIMIT 1').get(crew.master_soop_id, year, month)
-      master_balloons = snap?.total_balloons ?? 0
-    }
-    crewMap[crew.id] = { id: crew.id, name: crew.name, color: crew.color, master_balloons, members: [], total: 0 }
-  }
-
-  const rows = db.prepare(`
-    SELECT m.id, m.soop_id, m.name, m.crew_id,
-      COALESCE(m.profile_img,'') as profile_img,
-      CASE WHEN m.joined_at IS NOT NULL AND (julianday('now') - julianday(m.joined_at)) <= 14 THEN 1 ELSE 0 END as is_new,
-      COALESCE((
-        SELECT total_balloons FROM balloon_snapshots
-        WHERE soop_id=m.soop_id AND year=? AND month=?
-        ORDER BY fetched_at DESC LIMIT 1
-      ),0) as balloons
-    FROM members m
-    JOIN crews c ON m.crew_id=c.id
-    WHERE m.is_active=1 AND c.group_key=?
-  `).all(year, month, group)
-
-  for (const row of rows) {
-    if (!crewMap[row.crew_id]) continue
-    crewMap[row.crew_id].members.push({ id: row.id, soop_id: row.soop_id, name: row.name, profile_img: row.profile_img, balloons: row.balloons, is_new: row.is_new, crew_id: row.crew_id })
-    crewMap[row.crew_id].total += row.balloons
-  }
-
-  const crews = Object.values(crewMap).map(c => ({
-    ...c,
-    avg: c.members.length > 0 ? Math.round(c.total / c.members.length) : 0
-  }))
-
-  // 평균 순위
-  const avgRanking = [...crews].sort((a, b) => b.avg - a.avg).map((c, i) => ({ rank: i+1, id: c.id, name: c.name, color: c.color, avg: c.avg }))
-
-  // 총매출 순위 (수장 매출 = master_balloons, 없으면 total)
-  const totalRanking = [...crews].sort((a, b) => (b.master_balloons || b.total) - (a.master_balloons || a.total)).map((c, i) => ({ rank: i+1, id: c.id, name: c.name, color: c.color, total: c.master_balloons || c.total }))
-
-  // 개인 top10
-  const allMembers = []
-  for (const c of crews) {
-    for (const m of c.members) {
-      allMembers.push({ ...m, crew_name: c.name, crew_color: c.color })
-    }
-  }
-  const top10 = allMembers.sort((a, b) => b.balloons - a.balloons).slice(0, 10).map((m, i) => ({ rank: i+1, ...m }))
-
-  res.json({ year, month, group, avgRanking, totalRanking, top10 })
 })
 
 export async function autoImportNaksoo() {
