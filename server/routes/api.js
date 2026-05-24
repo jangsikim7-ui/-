@@ -98,15 +98,25 @@ function cleanMemberName(raw) {
     .trim()
 }
 
-// ⭐ 이름 정규화 — 원본 + NFC 정규화만 추가 (이모지 범위 제거 안 함 → 부작용 방지)
+// ⭐ 이름 정규화
 function normalizeName(name) {
   if (!name) return ''
   return name
-    .normalize('NFC')  // ← 유니코드 정규화 (같아 보이는 글자 통일)
-    .replace(/[🥇🥈🥉]/g, '')
-    .replace(/[◈◉◆◇♦♢■□▲△▶▷●○★☆✦✧※◊]/g, '')
+    .normalize('NFC')
+    // 전각→반각
     .replace(/[\uFF01-\uFF5E]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
-    .replace(/[\s_\-\.˚°"'`~!@#$%^&*()\[\]{}|\\:;<>?,/♥♡＠]/g, '')
+    // 순위 이모지 제거
+    .replace(/[🥇🥈🥉]/g, '')
+    // 도형 기호 제거
+    .replace(/[◈◉◆◇♦♢■□▲△▶▷●○★☆✦✧※◊]/g, '')
+    // 하트류 전부 제거 (♥ ♡ 통일)
+    .replace(/[♥♡❤]/g, '')
+    // 끝에 붙는 호칭 제거 (나래님 → 나래)
+    .replace(/님$/, '')
+    // 특수문자/공백 제거
+    .replace(/[\s_\-\.˚°"'`~!@#$%^&*()\[\]{}|\\:;<>?,/＠]/g, '')
+    // 소문자 l → i 통일 (Im미나 / lm미나 혼동 방지)
+    .replace(/l/g, 'i')
     .toLowerCase()
     .trim()
 }
@@ -300,8 +310,9 @@ name = cleanMemberName(name)
       db.prepare('UPDATE members SET crew_id=?, name=?, sort_order=?, is_new=?, is_active=1, profile_img=? WHERE soop_id=?')
         .run(crew_id, name, sort_order, is_new ? 1 : 0, profile_img, soop_id)
     } else {
-      db.prepare('INSERT INTO members (crew_id, soop_id, name, sort_order, is_new, profile_img) VALUES (?, ?, ?, ?, ?, ?)')
-        .run(crew_id, soop_id, name, sort_order, is_new ? 1 : 0, profile_img)
+      const nowIso = new Date().toISOString()
+      db.prepare('INSERT INTO members (crew_id, soop_id, name, sort_order, is_new, profile_img, joined_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        .run(crew_id, soop_id, name, sort_order, is_new ? 1 : 0, profile_img, is_new ? nowIso : null)
     }
     const now = new Date()
     const year = now.getFullYear()
@@ -347,7 +358,7 @@ router.get('/stats', (req, res) => {
   const allCrews = db.prepare('SELECT * FROM crews WHERE group_key = ? ORDER BY sort_order, id').all(group)
   const rows = db.prepare(`
     SELECT
-      m.id, m.soop_id, m.name, m.crew_id, m.sort_order, m.is_new,
+      m.id, m.soop_id, m.name, m.crew_id, m.sort_order, m.is_new, m.joined_at,
       COALESCE(m.profile_img, '') as profile_img,
       c.name as crew_name, c.color as crew_color, c.logo_url as crew_logo, c.sort_order as crew_order,
       COALESCE((
@@ -400,6 +411,7 @@ router.get('/stats', (req, res) => {
     if (!crewMap[row.crew_id]) continue
     crewMap[row.crew_id].members.push({
       id: row.id, soop_id: row.soop_id, name: row.name, profile_img: row.profile_img,
+      joined_at: row.joined_at || null,
       balloons: row.balloons, daily_balloons: row.daily_balloons,
       yesterday_diff: row.balloons - row.yesterday_balloons,
       prev_balloons: row.prev_balloons, is_new: row.is_new, sort_order: row.sort_order
@@ -408,9 +420,14 @@ router.get('/stats', (req, res) => {
     crewMap[row.crew_id].prev_total += row.prev_balloons
   }
 
-  const crews = Object.values(crewMap).map(c => ({
-    ...c, avg: c.members.length > 0 ? Math.round(c.total / c.members.length) : 0
-  })).sort((a, b) => b.avg - a.avg)
+  const crews = Object.values(crewMap).map(c => {
+    const activeMembers = c.members.filter(m => m.balloons > 0)
+    return {
+      ...c,
+      avg_member_count: activeMembers.length,
+      avg: activeMembers.length > 0 ? Math.round(c.total / activeMembers.length) : 0
+    }
+  }).sort((a, b) => b.avg - a.avg)
 
 res.json({ year, month, prevYear, prevMonth, group, crews })
 })
@@ -426,7 +443,7 @@ router.get('/viewer-stats', (req, res) => {
   const allCrews = db.prepare('SELECT * FROM crews WHERE group_key = ? ORDER BY sort_order, id').all(group)
   const rows = db.prepare(`
     SELECT
-      m.id, m.soop_id, m.name, m.crew_id, m.sort_order, m.is_new,
+      m.id, m.soop_id, m.name, m.crew_id, m.sort_order, m.is_new, m.joined_at,
       COALESCE(m.profile_img, '') as profile_img,
       c.name as crew_name, c.color as crew_color, c.logo_url as crew_logo, c.sort_order as crew_order,
       COALESCE((
@@ -469,9 +486,14 @@ router.get('/viewer-stats', (req, res) => {
     crewMap[row.crew_id].total += row.viewers
     crewMap[row.crew_id].prev_total += row.prev_viewers
   }
-  const crews = Object.values(crewMap).map(c => ({
-    ...c, avg: c.members.length > 0 ? Math.round(c.total / c.members.length) : 0
-  })).sort((a, b) => b.avg - a.avg)
+  const crews = Object.values(crewMap).map(c => {
+    const activeMembers = c.members.filter(m => m.balloons > 0)
+    return {
+      ...c,
+      avg_member_count: activeMembers.length,
+      avg: activeMembers.length > 0 ? Math.round(c.total / activeMembers.length) : 0
+    }
+  }).sort((a, b) => b.avg - a.avg)
   res.json({ year, month, prevYear, prevMonth, group, crews })
 })
 
@@ -520,7 +542,7 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
   if (!name) return res.json({ results: [] })
   try {
     const cleanName = cleanMemberName(name).replace(/^\[[^\]]+\]\s*/, '').trim() || name
-    const keyword = cleanName.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '').toLowerCase()
+    const keyword = normalizeName(cleanName)
     if (keyword.length < 1) return res.json({ results: [] })
 
     const now = new Date()
@@ -531,7 +553,7 @@ router.get('/search-by-name', adminOnly, async (req, res) => {
       const partial = []
       for (const item of list) {
         if (!item.n) continue
-        const n = item.n.replace(/[^\uAC00-\uD7A3a-zA-Z0-9]/g, '').toLowerCase()
+        const n = normalizeName(item.n)
         if (n === keyword) exact.push(item)
         else if (keyword.length >= 2 && n.includes(keyword)) partial.push(item)
       }
@@ -721,8 +743,8 @@ router.post('/sync-naksoo/apply', adminOnly, async (req, res) => {
 // 3) 진짜 신규
     const maxOrder = db.prepare('SELECT MAX(sort_order) as m FROM members WHERE crew_id = ?').get(crew.id)?.m || 0
     const cleanName = cleanMemberName(m.name)
-    db.prepare('INSERT INTO members (soop_id, name, crew_id, sort_order, profile_img, is_active) VALUES (?,?,?,?,?,1)')
-      .run(m.soop_id, cleanName, crew.id, maxOrder + 1, m.profile_img || soopCdnUrl(m.soop_id))
+    db.prepare('INSERT INTO members (soop_id, name, crew_id, sort_order, profile_img, is_active, is_new, joined_at) VALUES (?,?,?,?,?,1,1,?)')
+      .run(m.soop_id, cleanName, crew.id, maxOrder + 1, m.profile_img || soopCdnUrl(m.soop_id), new Date().toISOString())
     results.added++
   }
 
