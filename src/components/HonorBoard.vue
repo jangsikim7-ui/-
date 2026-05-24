@@ -1,6 +1,5 @@
 <template>
   <div class="honor-wrap">
-
     <!-- 헤더 -->
     <div class="honor-header">
       <div class="honor-title-row">
@@ -26,43 +25,31 @@
       </div>
     </div>
 
-    <!-- 로딩 -->
+    <!-- 로딩 & 에러 -->
     <div v-if="loading" class="honor-loading">
       <div class="spin" /><span>순위 불러오는 중...</span>
     </div>
-
-    <!-- 에러 -->
     <div v-else-if="error" class="honor-error">{{ error }}</div>
 
-    <!-- 콘텐츠 -->
+    <!-- 콘텐츠 (1단 세로 배치) -->
     <div v-else class="honor-cols">
-
-      <!-- 크루 평균 순위 -->
+      
+      <!-- 1. 크루 평균 순위 -->
       <div class="hcol">
         <div class="hcol-head">
-          <div class="hcol-icon hcol-icon-avg">
-            <i class="ti ti-chart-bar" />
-          </div>
+          <div class="hcol-icon hcol-icon-avg"><i class="ti ti-chart-bar" /></div>
           <div>
             <div class="hcol-title">크루 평균 순위</div>
             <div class="hcol-sub">평균 별풍선 기준</div>
           </div>
         </div>
 
-        <!-- 포디움 -->
         <div class="podium">
           <div v-for="(pos, pi) in podiumOrder" :key="pi" class="pod" :class="'pod-'+pos">
             <template v-if="avgRanked[pos]">
               <div class="pod-img-wrap">
-                <img
-                  v-if="avgRanked[pos].logo_url"
-                  :src="avgRanked[pos].logo_url"
-                  class="pod-logo"
-                  @error="e => e.target.style.display='none'"
-                />
-                <div v-else class="pod-initial" :style="{ background: avgRanked[pos].color + '33', color: avgRanked[pos].color }">
-                  {{ avgRanked[pos].name.charAt(0) }}
-                </div>
+                <img v-if="avgRanked[pos].logo_url" :src="avgRanked[pos].logo_url" class="pod-logo" @error="e => e.target.style.display='none'" />
+                <div v-else class="pod-initial" :style="{ background: avgRanked[pos].color + '33', color: avgRanked[pos].color }">{{ avgRanked[pos].name.charAt(0) }}</div>
                 <div class="pod-medal" :class="'medal-'+(pos+1)">{{ pos+1 }}</div>
               </div>
               <div class="pod-name">{{ avgRanked[pos].name }}</div>
@@ -72,29 +59,28 @@
           </div>
         </div>
 
-        <!-- 4위~10위 -->
         <div class="rank-list">
           <div v-for="(crew, i) in avgRanked.slice(3)" :key="crew.id" class="rank-row">
-            <span class="rank-num">{{ i+4 }}</span>
-            <div class="rank-logo-wrap">
-              <img v-if="crew.logo_url" :src="crew.logo_url" class="rank-logo" @error="e => e.target.style.display='none'" />
-              <div v-else class="rank-initial-sm" :style="{ background: crew.color+'22', color: crew.color }">{{ crew.name.charAt(0) }}</div>
+            <div class="rank-bg-fill" :style="{ width: pctOf(crew.avg, avgRanked[0]?.avg)+'%', background: crew.color }" />
+            <div class="rank-content">
+              <span class="rank-num">{{ i+4 }}</span>
+              <div class="rank-logo-wrap">
+                <img v-if="crew.logo_url" :src="crew.logo_url" class="rank-logo" @error="e => e.target.style.display='none'" />
+                <div v-else class="rank-initial-sm" :style="{ background: crew.color+'22', color: crew.color }">{{ crew.name.charAt(0) }}</div>
+              </div>
+              <span class="rank-name">{{ crew.name }}</span>
+              <span class="rank-val">{{ fmt(crew.avg) }}</span>
             </div>
-            <span class="rank-name">{{ crew.name }}</span>
-            <span class="rank-val">{{ fmt(crew.avg) }}</span>
-            <div class="rank-bar"><div class="rank-bar-fill" :style="{ width: pctOf(crew.avg, avgRanked[0]?.avg)+'%', background: crew.color }" /></div>
           </div>
         </div>
       </div>
 
-      <!-- 수장 별풍선 순위 -->
+      <!-- 2. 크루 매출 순위 -->
       <div class="hcol">
         <div class="hcol-head">
-          <div class="hcol-icon hcol-icon-master">
-            <i class="ti ti-crown" />
-          </div>
+          <div class="hcol-icon hcol-icon-master"><i class="ti ti-crown" /></div>
           <div>
-            <div class="hcol-title">수장 별풍선 순위</div>
+            <div class="hcol-title">크루 매출 순위</div>
             <div class="hcol-sub">크루 매출풍 기준</div>
           </div>
         </div>
@@ -103,15 +89,8 @@
           <div v-for="(pos, pi) in podiumOrder" :key="pi" class="pod" :class="'pod-'+pos">
             <template v-if="masterRanked[pos]">
               <div class="pod-img-wrap">
-                <img
-                  v-if="masterRanked[pos].logo_url"
-                  :src="masterRanked[pos].logo_url"
-                  class="pod-logo"
-                  @error="e => e.target.style.display='none'"
-                />
-                <div v-else class="pod-initial" :style="{ background: masterRanked[pos].color + '33', color: masterRanked[pos].color }">
-                  {{ masterRanked[pos].name.charAt(0) }}
-                </div>
+                <img v-if="masterRanked[pos].logo_url" :src="masterRanked[pos].logo_url" class="pod-logo" @error="e => e.target.style.display='none'" />
+                <div v-else class="pod-initial" :style="{ background: masterRanked[pos].color + '33', color: masterRanked[pos].color }">{{ masterRanked[pos].name.charAt(0) }}</div>
                 <div class="pod-medal" :class="'medal-'+(pos+1)">{{ pos+1 }}</div>
               </div>
               <div class="pod-name">{{ masterRanked[pos].name }}</div>
@@ -123,24 +102,24 @@
 
         <div class="rank-list">
           <div v-for="(crew, i) in masterRanked.slice(3)" :key="crew.id" class="rank-row">
-            <span class="rank-num">{{ i+4 }}</span>
-            <div class="rank-logo-wrap">
-              <img v-if="crew.logo_url" :src="crew.logo_url" class="rank-logo" @error="e => e.target.style.display='none'" />
-              <div v-else class="rank-initial-sm" :style="{ background: crew.color+'22', color: crew.color }">{{ crew.name.charAt(0) }}</div>
+            <div class="rank-bg-fill" :style="{ width: pctOf(crew.master_balloons, masterRanked[0]?.master_balloons)+'%', background: crew.color }" />
+            <div class="rank-content">
+              <span class="rank-num">{{ i+4 }}</span>
+              <div class="rank-logo-wrap">
+                <img v-if="crew.logo_url" :src="crew.logo_url" class="rank-logo" @error="e => e.target.style.display='none'" />
+                <div v-else class="rank-initial-sm" :style="{ background: crew.color+'22', color: crew.color }">{{ crew.name.charAt(0) }}</div>
+              </div>
+              <span class="rank-name">{{ crew.name }}</span>
+              <span class="rank-val">{{ fmt(crew.master_balloons) }}</span>
             </div>
-            <span class="rank-name">{{ crew.name }}</span>
-            <span class="rank-val">{{ fmt(crew.master_balloons) }}</span>
-            <div class="rank-bar"><div class="rank-bar-fill" :style="{ width: pctOf(crew.master_balloons, masterRanked[0]?.master_balloons)+'%', background: crew.color }" /></div>
           </div>
         </div>
       </div>
 
-      <!-- 개인 TOP 10 -->
+      <!-- 3. 개인 TOP 10 -->
       <div class="hcol">
         <div class="hcol-head">
-          <div class="hcol-icon hcol-icon-indiv">
-            <i class="ti ti-medal" />
-          </div>
+          <div class="hcol-icon hcol-icon-indiv"><i class="ti ti-medal" /></div>
           <div>
             <div class="hcol-title">개인 TOP 10</div>
             <div class="hcol-sub">전체 멤버 별풍선 순위</div>
@@ -151,18 +130,11 @@
           <div v-for="(pos, pi) in podiumOrder" :key="pi" class="pod" :class="'pod-'+pos">
             <template v-if="indivRanked[pos]">
               <div class="pod-img-wrap">
-                <img
-                  :src="indivRanked[pos].profile_img || cdnUrl(indivRanked[pos].soop_id)"
-                  class="pod-profile"
-                  :style="{ borderColor: indivRanked[pos].crew_color }"
-                  @error="onImgError($event, indivRanked[pos].soop_id)"
-                />
+                <img :src="indivRanked[pos].profile_img || cdnUrl(indivRanked[pos].soop_id)" class="pod-profile" :style="{ borderColor: indivRanked[pos].crew_color }" @error="onImgError($event, indivRanked[pos].soop_id)" />
                 <div class="pod-medal" :class="'medal-'+(pos+1)">{{ pos+1 }}</div>
               </div>
               <div class="pod-name">{{ indivRanked[pos].name }}</div>
-              <div class="pod-crew-tag" :style="{ background: indivRanked[pos].crew_color+'22', color: indivRanked[pos].crew_color }">
-                {{ indivRanked[pos].crew_name }}
-              </div>
+              <div class="pod-crew-tag" :style="{ background: indivRanked[pos].crew_color+'22', color: indivRanked[pos].crew_color }">{{ indivRanked[pos].crew_name }}</div>
               <div class="pod-val" :class="pos===0?'gold':''">{{ fmt(indivRanked[pos].balloons) }}</div>
               <div class="pod-stage" :class="'stage-'+(pos+1)" />
             </template>
@@ -171,19 +143,16 @@
 
         <div class="rank-list">
           <div v-for="(m, i) in indivRanked.slice(3)" :key="m.id" class="rank-row rank-row-indiv">
-            <span class="rank-num">{{ i+4 }}</span>
-            <div class="rank-profile-wrap">
-              <img
-                :src="m.profile_img || cdnUrl(m.soop_id)"
-                class="rank-profile"
-                :style="{ borderColor: m.crew_color }"
-                @error="onImgError($event, m.soop_id)"
-              />
+            <div class="rank-bg-fill" :style="{ width: pctOf(m.balloons, indivRanked[0]?.balloons)+'%', background: m.crew_color }" />
+            <div class="rank-content">
+              <span class="rank-num">{{ i+4 }}</span>
+              <div class="rank-profile-wrap">
+                <img :src="m.profile_img || cdnUrl(m.soop_id)" class="rank-profile" :style="{ borderColor: m.crew_color }" @error="onImgError($event, m.soop_id)" />
+              </div>
+              <span class="rank-name">{{ m.name }}</span>
+              <span class="rank-crew-tag" :style="{ background: m.crew_color+'22', color: m.crew_color }">{{ m.crew_name }}</span>
+              <span class="rank-val">{{ fmt(m.balloons) }}</span>
             </div>
-            <span class="rank-name">{{ m.name }}</span>
-            <span class="rank-crew-tag" :style="{ background: m.crew_color+'22', color: m.crew_color }">{{ m.crew_name }}</span>
-            <span class="rank-val">{{ fmt(m.balloons) }}</span>
-            <div class="rank-bar"><div class="rank-bar-fill" :style="{ width: pctOf(m.balloons, indivRanked[0]?.balloons)+'%', background: m.crew_color }" /></div>
           </div>
         </div>
       </div>
@@ -260,268 +229,150 @@ function onImgError(e, soopId) {
 
 <style scoped>
 .honor-wrap {
-  padding: 16px 22px 24px;
+  padding: 20px 24px 40px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
 /* ── 헤더 ── */
 .honor-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
 }
-.honor-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.honor-crown { font-size: 20px; }
-.honor-title {
-  font-size: 18px;
-  font-weight: 900;
-  color: var(--text);
-  letter-spacing: -0.4px;
-}
-.honor-period {
-  font-size: 13px;
-  color: var(--text3);
-  font-weight: 600;
-}
+.honor-title-row { display: flex; align-items: center; gap: 8px; }
+.honor-crown { font-size: 24px; filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3)); }
+.honor-title { font-size: 22px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; }
+.honor-period { font-size: 15px; color: var(--text3); font-weight: 600; background: var(--bg4); padding: 4px 10px; border-radius: 8px; }
 
-.honor-group-tabs { display: flex; gap: 6px; }
+.honor-group-tabs { display: flex; gap: 8px; }
 .hg-tab {
-  display: flex; align-items: center; gap: 5px;
-  padding: 7px 16px; border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg3);
-  color: var(--text3);
-  font-size: 12px; font-weight: 700;
-  cursor: pointer; font-family: inherit;
-  transition: all .15s;
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--bg3); color: var(--text3);
+  font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s ease;
 }
-.hg-tab i { font-size: 13px; }
-.hg-tab.active {
-  background: #0d2040;
-  border-color: #4a9eff;
-  color: #90c8ff;
-}
-.hg-bora.active {
-  background: #1e0d38;
-  border-color: #9944cc;
-  color: #cc88ff;
-}
-[data-theme="light"] .hg-tab.active {
-  background: #ddeeff;
-  border-color: #1a60dd;
-  color: #0a3a99;
-}
-[data-theme="light"] .hg-bora.active {
-  background: #f0deff;
-  border-color: #8822cc;
-  color: #5a0099;
-}
+.hg-tab.active { background: rgba(74, 158, 255, 0.15); border-color: #4a9eff; color: #90c8ff; box-shadow: 0 0 12px rgba(74, 158, 255, 0.1); }
+.hg-bora.active { background: rgba(153, 68, 204, 0.15); border-color: #9944cc; color: #cc88ff; box-shadow: 0 0 12px rgba(153, 68, 204, 0.1); }
 
-/* ── 로딩/에러 ── */
-.honor-loading {
-  display: flex; align-items: center; justify-content: center;
-  gap: 10px; padding: 60px;
-  color: var(--text3); font-size: 14px;
-}
-.spin {
-  width: 20px; height: 20px;
-  border: 2px solid var(--border); border-top-color: #c9960a;
-  border-radius: 50%; animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg) } }
-.honor-error { color: #ff6b6b; text-align: center; padding: 40px; }
+/* ── 1단 세로 레이아웃 ── */
+.honor-cols { display: flex; flex-direction: column; gap: 32px; }
 
-/* ── 3열 레이아웃 ── */
-.honor-cols {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-/* ── 컬럼 카드 ── */
 .hcol {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  overflow: hidden;
+  background: linear-gradient(145deg, var(--bg3) 0%, var(--bg4) 100%);
+  border: 1px solid var(--border); border-radius: 24px;
+  overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
 }
 
 .hcol-head {
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 16px 12px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg4);
+  display: flex; align-items: center; gap: 14px;
+  padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: rgba(0, 0, 0, 0.2);
 }
 .hcol-icon {
-  width: 32px; height: 32px; border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.hcol-icon i { font-size: 16px; }
-.hcol-icon-avg { background: rgba(201,150,10,0.15); color: #c9960a; }
-.hcol-icon-master { background: rgba(255,190,0,0.15); color: #ffc832; }
-.hcol-icon-indiv { background: rgba(107,203,119,0.15); color: #6bcb77; }
-[data-theme="light"] .hcol-icon-avg { background: rgba(180,120,0,0.1); color: #8a6400; }
-[data-theme="light"] .hcol-icon-master { background: rgba(200,140,0,0.1); color: #a07800; }
-[data-theme="light"] .hcol-icon-indiv { background: rgba(30,140,60,0.1); color: #1e7a38; }
+.hcol-icon i { font-size: 22px; }
+.hcol-icon-avg { background: rgba(201,150,10,0.2); color: #e8b820; box-shadow: 0 0 16px rgba(201,150,10,0.3); }
+.hcol-icon-master { background: rgba(255,190,0,0.2); color: #ffcc44; box-shadow: 0 0 16px rgba(255,190,0,0.3); }
+.hcol-icon-indiv { background: rgba(107,203,119,0.2); color: #88df94; box-shadow: 0 0 16px rgba(107,203,119,0.3); }
 
-.hcol-title { font-size: 13px; font-weight: 800; color: var(--text); }
-.hcol-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.hcol-title { font-size: 18px; font-weight: 800; color: var(--text); }
+.hcol-sub { font-size: 13px; color: var(--text3); margin-top: 4px; }
 
 /* ── 포디움 ── */
 .podium {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 4px;
-  padding: 16px 8px 0;
-  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-end; justify-content: center; gap: 20px;
+  padding: 40px 20px 0; position: relative;
 }
 
-.pod {
-  display: flex; flex-direction: column;
-  align-items: center; gap: 4px;
-  flex: 1; min-width: 0;
-}
-.pod-0 { order: 2; }
+.pod { display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; min-width: 0; z-index: 1; max-width: 200px; }
+.pod-0 { order: 2; transform: translateY(-16px); }
 .pod-1 { order: 1; }
 .pod-2 { order: 3; }
 
-.pod-img-wrap { position: relative; flex-shrink: 0; }
+.pod-img-wrap { position: relative; flex-shrink: 0; margin-bottom: 6px; }
+.pod-logo { border-radius: 16px; object-fit: contain; box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
+.pod-0 .pod-logo { width: 80px; height: 80px; }
+.pod-1 .pod-logo { width: 64px; height: 64px; }
+.pod-2 .pod-logo { width: 56px; height: 56px; }
 
-/* 크루 로고 */
-.pod-logo {
-  border-radius: 8px;
-  object-fit: contain;
-  display: block;
-}
-.pod-0 .pod-logo { width: 48px; height: 48px; }
-.pod-1 .pod-logo { width: 38px; height: 38px; }
-.pod-2 .pod-logo { width: 32px; height: 32px; }
+.pod-initial { display: flex; align-items: center; justify-content: center; font-weight: 900; border-radius: 16px; box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
+.pod-0 .pod-initial { width: 80px; height: 80px; font-size: 28px; }
+.pod-1 .pod-initial { width: 64px; height: 64px; font-size: 22px; }
+.pod-2 .pod-initial { width: 56px; height: 56px; font-size: 18px; }
 
-/* 크루 이니셜 */
-.pod-initial {
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 900; font-size: 16px;
-}
-.pod-0 .pod-initial { width: 48px; height: 48px; font-size: 18px; }
-.pod-1 .pod-initial { width: 38px; height: 38px; font-size: 14px; }
-.pod-2 .pod-initial { width: 32px; height: 32px; font-size: 12px; }
+.pod-profile { border-radius: 50%; object-fit: cover; border: 3px solid transparent; box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
+.pod-0 .pod-profile { width: 80px; height: 80px; }
+.pod-1 .pod-profile { width: 64px; height: 64px; }
+.pod-2 .pod-profile { width: 56px; height: 56px; border-width: 2.5px; }
 
-/* 개인 프로필 */
-.pod-profile {
-  border-radius: 50%; object-fit: cover; display: block;
-  border: 2px solid transparent;
-}
-.pod-0 .pod-profile { width: 48px; height: 48px; border-width: 2.5px; }
-.pod-1 .pod-profile { width: 38px; height: 38px; }
-.pod-2 .pod-profile { width: 32px; height: 32px; border-width: 1.5px; }
-
-/* 메달 뱃지 */
 .pod-medal {
-  position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
-  font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 8px;
-  line-height: 1.4; white-space: nowrap; color: #fff;
+  position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+  font-size: 12px; font-weight: 900; padding: 4px 12px; border-radius: 12px;
+  color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
-.medal-1 { background: #c9960a; box-shadow: 0 2px 6px rgba(201,150,10,0.5); }
-.medal-2 { background: #7a8a9a; }
-.medal-3 { background: #a07850; }
+.medal-1 { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); box-shadow: 0 4px 12px rgba(246, 211, 101, 0.5); }
+.medal-2 { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); box-shadow: 0 4px 12px rgba(142, 197, 252, 0.4); }
+.medal-3 { background: linear-gradient(135deg, #f6d365 0%, #d48b55 100%); box-shadow: 0 4px 12px rgba(212, 139, 85, 0.4); }
 
-.pod-name {
-  font-size: 10px; font-weight: 700; color: var(--text);
-  text-align: center; max-width: 76px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  margin-top: 8px;
-}
-.pod-crew-tag {
-  font-size: 8px; padding: 1px 5px; border-radius: 6px;
-  font-weight: 700; white-space: nowrap;
-  max-width: 72px; overflow: hidden; text-overflow: ellipsis;
-}
-.pod-val {
-  font-size: 10px; font-weight: 700; color: var(--text2);
-  margin-bottom: 3px; letter-spacing: -0.3px;
-}
-.pod-val.gold { color: #c9960a; }
-[data-theme="light"] .pod-val.gold { color: #8a6400; }
+.pod-name { font-size: 14px; font-weight: 800; color: var(--text); text-align: center; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pod-crew-tag { font-size: 11px; padding: 3px 8px; border-radius: 8px; font-weight: 800; }
+.pod-val { font-size: 15px; font-weight: 800; color: var(--text2); letter-spacing: -0.3px; }
+.pod-val.gold { color: #f6d365; text-shadow: 0 0 10px rgba(246, 211, 101, 0.4); font-size: 17px; }
 
 /* 시상대 */
-.pod-stage {
-  width: 100%; border-radius: 3px 3px 0 0;
-}
-.stage-1 { height: 40px; background: linear-gradient(180deg, #c9960a 0%, #a07800 100%); }
-.stage-2 { height: 28px; background: linear-gradient(180deg, #7a8a9a 0%, #5a6a7a 100%); }
-.stage-3 { height: 20px; background: linear-gradient(180deg, #a07850 0%, #7a5830 100%); }
-[data-theme="light"] .stage-1 { background: linear-gradient(180deg, #e8b820 0%, #c9960a 100%); }
-[data-theme="light"] .stage-2 { background: linear-gradient(180deg, #9aabb8 0%, #7a8a9a 100%); }
-[data-theme="light"] .stage-3 { background: linear-gradient(180deg, #c09870 0%, #a07850 100%); }
+.pod-stage { width: 100%; border-radius: 8px 8px 0 0; position: relative; overflow: hidden; }
+.pod-stage::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.4); }
+.stage-1 { height: 60px; background: rgba(201,150,10,0.15); border: 1px solid rgba(201,150,10,0.4); border-bottom: none; box-shadow: 0 -6px 24px rgba(201,150,10,0.15); }
+.stage-2 { height: 45px; background: rgba(122,138,154,0.15); border: 1px solid rgba(122,138,154,0.3); border-bottom: none; box-shadow: 0 -4px 18px rgba(122,138,154,0.1); }
+.stage-3 { height: 30px; background: rgba(160,120,80,0.15); border: 1px solid rgba(160,120,80,0.3); border-bottom: none; box-shadow: 0 -4px 18px rgba(160,120,80,0.1); }
 
-/* ── 리스트 ── */
-.rank-list { padding: 6px 0 4px; }
+/* ── 리스트 (PC 2열) ── */
+.rank-list { 
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  padding: 24px;
+}
 
 .rank-row {
-  display: flex; align-items: center; gap: 7px;
-  padding: 5px 14px;
-  transition: background .1s;
+  position: relative; border-radius: 12px; overflow: hidden;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
 }
-.rank-row:hover { background: var(--member-hover); }
+.rank-row:hover { background: rgba(255, 255, 255, 0.05); }
 
-.rank-num {
-  font-size: 10px; font-weight: 700; color: var(--text3);
-  width: 14px; text-align: center; flex-shrink: 0;
-}
-.rank-logo-wrap { flex-shrink: 0; width: 22px; height: 22px; }
-.rank-logo {
-  width: 22px; height: 22px; border-radius: 5px;
-  object-fit: contain; display: block;
-}
-.rank-initial-sm {
-  width: 22px; height: 22px; border-radius: 5px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 800;
-}
-.rank-profile-wrap { flex-shrink: 0; width: 22px; height: 22px; }
-.rank-profile {
-  width: 22px; height: 22px; border-radius: 50%;
-  object-fit: cover; border: 1.5px solid transparent; display: block;
-}
-.rank-name {
-  flex: 1; font-size: 11px; font-weight: 600; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.rank-crew-tag {
-  font-size: 8px; padding: 1px 5px; border-radius: 5px;
-  font-weight: 700; flex-shrink: 0; white-space: nowrap;
-}
-.rank-val {
-  font-size: 10px; font-weight: 700; color: var(--text2);
-  flex-shrink: 0; letter-spacing: -0.3px;
-}
-.rank-bar {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  height: 2px; background: var(--bar-bg);
-}
-.rank-row { position: relative; }
-.rank-bar-fill {
-  height: 100%; border-radius: 0 1px 1px 0;
-  opacity: 0.6; transition: width .5s ease;
+.rank-bg-fill {
+  position: absolute; top: 0; left: 0; bottom: 0;
+  opacity: 0.15; border-radius: 12px 0 0 12px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ── 반응형 ── */
+.rank-content {
+  position: relative; display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px; z-index: 2;
+}
+
+.rank-num { font-size: 13px; font-weight: 800; color: var(--text3); width: 20px; text-align: center; flex-shrink: 0; }
+.rank-logo-wrap, .rank-profile-wrap { flex-shrink: 0; width: 34px; height: 34px; }
+.rank-logo { width: 100%; height: 100%; border-radius: 8px; object-fit: contain; }
+.rank-profile { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid transparent; }
+.rank-initial-sm { width: 100%; height: 100%; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+
+.rank-name { flex: 1; font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-crew-tag { font-size: 11px; padding: 3px 8px; border-radius: 8px; font-weight: 800; flex-shrink: 0; }
+.rank-val { font-size: 14px; font-weight: 800; color: var(--text); flex-shrink: 0; font-family: monospace; letter-spacing: -0.5px; }
+
+/* ── 모바일 반응형 ── */
 @media (max-width: 900px) {
-  .honor-cols { grid-template-columns: 1fr; }
-  .honor-wrap { padding: 12px 12px 20px; }
-}
-@media (max-width: 600px) {
+  .honor-wrap { padding: 16px; }
   .honor-header { flex-direction: column; align-items: flex-start; }
+  
+  .rank-list { grid-template-columns: 1fr; padding: 16px; }
+  
+  .pod-0 .pod-logo, .pod-0 .pod-profile, .pod-0 .pod-initial { width: 64px; height: 64px; font-size: 22px; }
+  .pod-1 .pod-logo, .pod-1 .pod-profile, .pod-1 .pod-initial { width: 52px; height: 52px; font-size: 18px; }
+  .pod-2 .pod-logo, .pod-2 .pod-profile, .pod-2 .pod-initial { width: 44px; height: 44px; font-size: 16px; }
 }
 </style>
