@@ -279,6 +279,24 @@
             </label>
           </div>
           <div class="hint" style="margin-top:14px">💡 OFF로 설정하면 일반 사용자에게 ⚔️ 크루대결 버튼이 보이지 않아요.</div>
+
+          <div class="section-title" style="margin-top:22px">🏆 이달의 명예</div>
+          <div class="battle-info-box" style="border-color: color-mix(in srgb, #c9960a 25%, transparent); background: color-mix(in srgb, #c9960a 8%, var(--bg3))">
+            <div class="battle-info-title">🏆 무엇을 하는 기능?</div>
+            <div class="battle-info-desc">크루 평균 순위, 수장 별풍선 순위, 개인 TOP 10을 한눈에 보여주는 명예의 전당 탭이에요.</div>
+          </div>
+          <div class="section-title" style="margin-top:18px">표시 설정</div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <div class="toggle-label">이달의 명예 탭 표시</div>
+              <div class="toggle-desc">{{ honorEnabled ? '✅ 사용자에게 보임' : '🚫 숨김 처리됨' }}</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" v-model="honorEnabled" @change="onHonorToggleChange" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="hint" style="margin-top:14px">💡 OFF로 설정하면 🏆 이달의명예 탭이 보이지 않아요.</div>
         </div>
 
         <!-- 백업 탭 -->
@@ -323,7 +341,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { api } from '../composables/useApi.js'
 
 const props = defineProps({ activeGroup: { type: String, default: 'excel' } })
-const emit = defineEmits(['close', 'updated', 'battle-toggle'])
+const emit = defineEmits(['close', 'updated', 'battle-toggle', 'honor-toggle'])
 const adminGroup = ref(props.activeGroup)
 watch(adminGroup, () => load())
 
@@ -359,6 +377,12 @@ const battleEnabled = ref(localStorage.getItem('battle_enabled') !== 'false')
 function onBattleToggleChange() {
   localStorage.setItem('battle_enabled', battleEnabled.value ? 'true' : 'false')
   emit('battle-toggle', battleEnabled.value)
+}
+
+const honorEnabled = ref(localStorage.getItem('honor_enabled') !== 'false')
+function onHonorToggleChange() {
+  localStorage.setItem('honor_enabled', honorEnabled.value ? 'true' : 'false')
+  emit('honor-toggle', honorEnabled.value)
 }
 
 const bulkInput = ref('')

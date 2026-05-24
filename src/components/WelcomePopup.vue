@@ -59,6 +59,13 @@
             <div class="feat-desc">크루수장 월간 별풍선 현황</div>
           </div>
         </div>
+        <div class="feat-item feat-honor">
+          <span class="feat-ico">🏆</span>
+          <div>
+            <div class="feat-name feat-name-honor">이달의 명예</div>
+            <div class="feat-desc">크루 평균·수장 별풍선·개인 TOP 10 순위 한눈에</div>
+          </div>
+        </div>
         <div class="feat-item feat-blue">
           <span class="feat-ico">🏅</span>
           <div>
@@ -143,14 +150,10 @@ defineExpose({ open })
   position: relative;
   display: flex; flex-direction: column;
   margin-bottom: 40px;
-
-  /* 다크 기본 */
   background: #0e1020;
   border: 0.5px solid #252850;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
 }
-
-/* 라이트 */
 [data-theme="light"] .popup-box {
   background: #f4f5fb;
   border-color: #d0d4ee;
@@ -205,13 +208,11 @@ defineExpose({ open })
 
 /* ── 크루 카드 ── */
 .crew-group { display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
-
 .crew-card {
   border-radius: 12px; padding: 12px 14px;
   border: 1px solid; position: relative; overflow: hidden;
   display: flex; align-items: center; gap: 12px;
 }
-
 .crew-excel {
   background: linear-gradient(120deg, #071828 0%, #0d2545 100%);
   border-color: #3a7acc;
@@ -222,7 +223,6 @@ defineExpose({ open })
   border-color: #9944cc;
   box-shadow: 0 0 18px rgba(160,80,255,0.12), inset 0 1px 0 rgba(200,100,255,0.15);
 }
-
 [data-theme="light"] .crew-excel {
   background: linear-gradient(120deg, #d8eeff 0%, #eaf4ff 100%);
   border-color: #1a60dd;
@@ -233,7 +233,6 @@ defineExpose({ open })
   border-color: #8822cc;
   box-shadow: 0 2px 14px rgba(136,34,204,0.10), inset 0 1px 0 rgba(200,100,255,0.2);
 }
-
 .crew-icon-wrap {
   width: 36px; height: 36px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
@@ -243,15 +242,12 @@ defineExpose({ open })
 .crew-bora  .crew-icon-wrap { background: rgba(200,100,255,0.15); }
 [data-theme="light"] .crew-excel .crew-icon-wrap { background: rgba(26,96,221,0.12); }
 [data-theme="light"] .crew-bora  .crew-icon-wrap { background: rgba(136,34,204,0.12); }
-
 .crew-info { flex: 1; position: relative; z-index: 1; }
-
 .crew-name { font-size: 13px; font-weight: 700; letter-spacing: -0.2px; }
 .crew-excel .crew-name { color: #90c8ff; }
 .crew-bora  .crew-name { color: #dd99ff; }
 [data-theme="light"] .crew-excel .crew-name { color: #0a3a99; }
 [data-theme="light"] .crew-bora  .crew-name { color: #5a0099; }
-
 .crew-tag {
   display: inline-block; font-size: 9px; font-weight: 600;
   border-radius: 5px; padding: 1px 6px; margin-top: 3px;
@@ -260,7 +256,6 @@ defineExpose({ open })
 .crew-bora  .crew-tag { background: rgba(200,100,255,0.15); color: #cc77ff; }
 [data-theme="light"] .crew-excel .crew-tag { background: rgba(26,96,221,0.12); color: #1a4eb0; }
 [data-theme="light"] .crew-bora  .crew-tag { background: rgba(136,34,204,0.12); color: #7722aa; }
-
 .crew-arrow { font-size: 16px; position: relative; z-index: 1; }
 .crew-excel .crew-arrow { color: #3a6aaa; }
 .crew-bora  .crew-arrow { color: #7733aa; }
@@ -269,19 +264,15 @@ defineExpose({ open })
 
 /* ── 기능 리스트 ── */
 .feat-list { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
-
 .feat-item {
   display: flex; align-items: center; gap: 11px;
   border-radius: 9px; padding: 9px 12px; border: 0.5px solid;
   background: #12152a; border-color: #252850;
 }
 [data-theme="light"] .feat-item { background: #fff; border-color: #d8daf0; }
-
 .feat-ico { font-size: 17px; width: 24px; text-align: center; flex-shrink: 0; }
-
 .feat-name { font-size: 12px; font-weight: 600; margin-bottom: 1px; color: #c0c8ee; }
 [data-theme="light"] .feat-name { color: #1a1a3a; }
-
 .feat-desc { font-size: 9.5px; color: #6070a0; }
 [data-theme="light"] .feat-desc { color: #7070a0; }
 
@@ -290,6 +281,12 @@ defineExpose({ open })
 .feat-name-gold { color: #f5c842 !important; }
 [data-theme="light"] .feat-gold { background: rgba(255,196,0,0.06) !important; border-color: rgba(200,140,0,0.25) !important; }
 [data-theme="light"] .feat-name-gold { color: #a06800 !important; }
+
+/* 이달의명예 골드 */
+.feat-honor { background: rgba(201,150,10,0.08) !important; border-color: rgba(201,150,10,0.28) !important; }
+.feat-name-honor { color: #f5c842 !important; }
+[data-theme="light"] .feat-honor { background: rgba(201,150,10,0.06) !important; border-color: rgba(180,130,0,0.28) !important; }
+[data-theme="light"] .feat-name-honor { color: #8a6400 !important; }
 
 /* 파란색 */
 .feat-blue { background: rgba(74,158,255,0.07) !important; border-color: rgba(74,158,255,0.2) !important; }
@@ -310,7 +307,6 @@ defineExpose({ open })
 [data-theme="light"] .feat-name-contact { color: #2244bb !important; }
 .feat-desc-contact { color: #7090c0 !important; }
 [data-theme="light"] .feat-desc-contact { color: #5060a0 !important; }
-
 .contact-badge {
   font-size: 9px; font-weight: 700;
   background: #6b5fff; color: #fff;
@@ -320,20 +316,16 @@ defineExpose({ open })
 
 /* ── 하단 정보 ── */
 .bottom-row { display: flex; gap: 6px; margin-bottom: 12px; }
-
 .bottom-box {
   flex: 1; border-radius: 8px; padding: 7px 10px;
   border: 0.5px solid; text-align: center;
   background: #12152a; border-color: #252850;
 }
 [data-theme="light"] .bottom-box { background: #fff; border-color: #d8daf0; }
-
 .bottom-label { font-size: 9.5px; margin-bottom: 2px; color: #6070a0; }
 [data-theme="light"] .bottom-label { color: #9090b8; }
-
 .bottom-val { font-size: 11px; font-weight: 500; color: #c0c8ee; }
 [data-theme="light"] .bottom-val { color: #1a1a3a; }
-
 .auto-box {
   flex: 1; display: flex; align-items: center; justify-content: center;
   gap: 6px; border-radius: 8px; padding: 7px 10px;
@@ -341,9 +333,7 @@ defineExpose({ open })
   background: #12152a; border-color: #252850;
 }
 [data-theme="light"] .auto-box { background: #fff; border-color: #d8daf0; }
-
 .dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; }
-
 .auto-txt { font-size: 10.5px; color: #6070a0; }
 [data-theme="light"] .auto-txt { color: #7070a0; }
 .auto-txt strong { color: #c0c8ee; }
@@ -368,7 +358,6 @@ defineExpose({ open })
 /* ── 구분선 / 오늘 하루 안보기 ── */
 .popup-sep { height: 0.5px; background: #252850; margin-bottom: 10px; }
 [data-theme="light"] .popup-sep { background: #d8daf0; }
-
 .popup-skip {
   display: flex; align-items: center; justify-content: center;
   gap: 7px; cursor: pointer; user-select: none;
@@ -382,7 +371,6 @@ defineExpose({ open })
 .popup-chk.on { background: #7c74e8; border-color: #7c74e8; color: #fff; }
 [data-theme="light"] .popup-chk { border-color: #b0b0d0; }
 [data-theme="light"] .popup-chk.on { background: #6b5fff; border-color: #6b5fff; }
-
 .popup-sk-lbl { font-size: 10.5px; font-weight: 500; color: #6070a0; }
 [data-theme="light"] .popup-sk-lbl { color: #9090b8; }
 

@@ -63,6 +63,9 @@
       <button class="mode-tab" :class="{ active: mode === 'viewer' }" @click="setMode('viewer')">
         👁️ 뷰어십
       </button>
+      <button v-if="honorEnabled" class="mode-tab mode-tab-honor" :class="{ active: mode === 'honor' }" @click="setMode('honor')">
+        🏆 이달의명예
+      </button>
 
       <button v-if="battleEnabled" class="btn-battle-center pc-only" @click="showBattle = true">
         ⚔️ 크루대결
@@ -120,7 +123,8 @@
     </div>
 
     <div ref="captureTarget">
-      <main v-if="!loading && stats.length > 0" class="grid">
+      <HonorBoard v-if="mode === 'honor'" :active-group="activeGroup" :year="year" :month="month" />
+      <main v-if="!loading && stats.length > 0 && mode !== 'honor'" class="grid">
         <CrewCard
           v-for="(crew, i) in stats"
           :key="crew.id"
@@ -155,7 +159,7 @@
       </div>
     </div>
 
-    <AdminModal v-if="showAdmin" :active-group="activeGroup" @close="showAdmin = false" @updated="loadStats" @battle-toggle="onBattleToggle" />
+    <AdminModal v-if="showAdmin" :active-group="activeGroup" @close="showAdmin = false" @updated="loadStats" @battle-toggle="onBattleToggle" @honor-toggle="onHonorToggle" />
     <CrewBattleModal v-if="showBattle" :crews="stats" :mode="mode" @close="showBattle = false" />
     <SyncModal v-if="showSync" @close="showSync = false" @done="loadStats" />
     <WelcomePopup ref="welcomePopupRef" />
@@ -170,6 +174,7 @@ import CrewCard from './components/CrewCard.vue'
 import AdminModal from './components/AdminModal.vue'
 import CrewBattleModal from './components/CrewBattleModal.vue'
 import SyncModal from './components/SyncModal.vue'
+import HonorBoard from './components/HonorBoard.vue'
 import WelcomePopup from './components/WelcomePopup.vue'
 import { api, getAdminToken, setAdminToken, clearAdminToken } from './composables/useApi.js'
 
@@ -200,10 +205,17 @@ const captureTarget = ref(null)
 const welcomePopupRef = ref(null)
 
 const battleEnabled = ref(localStorage.getItem('battle_enabled') !== 'false')
+const honorEnabled = ref(localStorage.getItem('honor_enabled') !== 'false')
 
 function onBattleToggle(value) {
   battleEnabled.value = value
   localStorage.setItem('battle_enabled', value ? 'true' : 'false')
+}
+
+function onHonorToggle(value) {
+  honorEnabled.value = value
+  localStorage.setItem('honor_enabled', value ? 'true' : 'false')
+  if (!value && mode.value === 'honor') setMode('balloon')
 }
 
 const MIN_MONTHS_BACK = 2
@@ -558,6 +570,8 @@ onUnmounted(() => {
 }
 .mode-tab:hover { border-color: var(--text3); color: var(--text); }
 .mode-tab.active { background: var(--text); color: var(--bg); border-color: var(--text); box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
+.mode-tab-honor.active { background: linear-gradient(135deg, #b8860b, #c9960a); color: #fff; border-color: #c9960a; box-shadow: 0 4px 14px rgba(201,150,10,0.35); }
+[data-theme="light"] .mode-tab-honor.active { background: linear-gradient(135deg, #8a6400, #b8860b); }
 
 .btn-battle-center {
   padding: 8px 18px; border-radius: 999px;
