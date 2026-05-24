@@ -51,4 +51,5 @@ getCrews: (group = 'excel') => apiFetch(`/crews?group=${group}`),
   lastCollected: () => apiFetch('/last-collected'),
   changePassword: (newPassword) => apiFetch('/admin/change-password', { method: 'POST', body: { newPassword } }),
   searchByName: (name) => apiFetch(`/search-by-name?name=${encodeURIComponent(name)}`),
+  getSummary: (year, month, group = 'excel') => apiFetch(`/summary?year=${year}&month=${month}&group=${group}`),
 }

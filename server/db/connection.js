@@ -3,7 +3,7 @@ import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const dbPath = join('/app/data', 'data.db')
+const dbPath = process.env.DB_PATH || join(__dirname, '..', 'data.db')
 const schemaPath = join(__dirname, 'schema.sql')
 const db = new DatabaseSync(dbPath)
 db.exec('PRAGMA journal_mode = WAL')
@@ -25,6 +25,11 @@ try {
   db.exec('ALTER TABLE crews ADD COLUMN master_soop_id TEXT DEFAULT NULL')
   console.log('[db] crews.master_soop_id 컬럼 추가됨')
 } catch(e) { /* 이미 있으면 무시 */ }
+// 마이그레이션: joined_at 컬럼 추가 (NEW 뱃지 자동화용)
+try {
+  db.exec('ALTER TABLE members ADD COLUMN joined_at TEXT DEFAULT NULL')
+  console.log('[db] joined_at 추가')
+} catch(e) {}
 // 마이그레이션: 중복 데이터 제거
 try {
   db.exec(`
