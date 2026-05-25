@@ -642,6 +642,73 @@ function onImgError(e, soopId) {
   background: rgba(153, 68, 204, 0.10); color: #6a10aa;
   box-shadow: none;
 }
+/* 라이트모드 전체 배경 */
+:global([data-theme='light']) .honor-wrap {
+  background: #f0f2f8;
+}
+
+/* 카드 */
+:global([data-theme='light']) .hcol {
+  background: #ffffff;
+}
+
+/* rank-bar 불투명도 높이기 */
+:global([data-theme='light']) .rank-bar-bg {
+  opacity: 0.55;
+}
+
+/* 4위~ 이름 더 진하게 */
+:global([data-theme='light']) .rank-name {
+  color: #111111;
+  font-weight: 800;
+}
+
+/* 4위~ 점수 더 진하게 */
+:global([data-theme='light']) .rank-val {
+  color: #222222;
+  font-weight: 800;
+}
+
+/* 순위 번호 */
+:global([data-theme='light']) .rank-num {
+  color: #444444;
+}
+
+/* 포디움 이름 */
+:global([data-theme='light']) .pod-name {
+  color: #111111;
+  font-weight: 900;
+}
+
+/* 포디움 점수 */
+:global([data-theme='light']) .score-1 { color: #b07800; }
+:global([data-theme='light']) .score-2 { color: #3a5a70; }
+:global([data-theme='light']) .score-3 { color: #9a3800; }
+
+/* 시상대 라벨 */
+:global([data-theme='light']) .stage-1 .stage-label { color: #7a5000; font-weight: 900; }
+:global([data-theme='light']) .stage-2 .stage-label { color: #2a4a60; font-weight: 900; }
+:global([data-theme='light']) .stage-3 .stage-label { color: #7a3000; font-weight: 900; }
+
+/* 헤더 제목 */
+:global([data-theme='light']) .hcol-title-avg   { color: #7a5000; }
+:global([data-theme='light']) .hcol-title-master { color: #7a3200; }
+:global([data-theme='light']) .hcol-title-indiv  { color: #0a6030; }
+
+/* 서브타이틀 */
+:global([data-theme='light']) .hcol-sub-avg    { color: #9a6500; }
+:global([data-theme='light']) .hcol-sub-master { color: #9a4500; }
+:global([data-theme='light']) .hcol-sub-indiv  { color: #0a7030; }
+
+:global([data-theme='light']) .hcol-avg .hcol-head {
+  background: rgba(255, 200, 40, 0.08);
+}
+:global([data-theme='light']) .hcol-master .hcol-head {
+  background: rgba(255, 140, 20, 0.08);
+}
+:global([data-theme='light']) .hcol-indiv .hcol-head {
+  background: rgba(60, 210, 110, 0.08);
+}
 
 /* ═══════════════════════════════════════
    반응형
