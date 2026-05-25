@@ -348,7 +348,7 @@ function onImgError(e, soopId) {
 }
 
 /* ═══════════════════════════════════════
-   컬럼 카드
+   컬럼 카드 (다크모드 기본)
 ═══════════════════════════════════════ */
 .hcol {
   background: linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.3) 100%);
@@ -399,7 +399,7 @@ function onImgError(e, soopId) {
   border-bottom-color: rgba(60, 210, 110, 0.2);
 }
 
-/* 아이콘 박스 - 사진 느낌 그대로 */
+/* 아이콘 박스 */
 .hcol-icon {
   width: 40px;
   height: 40px;
@@ -450,7 +450,7 @@ function onImgError(e, soopId) {
   text-shadow: 0 0 8px rgba(60, 210, 110, 0.7), 0 0 20px rgba(40, 190, 90, 0.4);
 }
 
-/* 서브타이틀 - 컬러 네온 */
+/* 서브타이틀 */
 .hcol-sub {
   font-size: 11px;
   font-weight: 600;
@@ -497,7 +497,7 @@ function onImgError(e, soopId) {
   margin-bottom: 4px;
 }
 
-/* 아바타 원형 - 네온 테두리 glow */
+/* 아바타 */
 .pod-av {
   overflow: hidden;
   display: flex;
@@ -542,7 +542,12 @@ function onImgError(e, soopId) {
   object-fit: cover;
   display: block;
 }
-.pod-img-sq { object-fit: contain; }
+/* 로고 이미지 - 흰 배경으로 다크/라이트 모두 보이게 */
+.pod-img-sq {
+  object-fit: contain;
+  background: #ffffff;
+  padding: 4px;
+}
 .pod-initial {
   width: 100%;
   height: 100%;
@@ -641,7 +646,7 @@ function onImgError(e, soopId) {
 .rank-bar-bg {
   position: absolute;
   top: 0; left: 0; bottom: 0;
-  opacity: 0.12;
+  opacity: 0.30;
   border-radius: 8px 0 0 8px;
   transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
   min-width: 4px;
@@ -657,18 +662,21 @@ function onImgError(e, soopId) {
 .rank-num {
   font-size: 10px;
   font-weight: 800;
-  color: #444;
+  color: #888;
   width: 14px;
   text-align: center;
   flex-shrink: 0;
 }
 .rank-thumb { flex-shrink: 0; width: 26px; height: 26px; }
 .rank-thumb-circle { }
+/* 크루 로고 - 흰 배경으로 다크/라이트 모두 보이게 */
 .rank-logo {
   width: 26px; height: 26px;
   border-radius: 6px;
   object-fit: contain;
   display: block;
+  background: #ffffff;
+  padding: 2px;
 }
 .rank-profile {
   width: 26px; height: 26px;
@@ -707,10 +715,240 @@ function onImgError(e, soopId) {
 .rank-val {
   font-size: 10px;
   font-weight: 800;
-  color: #555;
+  color: #888;
   flex-shrink: 0;
   letter-spacing: -0.3px;
   font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════
+   라이트모드 오버라이드
+   - html.light, body.light, :root.light 어떤 방식이든 커버
+═══════════════════════════════════════ */
+:global(html:not(.dark):not([data-theme='dark'])) .honor-wrap,
+:global(body:not(.dark):not([data-theme='dark'])) .honor-wrap,
+:global(.light) .honor-wrap {
+
+  /* 카드 배경 */
+  --lm-card-bg: #ffffff;
+  --lm-card-bg2: #f8f9fc;
+}
+
+/* 라이트모드 카드 */
+:global(html:not(.dark):not([data-theme='dark'])) .hcol,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol,
+:global(.light) .hcol {
+  background: linear-gradient(160deg, #ffffff 0%, #f4f6fb 100%);
+}
+
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-avg,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-avg,
+:global(.light) .hcol-avg {
+  border-color: rgba(200, 155, 10, 0.45);
+  box-shadow: 0 2px 20px rgba(200, 155, 10, 0.10), 0 1px 6px rgba(0,0,0,0.06);
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-master,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-master,
+:global(.light) .hcol-master {
+  border-color: rgba(210, 100, 10, 0.45);
+  box-shadow: 0 2px 20px rgba(210, 100, 10, 0.10), 0 1px 6px rgba(0,0,0,0.06);
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-indiv,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-indiv,
+:global(.light) .hcol-indiv {
+  border-color: rgba(30, 170, 80, 0.45);
+  box-shadow: 0 2px 20px rgba(30, 170, 80, 0.10), 0 1px 6px rgba(0,0,0,0.06);
+}
+
+/* 라이트모드 헤더 */
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-avg .hcol-head,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-avg .hcol-head,
+:global(.light) .hcol-avg .hcol-head {
+  background: rgba(255, 200, 40, 0.07);
+  border-bottom-color: rgba(200, 155, 10, 0.25);
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-master .hcol-head,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-master .hcol-head,
+:global(.light) .hcol-master .hcol-head {
+  background: rgba(255, 140, 20, 0.07);
+  border-bottom-color: rgba(210, 100, 10, 0.25);
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-indiv .hcol-head,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-indiv .hcol-head,
+:global(.light) .hcol-indiv .hcol-head {
+  background: rgba(60, 210, 110, 0.07);
+  border-bottom-color: rgba(30, 170, 80, 0.25);
+}
+
+/* 라이트모드 제목 - 어두운 색으로 */
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-title,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-title,
+:global(.light) .hcol-title {
+  color: #1a1a2e;
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-title-avg,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-title-avg,
+:global(.light) .hcol-title-avg {
+  text-shadow: none;
+  color: #7a5500;
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-title-master,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-title-master,
+:global(.light) .hcol-title-master {
+  text-shadow: none;
+  color: #7a3800;
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-title-indiv,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-title-indiv,
+:global(.light) .hcol-title-indiv {
+  text-shadow: none;
+  color: #0e6e38;
+}
+
+/* 라이트모드 서브타이틀 */
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-sub-avg,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-sub-avg,
+:global(.light) .hcol-sub-avg {
+  color: #a07208;
+  text-shadow: none;
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-sub-master,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-sub-master,
+:global(.light) .hcol-sub-master {
+  color: #a05008;
+  text-shadow: none;
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-sub-indiv,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-sub-indiv,
+:global(.light) .hcol-sub-indiv {
+  color: #0a7a40;
+  text-shadow: none;
+}
+
+/* 라이트모드 pod-name */
+:global(html:not(.dark):not([data-theme='dark'])) .pod-name,
+:global(body:not(.dark):not([data-theme='dark'])) .pod-name,
+:global(.light) .pod-name {
+  color: #1a1a2e;
+}
+
+/* 라이트모드 점수 - 진하게 */
+:global(html:not(.dark):not([data-theme='dark'])) .score-1,
+:global(body:not(.dark):not([data-theme='dark'])) .score-1,
+:global(.light) .score-1 {
+  color: #b8860b;
+  text-shadow: none;
+}
+:global(html:not(.dark):not([data-theme='dark'])) .score-2,
+:global(body:not(.dark):not([data-theme='dark'])) .score-2,
+:global(.light) .score-2 {
+  color: #607080;
+  text-shadow: none;
+}
+:global(html:not(.dark):not([data-theme='dark'])) .score-3,
+:global(body:not(.dark):not([data-theme='dark'])) .score-3,
+:global(.light) .score-3 {
+  color: #a05010;
+  text-shadow: none;
+}
+
+/* 라이트모드 시상대 */
+:global(html:not(.dark):not([data-theme='dark'])) .stage-1,
+:global(body:not(.dark):not([data-theme='dark'])) .stage-1,
+:global(.light) .stage-1 {
+  background: linear-gradient(180deg, rgba(255, 208, 40, 0.15) 0%, rgba(255, 180, 0, 0.02) 100%);
+  box-shadow: 0 -4px 12px rgba(255, 208, 40, 0.18);
+}
+:global(html:not(.dark):not([data-theme='dark'])) .stage-1 .stage-label,
+:global(body:not(.dark):not([data-theme='dark'])) .stage-1 .stage-label,
+:global(.light) .stage-1 .stage-label {
+  color: #a07200;
+  text-shadow: none;
+}
+:global(html:not(.dark):not([data-theme='dark'])) .stage-2 .stage-label,
+:global(body:not(.dark):not([data-theme='dark'])) .stage-2 .stage-label,
+:global(.light) .stage-2 .stage-label {
+  color: #607080;
+  text-shadow: none;
+}
+:global(html:not(.dark):not([data-theme='dark'])) .stage-3 .stage-label,
+:global(body:not(.dark):not([data-theme='dark'])) .stage-3 .stage-label,
+:global(.light) .stage-3 .stage-label {
+  color: #904020;
+  text-shadow: none;
+}
+
+/* 라이트모드 divider */
+:global(html:not(.dark):not([data-theme='dark'])) .rank-divider,
+:global(body:not(.dark):not([data-theme='dark'])) .rank-divider,
+:global(.light) .rank-divider {
+  background: rgba(0,0,0,0.08);
+}
+
+/* 라이트모드 rank-row hover */
+:global(html:not(.dark):not([data-theme='dark'])) .rank-row:hover,
+:global(body:not(.dark):not([data-theme='dark'])) .rank-row:hover,
+:global(.light) .rank-row:hover {
+  background: rgba(0,0,0,0.04);
+}
+
+/* 라이트모드 rank-bar 더 연하게 (배경이 밝아서 진하면 과함) */
+:global(html:not(.dark):not([data-theme='dark'])) .rank-bar-bg,
+:global(body:not(.dark):not([data-theme='dark'])) .rank-bar-bg,
+:global(.light) .rank-bar-bg {
+  opacity: 0.18;
+}
+
+/* 라이트모드 rank-num */
+:global(html:not(.dark):not([data-theme='dark'])) .rank-num,
+:global(body:not(.dark):not([data-theme='dark'])) .rank-num,
+:global(.light) .rank-num {
+  color: #999;
+}
+
+/* 라이트모드 rank-name - 핵심! 어둡게 */
+:global(html:not(.dark):not([data-theme='dark'])) .rank-name,
+:global(body:not(.dark):not([data-theme='dark'])) .rank-name,
+:global(.light) .rank-name {
+  color: #1a1a2e;
+}
+
+/* 라이트모드 rank-val - 핵심! 어둡게 */
+:global(html:not(.dark):not([data-theme='dark'])) .rank-val,
+:global(body:not(.dark):not([data-theme='dark'])) .rank-val,
+:global(.light) .rank-val {
+  color: #333;
+}
+
+/* 라이트모드 아이콘박스 - text-shadow 제거 */
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-icon-avg,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-icon-avg,
+:global(.light) .hcol-icon-avg {
+  box-shadow: 0 0 8px rgba(255, 200, 40, 0.2);
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-icon-master,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-icon-master,
+:global(.light) .hcol-icon-master {
+  box-shadow: 0 0 8px rgba(255, 140, 20, 0.2);
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hcol-icon-indiv,
+:global(body:not(.dark):not([data-theme='dark'])) .hcol-icon-indiv,
+:global(.light) .hcol-icon-indiv {
+  box-shadow: 0 0 8px rgba(60, 210, 110, 0.2);
+}
+
+/* 라이트모드 탭 active */
+:global(html:not(.dark):not([data-theme='dark'])) .hg-tab.active,
+:global(body:not(.dark):not([data-theme='dark'])) .hg-tab.active,
+:global(.light) .hg-tab.active {
+  color: #1a6abf;
+  box-shadow: 0 0 10px rgba(74, 158, 255, 0.15);
+}
+:global(html:not(.dark):not([data-theme='dark'])) .hg-bora.active,
+:global(body:not(.dark):not([data-theme='dark'])) .hg-bora.active,
+:global(.light) .hg-bora.active {
+  color: #7722aa;
+  box-shadow: 0 0 10px rgba(153, 68, 204, 0.15);
 }
 
 /* ═══════════════════════════════════════
