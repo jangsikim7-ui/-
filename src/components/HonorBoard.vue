@@ -435,18 +435,24 @@ function onImgError(e, soopId) {
 .hcol-title {
   font-size: 15px;
   font-weight: 900;
-  color: #ffffff;
+  color: var(--text);
   letter-spacing: -0.3px;
 }
-.hcol-title-avg  { text-shadow: 0 0 8px rgba(255, 208, 40, 0.7), 0 0 20px rgba(255, 180, 0, 0.4); }
-.hcol-title-master { text-shadow: 0 0 8px rgba(255, 152, 32, 0.7), 0 0 20px rgba(255, 120, 0, 0.4); }
-.hcol-title-indiv  { text-shadow: 0 0 8px rgba(60, 210, 110, 0.7), 0 0 20px rgba(40, 190, 90, 0.4); }
+[data-theme="dark"] .hcol-title-avg  { text-shadow: 0 0 8px rgba(255, 208, 40, 0.7), 0 0 20px rgba(255, 180, 0, 0.4); }
+[data-theme="dark"] .hcol-title-master { text-shadow: 0 0 8px rgba(255, 152, 32, 0.7), 0 0 20px rgba(255, 120, 0, 0.4); }
+[data-theme="dark"] .hcol-title-indiv  { text-shadow: 0 0 8px rgba(60, 210, 110, 0.7), 0 0 20px rgba(40, 190, 90, 0.4); }
+[data-theme="light"] .hcol-title-avg  { color: #7a5000; }
+[data-theme="light"] .hcol-title-master { color: #7a3200; }
+[data-theme="light"] .hcol-title-indiv  { color: #0a6030; }
 
-/* 서브타이틀 — 다크모드 */
+/* 서브타이틀 */
 .hcol-sub { font-size: 11px; font-weight: 600; }
-.hcol-sub-avg    { color: #c9960a; text-shadow: 0 0 6px rgba(201, 150, 10, 0.6); }
-.hcol-sub-master { color: #c87010; text-shadow: 0 0 6px rgba(200, 112, 16, 0.6); }
-.hcol-sub-indiv  { color: #28a060; text-shadow: 0 0 6px rgba(40, 160, 96, 0.6); }
+[data-theme="dark"] .hcol-sub-avg    { color: #c9960a; text-shadow: 0 0 6px rgba(201, 150, 10, 0.6); }
+[data-theme="dark"] .hcol-sub-master { color: #c87010; text-shadow: 0 0 6px rgba(200, 112, 16, 0.6); }
+[data-theme="dark"] .hcol-sub-indiv  { color: #28a060; text-shadow: 0 0 6px rgba(40, 160, 96, 0.6); }
+[data-theme="light"] .hcol-sub-avg    { color: #9a6500; }
+[data-theme="light"] .hcol-sub-master { color: #9a4500; }
+[data-theme="light"] .hcol-sub-indiv  { color: #0a7030; }
 
 /* ═══════════════════════════════════════
    포디움
@@ -516,9 +522,12 @@ function onImgError(e, soopId) {
   max-width: 80px; overflow: hidden; text-overflow: ellipsis;
 }
 .pod-score { font-size: 11px; font-weight: 900; letter-spacing: -0.4px; }
-.score-1 { color: #ffd028; text-shadow: 0 0 8px rgba(255,208,40,0.7); }
-.score-2 { color: #b8c8d8; text-shadow: 0 0 6px rgba(184,200,216,0.5); }
-.score-3 { color: #d07830; text-shadow: 0 0 6px rgba(208,120,48,0.5); }
+[data-theme="dark"] .score-1 { color: #ffd028; text-shadow: 0 0 8px rgba(255,208,40,0.7); }
+[data-theme="dark"] .score-2 { color: #b8c8d8; text-shadow: 0 0 6px rgba(184,200,216,0.5); }
+[data-theme="dark"] .score-3 { color: #d07830; text-shadow: 0 0 6px rgba(208,120,48,0.5); }
+[data-theme="light"] .score-1 { color: #9a6500; }
+[data-theme="light"] .score-2 { color: #4a6070; }
+[data-theme="light"] .score-3 { color: #8a3800; }
 
 /* 시상대 */
 .pod-stage {
@@ -548,14 +557,17 @@ function onImgError(e, soopId) {
   position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
   font-size: 9px; font-weight: 900; letter-spacing: 0.8px; white-space: nowrap;
 }
-.stage-1 .stage-label { color: #ffd028; text-shadow: 0 0 8px rgba(255,208,40,0.9); }
-.stage-2 .stage-label { color: #b8c8d8; text-shadow: 0 0 6px rgba(184,200,216,0.6); }
-.stage-3 .stage-label { color: #d07830; text-shadow: 0 0 6px rgba(208,120,48,0.6); }
+[data-theme="dark"] .stage-1 .stage-label { color: #ffd028; text-shadow: 0 0 8px rgba(255,208,40,0.9); }
+[data-theme="dark"] .stage-2 .stage-label { color: #b8c8d8; text-shadow: 0 0 6px rgba(184,200,216,0.6); }
+[data-theme="dark"] .stage-3 .stage-label { color: #d07830; text-shadow: 0 0 6px rgba(208,120,48,0.6); }
+[data-theme="light"] .stage-1 .stage-label { color: #7a5000; }
+[data-theme="light"] .stage-2 .stage-label { color: #3a5060; }
+[data-theme="light"] .stage-3 .stage-label { color: #7a3000; }
 
 /* ═══════════════════════════════════════
    4위~ 리스트
 ═══════════════════════════════════════ */
-.rank-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 12px; }
+.rank-divider { height: 1px; background: var(--border); margin: 0 12px; }
 .rank-list {
   padding: 8px 10px 14px;
   display: flex; flex-direction: column; gap: 2px;
@@ -564,7 +576,7 @@ function onImgError(e, soopId) {
   position: relative; border-radius: 8px; overflow: hidden;
   transition: background 0.15s; cursor: default;
 }
-.rank-row:hover { background: rgba(255,255,255,0.03); }
+.rank-row:hover { background: var(--member-hover); }
 .rank-bar-bg {
   position: absolute; top: 0; left: 0; bottom: 0;
   opacity: 0.30; border-radius: 8px 0 0 8px;
@@ -605,86 +617,47 @@ function onImgError(e, soopId) {
 
 /* ═══════════════════════════════════════
    라이트모드 오버라이드
-   data-theme="light" 기준으로만 통일
 ═══════════════════════════════════════ */
 
 /* 아이콘 박스 */
 :global([data-theme='light']) .hcol-icon-avg {
-  background: rgba(255, 200, 40, 0.15);
-  color: #9a6500;
-  border-color: rgba(180, 130, 0, 0.4);
-  box-shadow: 0 0 8px rgba(180, 130, 0, 0.15);
+  background: rgba(255, 200, 40, 0.15); color: #9a6500;
+  border-color: rgba(180, 130, 0, 0.4); box-shadow: none;
 }
 :global([data-theme='light']) .hcol-icon-master {
-  background: rgba(255, 140, 20, 0.15);
-  color: #a04000;
-  border-color: rgba(190, 80, 0, 0.4);
-  box-shadow: 0 0 8px rgba(190, 80, 0, 0.15);
+  background: rgba(255, 140, 20, 0.15); color: #a04000;
+  border-color: rgba(190, 80, 0, 0.4); box-shadow: none;
 }
 :global([data-theme='light']) .hcol-icon-indiv {
-  background: rgba(60, 210, 110, 0.15);
-  color: #0e7a38;
-  border-color: rgba(20, 150, 70, 0.4);
-  box-shadow: 0 0 8px rgba(20, 150, 70, 0.15);
+  background: rgba(60, 210, 110, 0.15); color: #0e7a38;
+  border-color: rgba(20, 150, 70, 0.4); box-shadow: none;
 }
-
-/* 제목 — 라이트모드: 진한 색 + 그림자 없음 */
-:global([data-theme='light']) .hcol-title-avg    { color: #7a5000; text-shadow: none; }
-:global([data-theme='light']) .hcol-title-master { color: #7a3200; text-shadow: none; }
-:global([data-theme='light']) .hcol-title-indiv  { color: #0a6030; text-shadow: none; }
-
-/* 서브타이틀 */
-:global([data-theme='light']) .hcol-sub-avg    { color: #9a6500; text-shadow: none; }
-:global([data-theme='light']) .hcol-sub-master { color: #9a4500; text-shadow: none; }
-:global([data-theme='light']) .hcol-sub-indiv  { color: #0a7030; text-shadow: none; }
 
 /* 탭 active */
 :global([data-theme='light']) .hg-tab.active {
-  background: rgba(74, 158, 255, 0.10);
-  color: #1055b0;
-  box-shadow: 0 0 10px rgba(74, 158, 255, 0.15);
+  background: rgba(74, 158, 255, 0.10); color: #1055b0;
+  box-shadow: none;
 }
 :global([data-theme='light']) .hg-bora.active {
-  background: rgba(153, 68, 204, 0.10);
-  color: #6a10aa;
-  box-shadow: 0 0 10px rgba(153, 68, 204, 0.15);
+  background: rgba(153, 68, 204, 0.10); color: #6a10aa;
+  box-shadow: none;
 }
 
-/* 포디움 이름 */
-:global([data-theme='light']) .pod-name { color: #1a1a2e; }
-
-/* 점수 */
-:global([data-theme='light']) .score-1 { color: #9a6500; text-shadow: none; }
-:global([data-theme='light']) .score-2 { color: #4a6070; text-shadow: none; }
-:global([data-theme='light']) .score-3 { color: #8a3800; text-shadow: none; }
-
-/* 시상대 */
+/* 시상대 라이트모드 배경 (반투명 유지) */
 :global([data-theme='light']) .stage-1 {
-  background: linear-gradient(180deg, rgba(255,208,40,0.12) 0%, rgba(255,180,0,0.01) 100%);
-  box-shadow: 0 -3px 10px rgba(200,160,0,0.15);
+  background: linear-gradient(180deg, rgba(255,208,40,0.25) 0%, rgba(255,180,0,0.05) 100%);
 }
-:global([data-theme='light']) .stage-1 .stage-label { color: #9a6500; text-shadow: none; }
-:global([data-theme='light']) .stage-2 .stage-label { color: #4a6070; text-shadow: none; }
-:global([data-theme='light']) .stage-3 .stage-label { color: #8a3800; text-shadow: none; }
 
-/* 구분선 */
-:global([data-theme='light']) .rank-divider { background: rgba(0,0,0,0.08); }
-
-/* 리스트 hover */
-:global([data-theme='light']) .rank-row:hover { background: rgba(0,0,0,0.04); }
-
-/* 바 투명도 낮춤 (밝은 배경에서 과하지 않게) */
+/* 바 투명도 낮춤 */
 :global([data-theme='light']) .rank-bar-bg { opacity: 0.15; }
-
-/* rank-num / rank-name / rank-val 은 var(--text3)/var(--text2)/var(--text3) 변수로 자동처리 */
 
 /* 로딩 스핀 */
 :global([data-theme='light']) .spin { border-top-color: #9a6500; }
 
-/* honor-crown-icon */
-:global([data-theme='light']) .honor-crown-icon {
-  filter: drop-shadow(0 0 4px rgba(180, 130, 0, 0.5));
-}
+/* pod-av 글로우 제거 */
+:global([data-theme='light']) .pod-av-1 { box-shadow: 0 0 0 2px rgba(180,130,0,0.3); }
+:global([data-theme='light']) .pod-av-2 { box-shadow: 0 0 0 2px rgba(100,120,140,0.3); }
+:global([data-theme='light']) .pod-av-3 { box-shadow: 0 0 0 2px rgba(160,100,40,0.3); }
 
 /* ═══════════════════════════════════════
    반응형
