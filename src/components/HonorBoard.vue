@@ -615,56 +615,6 @@ function onImgError(e, soopId) {
   flex-shrink: 0; letter-spacing: -0.3px; font-variant-numeric: tabular-nums;
 }
 
-/* ═══════════════════════════════════════
-   라이트모드 오버라이드
-═══════════════════════════════════════ */
-
-/* 아이콘 박스 */
-:global([data-theme='light']) .hcol-icon-avg {
-  background: rgba(255, 200, 40, 0.15); color: #9a6500;
-  border-color: rgba(180, 130, 0, 0.4); box-shadow: none;
-}
-:global([data-theme='light']) .hcol-icon-master {
-  background: rgba(255, 140, 20, 0.15); color: #a04000;
-  border-color: rgba(190, 80, 0, 0.4); box-shadow: none;
-}
-:global([data-theme='light']) .hcol-icon-indiv {
-  background: rgba(60, 210, 110, 0.15); color: #0e7a38;
-  border-color: rgba(20, 150, 70, 0.4); box-shadow: none;
-}
-
-/* 탭 */
-:global([data-theme='light']) .hg-tab.active {
-  background: rgba(74, 158, 255, 0.10); color: #1055b0;
-  box-shadow: none;
-}
-:global([data-theme='light']) .hg-bora.active {
-  background: rgba(153, 68, 204, 0.10); color: #6a10aa;
-  box-shadow: none;
-}
-
-/* 카드 배경 흰색으로 */
-:global([data-theme='light']) .hcol {
-  background: #ffffff !important;
-}
-
-/* 텍스트 진하게 */
-:global([data-theme='light']) .rank-name { color: #111111; }
-:global([data-theme='light']) .rank-val  { color: #111111; }
-:global([data-theme='light']) .rank-num  { color: #333333; }
-:global([data-theme='light']) .pod-name  { color: #111111; }
-
-/* 크루 칩 진하게 */
-:global([data-theme='light']) .pod-crew-chip {
-  opacity: 1;
-  font-weight: 900;
-  filter: saturate(1.5) brightness(0.7);
-}
-:global([data-theme='light']) .rank-crew-chip-sm {
-  opacity: 1;
-  font-weight: 900;
-  filter: saturate(1.5) brightness(0.7);
-}
 
 /* ═══════════════════════════════════════
    반응형
