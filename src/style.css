@@ -28,9 +28,9 @@
 
 /* 라이트모드 */
 [data-theme="light"] {
-  --bg: #e8e8f0;
+  --bg: #ffffff;
   --bg2: #ffffff;
-  --bg3: #f0f0f7;
+  --bg3: #ffffff;
   --bg4: #ffffff;
   --border: rgba(0,0,0,0.12);
   --border2: rgba(0,0,0,0.08);

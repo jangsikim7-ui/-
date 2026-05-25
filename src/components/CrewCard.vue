@@ -301,8 +301,8 @@ function onImgError(e, soopId) {
 .foot-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 9px 6px; gap: 3px; }
 .foot-divider { width: 1px; background: var(--border); margin: 6px 0; }
 .foot-label { font-size: 10px; color: var(--text2); font-weight: 600; }
-.foot-val { font-size: 13px; font-weight: 900; color: var(--text); letter-spacing: -0.3px; }
-[data-theme="light"] .foot-val { color: #0f0f1a; }
+.foot-val { font-size: 13px; font-weight: 900; color: var(--text); COLOR: gold; letter-spacing: -0.3px; }
+[data-theme="light"] .foot-val { color: #ff0000; }
 
 @media (max-width: 600px) {
   .card { max-width: 100%; }
