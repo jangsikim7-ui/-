@@ -646,21 +646,6 @@ function onImgError(e, soopId) {
 /* 카드 배경 흰색으로 */
 :global([data-theme='light']) .hcol {
   background: #ffffff !important;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-}
-
-/* 카드 헤더 배경 */
-:global([data-theme='light']) .hcol-head {
-  background: #ffffff !important;
-}
-:global([data-theme='light']) .hcol-avg .hcol-head {
-  background: rgba(255, 200, 40, 0.10) !important;
-}
-:global([data-theme='light']) .hcol-master .hcol-head {
-  background: rgba(255, 140, 20, 0.10) !important;
-}
-:global([data-theme='light']) .hcol-indiv .hcol-head {
-  background: rgba(60, 210, 110, 0.10) !important;
 }
 
 /* 텍스트 진하게 */
