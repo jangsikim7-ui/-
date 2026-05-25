@@ -40,16 +40,76 @@
           <div v-for="(pos, pi) in podiumOrder" :key="pi" class="pod" :class="'pod-'+pos">
             <template v-if="avgRanked[pos]">
               <div class="pod-img-outer">
-                <div class="pod-img-wrap" :class="'rank-border-'+(pos+1)">
-                  <img v-if="avgRanked[pos].logo_url" :src="avgRanked[pos].logo_url" class="pod-logo" @error="e => e.target.style.display='none'" />
-                  <div v-else class="pod-initial" :style="{ background: avgRanked[pos].color + '33', color: avgRanked[pos].color }">{{ avgRanked[pos].name.charAt(0) }}</div>
-                  <div class="rank-glow" :class="'glow-'+(pos+1)"></div>
+                <div class="pod-medal-frame" :class="'medal-frame-'+(pos+1)">
+                  <!-- SVG 메달 오버레이 (왕관 + 원형 장식 테두리) -->
+                  <svg class="medal-svg" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <radialGradient :id="'gold'+pos" cx="50%" cy="40%">
+                        <stop v-if="pos===0" offset="0%" stop-color="#fffbe0"/>
+                        <stop v-if="pos===0" offset="50%" stop-color="#ffd700"/>
+                        <stop v-if="pos===0" offset="100%" stop-color="#b8860b"/>
+                        <stop v-if="pos===1" offset="0%" stop-color="#f0f8ff"/>
+                        <stop v-if="pos===1" offset="50%" stop-color="#c0d8ee"/>
+                        <stop v-if="pos===1" offset="100%" stop-color="#6a8fa8"/>
+                        <stop v-if="pos===2" offset="0%" stop-color="#f8d8b0"/>
+                        <stop v-if="pos===2" offset="50%" stop-color="#c87830"/>
+                        <stop v-if="pos===2" offset="100%" stop-color="#7a4010"/>
+                      </radialGradient>
+                    </defs>
+                    <!-- 왕관 -->
+                    <g v-if="pos===0" transform="translate(60,18)" fill="#ffd700" filter="url(#gs)">
+                      <polygon points="0,-14 -18,4 -10,4 0,-6 10,4 18,4" opacity="0.95"/>
+                      <circle cx="-18" cy="5" r="3.5"/><circle cx="0" cy="-15" r="3.5"/><circle cx="18" cy="5" r="3.5"/>
+                      <rect x="-18" y="5" width="36" height="7" rx="2"/>
+                    </g>
+                    <g v-if="pos===1" transform="translate(60,18)" :fill="'#c0d0e0'">
+                      <polygon points="0,-12 -15,3 -8,3 0,-5 8,3 15,3" opacity="0.9"/>
+                      <circle cx="-15" cy="4" r="3"/><circle cx="0" cy="-13" r="3"/><circle cx="15" cy="4" r="3"/>
+                      <rect x="-15" y="4" width="30" height="6" rx="2"/>
+                    </g>
+                    <g v-if="pos===2" transform="translate(60,18)" :fill="'#c87830'">
+                      <polygon points="0,-11 -13,2 -7,2 0,-4 7,2 13,2" opacity="0.9"/>
+                      <circle cx="-13" cy="3" r="2.5"/><circle cx="0" cy="-12" r="2.5"/><circle cx="13" cy="3" r="2.5"/>
+                      <rect x="-13" y="3" width="26" height="5" rx="2"/>
+                    </g>
+                    <!-- 원형 테두리 링 -->
+                    <circle cx="60" cy="72" r="44" :fill="'none'" :stroke="`url(#gold${pos})`" stroke-width="7" opacity="0.95"/>
+                    <circle cx="60" cy="72" r="48" :fill="'none'" :stroke="`url(#gold${pos})`" stroke-width="2" opacity="0.5"/>
+                    <circle cx="60" cy="72" r="39" :fill="'none'" :stroke="`url(#gold${pos})`" stroke-width="1.5" opacity="0.4"/>
+                    <!-- 날개/장식 (하단) -->
+                    <g v-if="pos===0" transform="translate(60,116)" fill="#ffd700" opacity="0.85">
+                      <ellipse cx="-22" cy="0" rx="18" ry="6" transform="rotate(-20,-22,0)"/>
+                      <ellipse cx="-30" cy="-4" rx="12" ry="4" transform="rotate(-35,-30,-4)"/>
+                      <ellipse cx="22" cy="0" rx="18" ry="6" transform="rotate(20,22,0)"/>
+                      <ellipse cx="30" cy="-4" rx="12" ry="4" transform="rotate(35,30,-4)"/>
+                      <circle cx="0" cy="2" r="4"/>
+                    </g>
+                    <g v-if="pos===1" transform="translate(60,116)" fill="#b0c8e0" opacity="0.75">
+                      <ellipse cx="-18" cy="0" rx="14" ry="5" transform="rotate(-20,-18,0)"/>
+                      <ellipse cx="-24" cy="-3" rx="9" ry="3" transform="rotate(-35,-24,-3)"/>
+                      <ellipse cx="18" cy="0" rx="14" ry="5" transform="rotate(20,18,0)"/>
+                      <ellipse cx="24" cy="-3" rx="9" ry="3" transform="rotate(35,24,-3)"/>
+                      <circle cx="0" cy="2" r="3"/>
+                    </g>
+                    <g v-if="pos===2" transform="translate(60,116)" fill="#c87830" opacity="0.7">
+                      <ellipse cx="-15" cy="0" rx="12" ry="4" transform="rotate(-20,-15,0)"/>
+                      <ellipse cx="-20" cy="-2" rx="8" ry="3" transform="rotate(-35,-20,-2)"/>
+                      <ellipse cx="15" cy="0" rx="12" ry="4" transform="rotate(20,15,0)"/>
+                      <ellipse cx="20" cy="-2" rx="8" ry="3" transform="rotate(35,20,-2)"/>
+                    </g>
+                  </svg>
+                  <!-- 실제 이미지 -->
+                  <div class="medal-img-inner">
+                    <img v-if="avgRanked[pos].logo_url" :src="avgRanked[pos].logo_url" class="pod-logo" @error="e => e.target.style.display='none'" />
+                    <div v-else class="pod-initial" :style="{ background: avgRanked[pos].color + '33', color: avgRanked[pos].color }">{{ avgRanked[pos].name.charAt(0) }}</div>
+                  </div>
                 </div>
-                <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
               </div>
               <div class="pod-name">{{ avgRanked[pos].name }}</div>
               <div class="pod-score" :class="pos===0?'gold-score':pos===1?'silver-score':'bronze-score'">{{ fmt(avgRanked[pos].avg) }}</div>
-              <div class="pod-stage" :class="'stage-'+(pos+1)" />
+              <div class="pod-stage" :class="'stage-'+(pos+1)">
+                <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
+              </div>
             </template>
           </div>
         </div>
@@ -84,16 +144,65 @@
           <div v-for="(pos, pi) in podiumOrder" :key="pi" class="pod" :class="'pod-'+pos">
             <template v-if="masterRanked[pos]">
               <div class="pod-img-outer">
-                <div class="pod-img-wrap" :class="'rank-border-'+(pos+1)">
-                  <img v-if="masterRanked[pos].logo_url" :src="masterRanked[pos].logo_url" class="pod-logo" @error="e => e.target.style.display='none'" />
-                  <div v-else class="pod-initial" :style="{ background: masterRanked[pos].color + '33', color: masterRanked[pos].color }">{{ masterRanked[pos].name.charAt(0) }}</div>
-                  <div class="rank-glow" :class="'glow-'+(pos+1)"></div>
+                <div class="pod-medal-frame" :class="'medal-frame-'+(pos+1)">
+                  <svg class="medal-svg" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <radialGradient :id="'mgold'+pos" cx="50%" cy="40%">
+                        <stop v-if="pos===0" offset="0%" stop-color="#fffbe0"/><stop v-if="pos===0" offset="50%" stop-color="#ffd700"/><stop v-if="pos===0" offset="100%" stop-color="#b8860b"/>
+                        <stop v-if="pos===1" offset="0%" stop-color="#f0f8ff"/><stop v-if="pos===1" offset="50%" stop-color="#c0d8ee"/><stop v-if="pos===1" offset="100%" stop-color="#6a8fa8"/>
+                        <stop v-if="pos===2" offset="0%" stop-color="#f8d8b0"/><stop v-if="pos===2" offset="50%" stop-color="#c87830"/><stop v-if="pos===2" offset="100%" stop-color="#7a4010"/>
+                      </radialGradient>
+                    </defs>
+                    <g v-if="pos===0" transform="translate(60,18)" fill="#ffd700">
+                      <polygon points="0,-14 -18,4 -10,4 0,-6 10,4 18,4" opacity="0.95"/>
+                      <circle cx="-18" cy="5" r="3.5"/><circle cx="0" cy="-15" r="3.5"/><circle cx="18" cy="5" r="3.5"/>
+                      <rect x="-18" y="5" width="36" height="7" rx="2"/>
+                    </g>
+                    <g v-if="pos===1" transform="translate(60,18)" fill="#c0d0e0">
+                      <polygon points="0,-12 -15,3 -8,3 0,-5 8,3 15,3" opacity="0.9"/>
+                      <circle cx="-15" cy="4" r="3"/><circle cx="0" cy="-13" r="3"/><circle cx="15" cy="4" r="3"/>
+                      <rect x="-15" y="4" width="30" height="6" rx="2"/>
+                    </g>
+                    <g v-if="pos===2" transform="translate(60,18)" fill="#c87830">
+                      <polygon points="0,-11 -13,2 -7,2 0,-4 7,2 13,2" opacity="0.9"/>
+                      <circle cx="-13" cy="3" r="2.5"/><circle cx="0" cy="-12" r="2.5"/><circle cx="13" cy="3" r="2.5"/>
+                      <rect x="-13" y="3" width="26" height="5" rx="2"/>
+                    </g>
+                    <circle cx="60" cy="72" r="44" fill="none" :stroke="`url(#mgold${pos})`" stroke-width="7" opacity="0.95"/>
+                    <circle cx="60" cy="72" r="48" fill="none" :stroke="`url(#mgold${pos})`" stroke-width="2" opacity="0.5"/>
+                    <circle cx="60" cy="72" r="39" fill="none" :stroke="`url(#mgold${pos})`" stroke-width="1.5" opacity="0.4"/>
+                    <g v-if="pos===0" transform="translate(60,116)" fill="#ffd700" opacity="0.85">
+                      <ellipse cx="-22" cy="0" rx="18" ry="6" transform="rotate(-20,-22,0)"/>
+                      <ellipse cx="-30" cy="-4" rx="12" ry="4" transform="rotate(-35,-30,-4)"/>
+                      <ellipse cx="22" cy="0" rx="18" ry="6" transform="rotate(20,22,0)"/>
+                      <ellipse cx="30" cy="-4" rx="12" ry="4" transform="rotate(35,30,-4)"/>
+                      <circle cx="0" cy="2" r="4"/>
+                    </g>
+                    <g v-if="pos===1" transform="translate(60,116)" fill="#b0c8e0" opacity="0.75">
+                      <ellipse cx="-18" cy="0" rx="14" ry="5" transform="rotate(-20,-18,0)"/>
+                      <ellipse cx="-24" cy="-3" rx="9" ry="3" transform="rotate(-35,-24,-3)"/>
+                      <ellipse cx="18" cy="0" rx="14" ry="5" transform="rotate(20,18,0)"/>
+                      <ellipse cx="24" cy="-3" rx="9" ry="3" transform="rotate(35,24,-3)"/>
+                      <circle cx="0" cy="2" r="3"/>
+                    </g>
+                    <g v-if="pos===2" transform="translate(60,116)" fill="#c87830" opacity="0.7">
+                      <ellipse cx="-15" cy="0" rx="12" ry="4" transform="rotate(-20,-15,0)"/>
+                      <ellipse cx="-20" cy="-2" rx="8" ry="3" transform="rotate(-35,-20,-2)"/>
+                      <ellipse cx="15" cy="0" rx="12" ry="4" transform="rotate(20,15,0)"/>
+                      <ellipse cx="20" cy="-2" rx="8" ry="3" transform="rotate(35,20,-2)"/>
+                    </g>
+                  </svg>
+                  <div class="medal-img-inner">
+                    <img v-if="masterRanked[pos].logo_url" :src="masterRanked[pos].logo_url" class="pod-logo" @error="e => e.target.style.display='none'" />
+                    <div v-else class="pod-initial" :style="{ background: masterRanked[pos].color + '33', color: masterRanked[pos].color }">{{ masterRanked[pos].name.charAt(0) }}</div>
+                  </div>
                 </div>
-                <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
               </div>
               <div class="pod-name">{{ masterRanked[pos].name }}</div>
               <div class="pod-score" :class="pos===0?'gold-score':pos===1?'silver-score':'bronze-score'">{{ fmt(masterRanked[pos].master_balloons) }}</div>
-              <div class="pod-stage" :class="'stage-'+(pos+1)" />
+              <div class="pod-stage" :class="'stage-'+(pos+1)">
+                <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
+              </div>
             </template>
           </div>
         </div>
@@ -128,16 +237,65 @@
           <div v-for="(pos, pi) in podiumOrder" :key="pi" class="pod" :class="'pod-'+pos">
             <template v-if="indivRanked[pos]">
               <div class="pod-img-outer">
-                <div class="pod-img-wrap pod-img-circle" :class="'rank-border-'+(pos+1)">
-                  <img :src="indivRanked[pos].profile_img || cdnUrl(indivRanked[pos].soop_id)" class="pod-profile" :style="{ borderColor: 'transparent' }" @error="onImgError($event, indivRanked[pos].soop_id)" />
-                  <div class="rank-glow" :class="'glow-'+(pos+1)"></div>
+                <div class="pod-medal-frame" :class="'medal-frame-'+(pos+1)">
+                  <svg class="medal-svg" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <radialGradient :id="'igold'+pos" cx="50%" cy="40%">
+                        <stop v-if="pos===0" offset="0%" stop-color="#fffbe0"/><stop v-if="pos===0" offset="50%" stop-color="#ffd700"/><stop v-if="pos===0" offset="100%" stop-color="#b8860b"/>
+                        <stop v-if="pos===1" offset="0%" stop-color="#f0f8ff"/><stop v-if="pos===1" offset="50%" stop-color="#c0d8ee"/><stop v-if="pos===1" offset="100%" stop-color="#6a8fa8"/>
+                        <stop v-if="pos===2" offset="0%" stop-color="#f8d8b0"/><stop v-if="pos===2" offset="50%" stop-color="#c87830"/><stop v-if="pos===2" offset="100%" stop-color="#7a4010"/>
+                      </radialGradient>
+                    </defs>
+                    <g v-if="pos===0" transform="translate(60,18)" fill="#ffd700">
+                      <polygon points="0,-14 -18,4 -10,4 0,-6 10,4 18,4" opacity="0.95"/>
+                      <circle cx="-18" cy="5" r="3.5"/><circle cx="0" cy="-15" r="3.5"/><circle cx="18" cy="5" r="3.5"/>
+                      <rect x="-18" y="5" width="36" height="7" rx="2"/>
+                    </g>
+                    <g v-if="pos===1" transform="translate(60,18)" fill="#c0d0e0">
+                      <polygon points="0,-12 -15,3 -8,3 0,-5 8,3 15,3" opacity="0.9"/>
+                      <circle cx="-15" cy="4" r="3"/><circle cx="0" cy="-13" r="3"/><circle cx="15" cy="4" r="3"/>
+                      <rect x="-15" y="4" width="30" height="6" rx="2"/>
+                    </g>
+                    <g v-if="pos===2" transform="translate(60,18)" fill="#c87830">
+                      <polygon points="0,-11 -13,2 -7,2 0,-4 7,2 13,2" opacity="0.9"/>
+                      <circle cx="-13" cy="3" r="2.5"/><circle cx="0" cy="-12" r="2.5"/><circle cx="13" cy="3" r="2.5"/>
+                      <rect x="-13" y="3" width="26" height="5" rx="2"/>
+                    </g>
+                    <circle cx="60" cy="72" r="44" fill="none" :stroke="`url(#igold${pos})`" stroke-width="7" opacity="0.95"/>
+                    <circle cx="60" cy="72" r="48" fill="none" :stroke="`url(#igold${pos})`" stroke-width="2" opacity="0.5"/>
+                    <circle cx="60" cy="72" r="39" fill="none" :stroke="`url(#igold${pos})`" stroke-width="1.5" opacity="0.4"/>
+                    <g v-if="pos===0" transform="translate(60,116)" fill="#ffd700" opacity="0.85">
+                      <ellipse cx="-22" cy="0" rx="18" ry="6" transform="rotate(-20,-22,0)"/>
+                      <ellipse cx="-30" cy="-4" rx="12" ry="4" transform="rotate(-35,-30,-4)"/>
+                      <ellipse cx="22" cy="0" rx="18" ry="6" transform="rotate(20,22,0)"/>
+                      <ellipse cx="30" cy="-4" rx="12" ry="4" transform="rotate(35,30,-4)"/>
+                      <circle cx="0" cy="2" r="4"/>
+                    </g>
+                    <g v-if="pos===1" transform="translate(60,116)" fill="#b0c8e0" opacity="0.75">
+                      <ellipse cx="-18" cy="0" rx="14" ry="5" transform="rotate(-20,-18,0)"/>
+                      <ellipse cx="-24" cy="-3" rx="9" ry="3" transform="rotate(-35,-24,-3)"/>
+                      <ellipse cx="18" cy="0" rx="14" ry="5" transform="rotate(20,18,0)"/>
+                      <ellipse cx="24" cy="-3" rx="9" ry="3" transform="rotate(35,24,-3)"/>
+                      <circle cx="0" cy="2" r="3"/>
+                    </g>
+                    <g v-if="pos===2" transform="translate(60,116)" fill="#c87830" opacity="0.7">
+                      <ellipse cx="-15" cy="0" rx="12" ry="4" transform="rotate(-20,-15,0)"/>
+                      <ellipse cx="-20" cy="-2" rx="8" ry="3" transform="rotate(-35,-20,-2)"/>
+                      <ellipse cx="15" cy="0" rx="12" ry="4" transform="rotate(20,15,0)"/>
+                      <ellipse cx="20" cy="-2" rx="8" ry="3" transform="rotate(35,20,-2)"/>
+                    </g>
+                  </svg>
+                  <div class="medal-img-inner medal-img-circle">
+                    <img :src="indivRanked[pos].profile_img || cdnUrl(indivRanked[pos].soop_id)" class="pod-profile" @error="onImgError($event, indivRanked[pos].soop_id)" />
+                  </div>
                 </div>
-                <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
               </div>
               <div class="pod-name">{{ indivRanked[pos].name }}</div>
               <div class="pod-crew-chip" :style="{ background: indivRanked[pos].crew_color+'22', color: indivRanked[pos].crew_color, borderColor: indivRanked[pos].crew_color+'55' }">{{ indivRanked[pos].crew_name }}</div>
               <div class="pod-score" :class="pos===0?'gold-score':pos===1?'silver-score':'bronze-score'">{{ fmt(indivRanked[pos].balloons) }}</div>
-              <div class="pod-stage pod-stage-indiv" :class="'stage-'+(pos+1)" />
+              <div class="pod-stage pod-stage-indiv" :class="'stage-'+(pos+1)">
+                <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
+              </div>
             </template>
           </div>
         </div>
@@ -398,72 +556,55 @@ function onImgError(e, soopId) {
 /* ── 이미지 + 배지 묶음 래퍼 ── */
 .pod-img-outer {
   display: flex; flex-direction: column; align-items: center;
-  gap: 0; margin-bottom: 6px;
+  gap: 0; margin-bottom: 4px;
+  position: relative;
 }
 
-/* ── 프로필 이미지 래퍼 (금/은/동 네온 테두리) ── */
-.pod-img-wrap {
-  position: relative; flex-shrink: 0;
-  border-radius: 12px;
-  padding: 3px;
+/* ── 메달 프레임 전체 컨테이너 ── */
+.pod-medal-frame {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
 }
-.pod-img-circle { border-radius: 50%; }
+.pod-0 .pod-medal-frame { width: 110px; height: 128px; }
+.pod-1 .pod-medal-frame { width: 90px;  height: 105px; }
+.pod-2 .pod-medal-frame { width: 78px;  height: 91px;  }
 
-/* 금색 테두리 + 네온 */
-.rank-border-1 {
-  background: linear-gradient(135deg, #f6d365, #fda085, #f6d365);
-  box-shadow:
-    0 0 12px rgba(246, 211, 101, 0.7),
-    0 0 24px rgba(246, 211, 101, 0.4),
-    0 0 40px rgba(246, 211, 101, 0.2);
+/* SVG 장식 오버레이 - 프레임 위에 포개기 */
+.medal-svg {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 3;
+  filter: drop-shadow(0 0 4px rgba(0,0,0,0.6));
 }
-/* 은색 테두리 + 네온 */
-.rank-border-2 {
-  background: linear-gradient(135deg, #c8d6e0, #8ec5fc, #c8d6e0);
-  box-shadow:
-    0 0 10px rgba(200, 214, 224, 0.6),
-    0 0 20px rgba(142, 197, 252, 0.3);
-}
-/* 동색 테두리 + 네온 */
-.rank-border-3 {
-  background: linear-gradient(135deg, #e8a87c, #c47a3a, #e8a87c);
-  box-shadow:
-    0 0 10px rgba(232, 168, 124, 0.6),
-    0 0 20px rgba(196, 122, 58, 0.3);
-}
+.medal-frame-1 .medal-svg { filter: drop-shadow(0 0 8px rgba(255,215,0,0.9)) drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+.medal-frame-2 .medal-svg { filter: drop-shadow(0 0 6px rgba(180,210,230,0.7)) drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+.medal-frame-3 .medal-svg { filter: drop-shadow(0 0 6px rgba(200,120,48,0.7)) drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
 
-/* 이미지 안쪽 컨테이너 */
+/* 실제 이미지 원형 클리핑 */
+.medal-img-inner {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -54%);
+  z-index: 2; overflow: hidden;
+  border-radius: 50%;
+  background: #111;
+}
+.pod-0 .medal-img-inner { width: 72px; height: 72px; }
+.pod-1 .medal-img-inner { width: 58px; height: 58px; }
+.pod-2 .medal-img-inner { width: 50px; height: 50px; }
+
+.medal-img-circle { border-radius: 50%; }
+
+/* 이미지 안쪽 */
 .pod-logo, .pod-profile, .pod-initial {
-  display: block;
-  border-radius: 9px;
-  background: var(--bg4);
+  display: block; width: 100%; height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
-.pod-profile { border-radius: 50%; object-fit: cover; }
-.pod-logo { object-fit: contain; }
+.pod-logo { object-fit: contain; border-radius: 8px; }
 .pod-initial {
   display: flex; align-items: center; justify-content: center;
-  font-weight: 900;
-}
-
-/* 크기 */
-.pod-0 .pod-logo, .pod-0 .pod-profile, .pod-0 .pod-initial { width: 64px; height: 64px; font-size: 22px; }
-.pod-1 .pod-logo, .pod-1 .pod-profile, .pod-1 .pod-initial { width: 52px; height: 52px; font-size: 17px; }
-.pod-2 .pod-logo, .pod-2 .pod-profile, .pod-2 .pod-initial { width: 44px; height: 44px; font-size: 14px; }
-
-/* 네온 글로우 오버레이 */
-.rank-glow {
-  position: absolute; inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  animation: glowPulse 2.5s ease-in-out infinite;
-}
-.glow-1 { box-shadow: inset 0 0 12px rgba(246, 211, 101, 0.3); }
-.glow-2 { box-shadow: inset 0 0 10px rgba(200, 214, 224, 0.2); }
-.glow-3 { box-shadow: inset 0 0 10px rgba(232, 168, 124, 0.2); }
-
-@keyframes glowPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  font-weight: 900; font-size: 22px; border-radius: 50%;
 }
 
 .pod-name {
@@ -483,12 +624,13 @@ function onImgError(e, soopId) {
 .silver-score { color: #c8d6e0; text-shadow: 0 0 6px rgba(200,214,224,0.5); }
 .bronze-score { color: #e8a87c; text-shadow: 0 0 6px rgba(232,168,124,0.5); }
 
-/* 1st 2nd 3rd 배지 - 이미지 바로 아래 붙임 */
+/* 1st 2nd 3rd 배지 - 시상대 위 중앙 */
 .pod-badge {
-  font-size: 10px; font-weight: 900; padding: 3px 12px;
+  position: absolute;
+  top: -14px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; font-weight: 900; padding: 3px 13px;
   border-radius: 20px; letter-spacing: 0.8px;
-  margin-top: -2px;
-  position: relative; z-index: 3;
+  white-space: nowrap; z-index: 5;
 }
 .badge-1 {
   background: linear-gradient(135deg, #f6d365, #fda085);
@@ -509,6 +651,8 @@ function onImgError(e, soopId) {
 /* 시상대 */
 .pod-stage {
   width: 100%; border-radius: 4px 4px 0 0;
+  position: relative; overflow: visible;
+  display: flex; align-items: flex-start; justify-content: center;
 }
 .stage-1 {
   height: 44px;
