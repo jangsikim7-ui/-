@@ -643,22 +643,6 @@ function onImgError(e, soopId) {
   box-shadow: none;
 }
 
-/* 시상대 라이트모드 배경 (반투명 유지) */
-:global([data-theme='light']) .stage-1 {
-  background: linear-gradient(180deg, rgba(255,208,40,0.25) 0%, rgba(255,180,0,0.05) 100%);
-}
-
-/* 바 투명도 낮춤 */
-:global([data-theme='light']) .rank-bar-bg { opacity: 0.15; }
-
-/* 로딩 스핀 */
-:global([data-theme='light']) .spin { border-top-color: #9a6500; }
-
-/* pod-av 글로우 제거 */
-:global([data-theme='light']) .pod-av-1 { box-shadow: 0 0 0 2px rgba(180,130,0,0.3); }
-:global([data-theme='light']) .pod-av-2 { box-shadow: 0 0 0 2px rgba(100,120,140,0.3); }
-:global([data-theme='light']) .pod-av-3 { box-shadow: 0 0 0 2px rgba(160,100,40,0.3); }
-
 /* ═══════════════════════════════════════
    반응형
 ═══════════════════════════════════════ */
