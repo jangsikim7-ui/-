@@ -39,14 +39,16 @@
         <div class="podium">
           <div v-for="(pos, pi) in podiumOrder" :key="pi" class="pod" :class="'pod-'+pos">
             <template v-if="avgRanked[pos]">
-              <div class="pod-img-wrap" :class="'rank-border-'+(pos+1)">
-                <img v-if="avgRanked[pos].logo_url" :src="avgRanked[pos].logo_url" class="pod-logo" @error="e => e.target.style.display='none'" />
-                <div v-else class="pod-initial" :style="{ background: avgRanked[pos].color + '33', color: avgRanked[pos].color }">{{ avgRanked[pos].name.charAt(0) }}</div>
-                <div class="rank-glow" :class="'glow-'+(pos+1)"></div>
+              <div class="pod-img-outer">
+                <div class="pod-img-wrap" :class="'rank-border-'+(pos+1)">
+                  <img v-if="avgRanked[pos].logo_url" :src="avgRanked[pos].logo_url" class="pod-logo" @error="e => e.target.style.display='none'" />
+                  <div v-else class="pod-initial" :style="{ background: avgRanked[pos].color + '33', color: avgRanked[pos].color }">{{ avgRanked[pos].name.charAt(0) }}</div>
+                  <div class="rank-glow" :class="'glow-'+(pos+1)"></div>
+                </div>
+                <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
               </div>
               <div class="pod-name">{{ avgRanked[pos].name }}</div>
               <div class="pod-score" :class="pos===0?'gold-score':pos===1?'silver-score':'bronze-score'">{{ fmt(avgRanked[pos].avg) }}</div>
-              <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
               <div class="pod-stage" :class="'stage-'+(pos+1)" />
             </template>
           </div>
@@ -81,14 +83,16 @@
         <div class="podium">
           <div v-for="(pos, pi) in podiumOrder" :key="pi" class="pod" :class="'pod-'+pos">
             <template v-if="masterRanked[pos]">
-              <div class="pod-img-wrap" :class="'rank-border-'+(pos+1)">
-                <img v-if="masterRanked[pos].logo_url" :src="masterRanked[pos].logo_url" class="pod-logo" @error="e => e.target.style.display='none'" />
-                <div v-else class="pod-initial" :style="{ background: masterRanked[pos].color + '33', color: masterRanked[pos].color }">{{ masterRanked[pos].name.charAt(0) }}</div>
-                <div class="rank-glow" :class="'glow-'+(pos+1)"></div>
+              <div class="pod-img-outer">
+                <div class="pod-img-wrap" :class="'rank-border-'+(pos+1)">
+                  <img v-if="masterRanked[pos].logo_url" :src="masterRanked[pos].logo_url" class="pod-logo" @error="e => e.target.style.display='none'" />
+                  <div v-else class="pod-initial" :style="{ background: masterRanked[pos].color + '33', color: masterRanked[pos].color }">{{ masterRanked[pos].name.charAt(0) }}</div>
+                  <div class="rank-glow" :class="'glow-'+(pos+1)"></div>
+                </div>
+                <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
               </div>
               <div class="pod-name">{{ masterRanked[pos].name }}</div>
               <div class="pod-score" :class="pos===0?'gold-score':pos===1?'silver-score':'bronze-score'">{{ fmt(masterRanked[pos].master_balloons) }}</div>
-              <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
               <div class="pod-stage" :class="'stage-'+(pos+1)" />
             </template>
           </div>
@@ -123,14 +127,16 @@
         <div class="podium">
           <div v-for="(pos, pi) in podiumOrder" :key="pi" class="pod" :class="'pod-'+pos">
             <template v-if="indivRanked[pos]">
-              <div class="pod-img-wrap pod-img-circle" :class="'rank-border-'+(pos+1)">
-                <img :src="indivRanked[pos].profile_img || cdnUrl(indivRanked[pos].soop_id)" class="pod-profile" :style="{ borderColor: 'transparent' }" @error="onImgError($event, indivRanked[pos].soop_id)" />
-                <div class="rank-glow" :class="'glow-'+(pos+1)"></div>
+              <div class="pod-img-outer">
+                <div class="pod-img-wrap pod-img-circle" :class="'rank-border-'+(pos+1)">
+                  <img :src="indivRanked[pos].profile_img || cdnUrl(indivRanked[pos].soop_id)" class="pod-profile" :style="{ borderColor: 'transparent' }" @error="onImgError($event, indivRanked[pos].soop_id)" />
+                  <div class="rank-glow" :class="'glow-'+(pos+1)"></div>
+                </div>
+                <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
               </div>
               <div class="pod-name">{{ indivRanked[pos].name }}</div>
               <div class="pod-crew-chip" :style="{ background: indivRanked[pos].crew_color+'22', color: indivRanked[pos].crew_color, borderColor: indivRanked[pos].crew_color+'55' }">{{ indivRanked[pos].crew_name }}</div>
               <div class="pod-score" :class="pos===0?'gold-score':pos===1?'silver-score':'bronze-score'">{{ fmt(indivRanked[pos].balloons) }}</div>
-              <div class="pod-badge" :class="'badge-'+(pos+1)">{{ pos===0?'1st':pos===1?'2nd':'3rd' }}</div>
               <div class="pod-stage pod-stage-indiv" :class="'stage-'+(pos+1)" />
             </template>
           </div>
@@ -339,9 +345,23 @@ function onImgError(e, soopId) {
 /* ── 헤더 ── */
 .hcol-head {
   display: flex; align-items: center; gap: 12px;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
-  background: rgba(0,0,0,0.25);
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+/* 평균 헤더 배경 */
+.hcol-avg .hcol-head {
+  background: rgba(201, 150, 10, 0.12);
+  border-bottom-color: rgba(201, 150, 10, 0.25);
+}
+/* 매출 헤더 배경 */
+.hcol-master .hcol-head {
+  background: rgba(255, 200, 50, 0.1);
+  border-bottom-color: rgba(255, 200, 50, 0.22);
+}
+/* 개인 헤더 배경 */
+.hcol-indiv .hcol-head {
+  background: rgba(107, 203, 119, 0.1);
+  border-bottom-color: rgba(107, 203, 119, 0.22);
 }
 .hcol-icon {
   width: 38px; height: 38px; border-radius: 10px;
@@ -375,12 +395,17 @@ function onImgError(e, soopId) {
 .pod-1 { order: 1; }
 .pod-2 { order: 3; }
 
+/* ── 이미지 + 배지 묶음 래퍼 ── */
+.pod-img-outer {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0; margin-bottom: 6px;
+}
+
 /* ── 프로필 이미지 래퍼 (금/은/동 네온 테두리) ── */
 .pod-img-wrap {
   position: relative; flex-shrink: 0;
   border-radius: 12px;
   padding: 3px;
-  margin-bottom: 4px;
 }
 .pod-img-circle { border-radius: 50%; }
 
@@ -458,11 +483,12 @@ function onImgError(e, soopId) {
 .silver-score { color: #c8d6e0; text-shadow: 0 0 6px rgba(200,214,224,0.5); }
 .bronze-score { color: #e8a87c; text-shadow: 0 0 6px rgba(232,168,124,0.5); }
 
-/* 1st 2nd 3rd 배지 */
+/* 1st 2nd 3rd 배지 - 이미지 바로 아래 붙임 */
 .pod-badge {
-  font-size: 10px; font-weight: 900; padding: 3px 10px;
-  border-radius: 20px; letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  font-size: 10px; font-weight: 900; padding: 3px 12px;
+  border-radius: 20px; letter-spacing: 0.8px;
+  margin-top: -2px;
+  position: relative; z-index: 3;
 }
 .badge-1 {
   background: linear-gradient(135deg, #f6d365, #fda085);
