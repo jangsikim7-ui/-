@@ -351,23 +351,29 @@ function onImgError(e, soopId) {
    컬럼 카드 — 다크모드 기본
 ═══════════════════════════════════════ */
 .hcol {
-  background: linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.3) 100%);
-  border-radius: 20px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 16px;
   overflow: hidden;
   position: relative;
 }
-.hcol-avg {
-  border: 1px solid rgba(255, 208, 40, 0.4);
-  box-shadow: 0 0 20px rgba(255, 200, 40, 0.12), 0 0 50px rgba(255, 180, 0, 0.06), inset 0 0 30px rgba(255, 200, 40, 0.03);
+/* 다크모드에서만 컬러 테두리+글로우 */
+[data-theme="dark"] .hcol-avg {
+  border-color: rgba(255, 208, 40, 0.4);
+  box-shadow: 0 0 20px rgba(255, 200, 40, 0.12), 0 0 50px rgba(255, 180, 0, 0.06);
 }
-.hcol-master {
-  border: 1px solid rgba(255, 140, 20, 0.4);
-  box-shadow: 0 0 20px rgba(255, 140, 20, 0.12), 0 0 50px rgba(255, 120, 0, 0.06), inset 0 0 30px rgba(255, 140, 20, 0.03);
+[data-theme="dark"] .hcol-master {
+  border-color: rgba(255, 140, 20, 0.4);
+  box-shadow: 0 0 20px rgba(255, 140, 20, 0.12), 0 0 50px rgba(255, 120, 0, 0.06);
 }
-.hcol-indiv {
-  border: 1px solid rgba(60, 210, 110, 0.4);
-  box-shadow: 0 0 20px rgba(60, 210, 110, 0.12), 0 0 50px rgba(40, 190, 90, 0.06), inset 0 0 30px rgba(60, 210, 110, 0.03);
+[data-theme="dark"] .hcol-indiv {
+  border-color: rgba(60, 210, 110, 0.4);
+  box-shadow: 0 0 20px rgba(60, 210, 110, 0.12), 0 0 50px rgba(40, 190, 90, 0.06);
 }
+/* 라이트모드 테두리 */
+[data-theme="light"] .hcol-avg { border-color: rgba(180, 130, 0, 0.4); }
+[data-theme="light"] .hcol-master { border-color: rgba(190, 80, 0, 0.4); }
+[data-theme="light"] .hcol-indiv { border-color: rgba(20, 150, 70, 0.4); }
 
 /* ── 헤더 ── */
 .hcol-head {
@@ -375,7 +381,8 @@ function onImgError(e, soopId) {
   align-items: center;
   gap: 12px;
   padding: 13px 18px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg4);
 }
 .hcol-avg .hcol-head {
   background: rgba(255, 200, 40, 0.08);
@@ -600,37 +607,6 @@ function onImgError(e, soopId) {
    라이트모드 오버라이드
    data-theme="light" 기준으로만 통일
 ═══════════════════════════════════════ */
-
-/* 카드 배경 */
-:global([data-theme='light']) .hcol {
-  background: linear-gradient(160deg, var(--bg2) 0%, var(--bg3) 100%);
-}
-:global([data-theme='light']) .hcol-avg {
-  border-color: rgba(180, 130, 0, 0.35);
-  box-shadow: 0 2px 16px rgba(180, 130, 0, 0.10), 0 1px 4px rgba(0,0,0,0.07);
-}
-:global([data-theme='light']) .hcol-master {
-  border-color: rgba(190, 80, 0, 0.35);
-  box-shadow: 0 2px 16px rgba(190, 80, 0, 0.10), 0 1px 4px rgba(0,0,0,0.07);
-}
-:global([data-theme='light']) .hcol-indiv {
-  border-color: rgba(20, 150, 70, 0.35);
-  box-shadow: 0 2px 16px rgba(20, 150, 70, 0.10), 0 1px 4px rgba(0,0,0,0.07);
-}
-
-/* 헤더 배경 */
-:global([data-theme='light']) .hcol-avg .hcol-head {
-  background: rgba(255, 200, 40, 0.08);
-  border-bottom-color: rgba(180, 130, 0, 0.2);
-}
-:global([data-theme='light']) .hcol-master .hcol-head {
-  background: rgba(255, 140, 20, 0.08);
-  border-bottom-color: rgba(190, 80, 0, 0.2);
-}
-:global([data-theme='light']) .hcol-indiv .hcol-head {
-  background: rgba(60, 210, 110, 0.08);
-  border-bottom-color: rgba(20, 150, 70, 0.2);
-}
 
 /* 아이콘 박스 */
 :global([data-theme='light']) .hcol-icon-avg {
