@@ -348,7 +348,7 @@ function onImgError(e, soopId) {
 }
 
 /* ═══════════════════════════════════════
-   컬럼 카드 (다크모드 기본)
+   컬럼 카드 — 다크모드 기본
 ═══════════════════════════════════════ */
 .hcol {
   background: linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(0,0,0,0.3) 100%);
@@ -358,24 +358,15 @@ function onImgError(e, soopId) {
 }
 .hcol-avg {
   border: 1px solid rgba(255, 208, 40, 0.4);
-  box-shadow:
-    0 0 20px rgba(255, 200, 40, 0.12),
-    0 0 50px rgba(255, 180, 0, 0.06),
-    inset 0 0 30px rgba(255, 200, 40, 0.03);
+  box-shadow: 0 0 20px rgba(255, 200, 40, 0.12), 0 0 50px rgba(255, 180, 0, 0.06), inset 0 0 30px rgba(255, 200, 40, 0.03);
 }
 .hcol-master {
   border: 1px solid rgba(255, 140, 20, 0.4);
-  box-shadow:
-    0 0 20px rgba(255, 140, 20, 0.12),
-    0 0 50px rgba(255, 120, 0, 0.06),
-    inset 0 0 30px rgba(255, 140, 20, 0.03);
+  box-shadow: 0 0 20px rgba(255, 140, 20, 0.12), 0 0 50px rgba(255, 120, 0, 0.06), inset 0 0 30px rgba(255, 140, 20, 0.03);
 }
 .hcol-indiv {
   border: 1px solid rgba(60, 210, 110, 0.4);
-  box-shadow:
-    0 0 20px rgba(60, 210, 110, 0.12),
-    0 0 50px rgba(40, 190, 90, 0.06),
-    inset 0 0 30px rgba(60, 210, 110, 0.03);
+  box-shadow: 0 0 20px rgba(60, 210, 110, 0.12), 0 0 50px rgba(40, 190, 90, 0.06), inset 0 0 30px rgba(60, 210, 110, 0.03);
 }
 
 /* ── 헤더 ── */
@@ -433,40 +424,22 @@ function onImgError(e, soopId) {
 
 .hcol-head-text { display: flex; flex-direction: column; gap: 3px; }
 
-/* 제목 - 흰색 + 네온 그림자 */
+/* 제목 — 다크모드: 흰색 + 네온 */
 .hcol-title {
   font-size: 15px;
   font-weight: 900;
   color: #ffffff;
   letter-spacing: -0.3px;
 }
-.hcol-title-avg {
-  text-shadow: 0 0 8px rgba(255, 208, 40, 0.7), 0 0 20px rgba(255, 180, 0, 0.4);
-}
-.hcol-title-master {
-  text-shadow: 0 0 8px rgba(255, 152, 32, 0.7), 0 0 20px rgba(255, 120, 0, 0.4);
-}
-.hcol-title-indiv {
-  text-shadow: 0 0 8px rgba(60, 210, 110, 0.7), 0 0 20px rgba(40, 190, 90, 0.4);
-}
+.hcol-title-avg  { text-shadow: 0 0 8px rgba(255, 208, 40, 0.7), 0 0 20px rgba(255, 180, 0, 0.4); }
+.hcol-title-master { text-shadow: 0 0 8px rgba(255, 152, 32, 0.7), 0 0 20px rgba(255, 120, 0, 0.4); }
+.hcol-title-indiv  { text-shadow: 0 0 8px rgba(60, 210, 110, 0.7), 0 0 20px rgba(40, 190, 90, 0.4); }
 
-/* 서브타이틀 */
-.hcol-sub {
-  font-size: 11px;
-  font-weight: 600;
-}
-.hcol-sub-avg {
-  color: #c9960a;
-  text-shadow: 0 0 6px rgba(201, 150, 10, 0.6);
-}
-.hcol-sub-master {
-  color: #c87010;
-  text-shadow: 0 0 6px rgba(200, 112, 16, 0.6);
-}
-.hcol-sub-indiv {
-  color: #28a060;
-  text-shadow: 0 0 6px rgba(40, 160, 96, 0.6);
-}
+/* 서브타이틀 — 다크모드 */
+.hcol-sub { font-size: 11px; font-weight: 600; }
+.hcol-sub-avg    { color: #c9960a; text-shadow: 0 0 6px rgba(201, 150, 10, 0.6); }
+.hcol-sub-master { color: #c87010; text-shadow: 0 0 6px rgba(200, 112, 16, 0.6); }
+.hcol-sub-indiv  { color: #28a060; text-shadow: 0 0 6px rgba(40, 160, 96, 0.6); }
 
 /* ═══════════════════════════════════════
    포디움
@@ -490,14 +463,7 @@ function onImgError(e, soopId) {
 .pod-1 { order: 1; margin-top: 14px; }
 .pod-2 { order: 3; margin-top: 22px; }
 
-/* 아바타 래퍼 */
-.pod-av-wrap {
-  position: relative;
-  display: inline-block;
-  margin-bottom: 4px;
-}
-
-/* 아바타 */
+.pod-av-wrap { position: relative; display: inline-block; margin-bottom: 4px; }
 .pod-av {
   overflow: hidden;
   display: flex;
@@ -511,119 +477,73 @@ function onImgError(e, soopId) {
 .pod-av-1 {
   width: 64px; height: 64px;
   border-color: #ffd028;
-  box-shadow:
-    0 0 0 2px rgba(255, 208, 40, 0.2),
-    0 0 12px rgba(255, 208, 40, 0.8),
-    0 0 28px rgba(255, 180, 0, 0.45),
-    0 0 50px rgba(255, 160, 0, 0.2);
+  box-shadow: 0 0 0 2px rgba(255,208,40,0.2), 0 0 12px rgba(255,208,40,0.8), 0 0 28px rgba(255,180,0,0.45), 0 0 50px rgba(255,160,0,0.2);
 }
 .pod-av-2 {
   width: 52px; height: 52px;
   border-color: #b8c8d8;
-  box-shadow:
-    0 0 0 2px rgba(184, 200, 216, 0.2),
-    0 0 10px rgba(184, 200, 216, 0.7),
-    0 0 22px rgba(160, 185, 210, 0.4),
-    0 0 40px rgba(140, 170, 200, 0.15);
+  box-shadow: 0 0 0 2px rgba(184,200,216,0.2), 0 0 10px rgba(184,200,216,0.7), 0 0 22px rgba(160,185,210,0.4), 0 0 40px rgba(140,170,200,0.15);
 }
 .pod-av-3 {
   width: 44px; height: 44px;
   border-color: #d07830;
-  box-shadow:
-    0 0 0 2px rgba(208, 120, 48, 0.2),
-    0 0 10px rgba(208, 120, 48, 0.65),
-    0 0 22px rgba(180, 90, 20, 0.35),
-    0 0 40px rgba(160, 70, 10, 0.15);
+  box-shadow: 0 0 0 2px rgba(208,120,48,0.2), 0 0 10px rgba(208,120,48,0.65), 0 0 22px rgba(180,90,20,0.35), 0 0 40px rgba(160,70,10,0.15);
 }
 
-.pod-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-/* 로고 이미지 - 흰 배경으로 다크/라이트 모두 보이게 */
-.pod-img-sq {
-  object-fit: contain;
-  background: #ffffff;
-  padding: 4px;
-}
+.pod-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pod-img-sq { object-fit: contain; background: #ffffff; padding: 4px; }
 .pod-initial {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-  font-size: 20px;
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; font-size: 20px;
 }
 
 .pod-name {
-  font-size: 11px;
-  font-weight: 800;
-  color: #e8e8f0;
-  text-align: center;
-  max-width: 84px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 11px; font-weight: 800; color: #e8e8f0;
+  text-align: center; max-width: 84px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .pod-crew-chip {
-  font-size: 9px;
-  padding: 2px 7px;
-  border-radius: 8px;
-  font-weight: 800;
-  border: 1px solid;
-  white-space: nowrap;
-  max-width: 80px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 9px; padding: 2px 7px; border-radius: 8px;
+  font-weight: 800; border: 1px solid; white-space: nowrap;
+  max-width: 80px; overflow: hidden; text-overflow: ellipsis;
 }
 .pod-score { font-size: 11px; font-weight: 900; letter-spacing: -0.4px; }
-.score-1 { color: #ffd028; text-shadow: 0 0 8px rgba(255, 208, 40, 0.7); }
-.score-2 { color: #b8c8d8; text-shadow: 0 0 6px rgba(184, 200, 216, 0.5); }
-.score-3 { color: #d07830; text-shadow: 0 0 6px rgba(208, 120, 48, 0.5); }
+.score-1 { color: #ffd028; text-shadow: 0 0 8px rgba(255,208,40,0.7); }
+.score-2 { color: #b8c8d8; text-shadow: 0 0 6px rgba(184,200,216,0.5); }
+.score-3 { color: #d07830; text-shadow: 0 0 6px rgba(208,120,48,0.5); }
 
 /* 시상대 */
 .pod-stage {
-  width: 100%;
-  border-radius: 3px 3px 0 0;
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  width: 100%; border-radius: 3px 3px 0 0;
+  position: relative; display: flex;
+  align-items: flex-start; justify-content: center;
 }
 .stage-1 {
   height: 40px;
-  background: linear-gradient(180deg, rgba(255, 208, 40, 0.18) 0%, rgba(255, 180, 0, 0.04) 100%);
+  background: linear-gradient(180deg, rgba(255,208,40,0.18) 0%, rgba(255,180,0,0.04) 100%);
   border-top: 2px solid #ffd028;
-  box-shadow: 0 -5px 20px rgba(255, 208, 40, 0.22), inset 0 1px 0 rgba(255, 220, 80, 0.15);
+  box-shadow: 0 -5px 20px rgba(255,208,40,0.22), inset 0 1px 0 rgba(255,220,80,0.15);
 }
 .stage-2 {
   height: 28px;
-  background: linear-gradient(180deg, rgba(184, 200, 216, 0.14) 0%, rgba(160, 180, 210, 0.03) 100%);
+  background: linear-gradient(180deg, rgba(184,200,216,0.14) 0%, rgba(160,180,210,0.03) 100%);
   border-top: 2px solid #b8c8d8;
-  box-shadow: 0 -4px 14px rgba(184, 200, 216, 0.16);
+  box-shadow: 0 -4px 14px rgba(184,200,216,0.16);
 }
 .stage-3 {
   height: 20px;
-  background: linear-gradient(180deg, rgba(208, 120, 48, 0.14) 0%, rgba(180, 90, 20, 0.03) 100%);
+  background: linear-gradient(180deg, rgba(208,120,48,0.14) 0%, rgba(180,90,20,0.03) 100%);
   border-top: 2px solid #d07830;
-  box-shadow: 0 -4px 14px rgba(208, 120, 48, 0.16);
+  box-shadow: 0 -4px 14px rgba(208,120,48,0.16);
 }
 .stage-label {
-  position: absolute;
-  top: 7px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.8px;
-  white-space: nowrap;
+  position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
+  font-size: 9px; font-weight: 900; letter-spacing: 0.8px; white-space: nowrap;
 }
-.stage-1 .stage-label { color: #ffd028; text-shadow: 0 0 8px rgba(255, 208, 40, 0.9); }
-.stage-2 .stage-label { color: #b8c8d8; text-shadow: 0 0 6px rgba(184, 200, 216, 0.6); }
-.stage-3 .stage-label { color: #d07830; text-shadow: 0 0 6px rgba(208, 120, 48, 0.6); }
+.stage-1 .stage-label { color: #ffd028; text-shadow: 0 0 8px rgba(255,208,40,0.9); }
+.stage-2 .stage-label { color: #b8c8d8; text-shadow: 0 0 6px rgba(184,200,216,0.6); }
+.stage-3 .stage-label { color: #d07830; text-shadow: 0 0 6px rgba(208,120,48,0.6); }
 
 /* ═══════════════════════════════════════
    4위~ 리스트
@@ -631,324 +551,170 @@ function onImgError(e, soopId) {
 .rank-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 12px; }
 .rank-list {
   padding: 8px 10px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: flex; flex-direction: column; gap: 2px;
 }
 .rank-row {
-  position: relative;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: background 0.15s;
-  cursor: default;
+  position: relative; border-radius: 8px; overflow: hidden;
+  transition: background 0.15s; cursor: default;
 }
 .rank-row:hover { background: rgba(255,255,255,0.03); }
 .rank-bar-bg {
-  position: absolute;
-  top: 0; left: 0; bottom: 0;
-  opacity: 0.30;
-  border-radius: 8px 0 0 8px;
+  position: absolute; top: 0; left: 0; bottom: 0;
+  opacity: 0.30; border-radius: 8px 0 0 8px;
   transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
   min-width: 4px;
 }
 .rank-content {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 10px;
+  position: relative; z-index: 2;
+  display: flex; align-items: center; gap: 7px; padding: 6px 10px;
 }
-.rank-num {
-  font-size: 10px;
-  font-weight: 800;
-  color: #888;
-  width: 14px;
-  text-align: center;
-  flex-shrink: 0;
-}
+.rank-num { font-size: 10px; font-weight: 800; color: #888; width: 14px; text-align: center; flex-shrink: 0; }
 .rank-thumb { flex-shrink: 0; width: 26px; height: 26px; }
-.rank-thumb-circle { }
-/* 크루 로고 - 흰 배경으로 다크/라이트 모두 보이게 */
 .rank-logo {
-  width: 26px; height: 26px;
-  border-radius: 6px;
-  object-fit: contain;
-  display: block;
-  background: #ffffff;
-  padding: 2px;
+  width: 26px; height: 26px; border-radius: 6px;
+  object-fit: contain; display: block; background: #ffffff; padding: 2px;
 }
 .rank-profile {
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1.5px solid;
-  display: block;
+  width: 26px; height: 26px; border-radius: 50%;
+  object-fit: cover; border: 1.5px solid; display: block;
 }
 .rank-initial-sm {
-  width: 26px; height: 26px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 800;
+  width: 26px; height: 26px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 800;
 }
 .rank-name {
-  flex: 1;
-  font-size: 11px;
-  font-weight: 700;
-  color: #c8c8d8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: 1; font-size: 11px; font-weight: 700; color: #c8c8d8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .rank-crew-chip-sm {
-  font-size: 9px;
-  padding: 1px 6px;
-  border-radius: 5px;
-  font-weight: 800;
-  border: 1px solid;
-  flex-shrink: 0;
-  white-space: nowrap;
+  font-size: 9px; padding: 1px 6px; border-radius: 5px;
+  font-weight: 800; border: 1px solid; flex-shrink: 0; white-space: nowrap;
 }
 .rank-val {
-  font-size: 10px;
-  font-weight: 800;
-  color: #888;
-  flex-shrink: 0;
-  letter-spacing: -0.3px;
-  font-variant-numeric: tabular-nums;
+  font-size: 10px; font-weight: 800; color: #888;
+  flex-shrink: 0; letter-spacing: -0.3px; font-variant-numeric: tabular-nums;
 }
 
 /* ═══════════════════════════════════════
    라이트모드 오버라이드
-   - html.light, body.light, :root.light 어떤 방식이든 커버
+   data-theme="light" 기준으로만 통일
 ═══════════════════════════════════════ */
-:global(html:not(.dark):not([data-theme='dark'])) .honor-wrap,
-:global(body:not(.dark):not([data-theme='dark'])) .honor-wrap,
-:global(.light) .honor-wrap {
 
-  /* 카드 배경 */
-  --lm-card-bg: #ffffff;
-  --lm-card-bg2: #f8f9fc;
+/* 카드 배경 */
+:global([data-theme='light']) .hcol {
+  background: linear-gradient(160deg, #ffffff 0%, #f0f4ff 100%);
 }
-
-/* 라이트모드 카드 */
-:global(html:not(.dark):not([data-theme='dark'])) .hcol,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol,
-:global(.light) .hcol {
-  background: linear-gradient(160deg, #ffffff 0%, #f4f6fb 100%);
+:global([data-theme='light']) .hcol-avg {
+  border-color: rgba(180, 130, 0, 0.35);
+  box-shadow: 0 2px 16px rgba(180, 130, 0, 0.10), 0 1px 4px rgba(0,0,0,0.07);
 }
-
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-avg,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-avg,
-:global(.light) .hcol-avg {
-  border-color: rgba(200, 155, 10, 0.45);
-  box-shadow: 0 2px 20px rgba(200, 155, 10, 0.10), 0 1px 6px rgba(0,0,0,0.06);
+:global([data-theme='light']) .hcol-master {
+  border-color: rgba(190, 80, 0, 0.35);
+  box-shadow: 0 2px 16px rgba(190, 80, 0, 0.10), 0 1px 4px rgba(0,0,0,0.07);
 }
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-master,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-master,
-:global(.light) .hcol-master {
-  border-color: rgba(210, 100, 10, 0.45);
-  box-shadow: 0 2px 20px rgba(210, 100, 10, 0.10), 0 1px 6px rgba(0,0,0,0.06);
-}
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-indiv,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-indiv,
-:global(.light) .hcol-indiv {
-  border-color: rgba(30, 170, 80, 0.45);
-  box-shadow: 0 2px 20px rgba(30, 170, 80, 0.10), 0 1px 6px rgba(0,0,0,0.06);
+:global([data-theme='light']) .hcol-indiv {
+  border-color: rgba(20, 150, 70, 0.35);
+  box-shadow: 0 2px 16px rgba(20, 150, 70, 0.10), 0 1px 4px rgba(0,0,0,0.07);
 }
 
-/* 라이트모드 헤더 */
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-avg .hcol-head,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-avg .hcol-head,
-:global(.light) .hcol-avg .hcol-head {
-  background: rgba(255, 200, 40, 0.07);
-  border-bottom-color: rgba(200, 155, 10, 0.25);
+/* 헤더 배경 */
+:global([data-theme='light']) .hcol-avg .hcol-head {
+  background: rgba(255, 200, 40, 0.08);
+  border-bottom-color: rgba(180, 130, 0, 0.2);
 }
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-master .hcol-head,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-master .hcol-head,
-:global(.light) .hcol-master .hcol-head {
-  background: rgba(255, 140, 20, 0.07);
-  border-bottom-color: rgba(210, 100, 10, 0.25);
+:global([data-theme='light']) .hcol-master .hcol-head {
+  background: rgba(255, 140, 20, 0.08);
+  border-bottom-color: rgba(190, 80, 0, 0.2);
 }
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-indiv .hcol-head,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-indiv .hcol-head,
-:global(.light) .hcol-indiv .hcol-head {
-  background: rgba(60, 210, 110, 0.07);
-  border-bottom-color: rgba(30, 170, 80, 0.25);
+:global([data-theme='light']) .hcol-indiv .hcol-head {
+  background: rgba(60, 210, 110, 0.08);
+  border-bottom-color: rgba(20, 150, 70, 0.2);
 }
 
-/* 라이트모드 제목 - 어두운 색으로 */
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-title,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-title,
-:global(.light) .hcol-title {
-  color: #1a1a2e;
+/* 아이콘 박스 */
+:global([data-theme='light']) .hcol-icon-avg {
+  background: rgba(255, 200, 40, 0.15);
+  color: #9a6500;
+  border-color: rgba(180, 130, 0, 0.4);
+  box-shadow: 0 0 8px rgba(180, 130, 0, 0.15);
 }
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-title-avg,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-title-avg,
-:global(.light) .hcol-title-avg {
-  text-shadow: none;
-  color: #7a5500;
+:global([data-theme='light']) .hcol-icon-master {
+  background: rgba(255, 140, 20, 0.15);
+  color: #a04000;
+  border-color: rgba(190, 80, 0, 0.4);
+  box-shadow: 0 0 8px rgba(190, 80, 0, 0.15);
 }
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-title-master,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-title-master,
-:global(.light) .hcol-title-master {
-  text-shadow: none;
-  color: #7a3800;
-}
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-title-indiv,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-title-indiv,
-:global(.light) .hcol-title-indiv {
-  text-shadow: none;
-  color: #0e6e38;
+:global([data-theme='light']) .hcol-icon-indiv {
+  background: rgba(60, 210, 110, 0.15);
+  color: #0e7a38;
+  border-color: rgba(20, 150, 70, 0.4);
+  box-shadow: 0 0 8px rgba(20, 150, 70, 0.15);
 }
 
-/* 라이트모드 서브타이틀 */
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-sub-avg,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-sub-avg,
-:global(.light) .hcol-sub-avg {
-  color: #a07208;
-  text-shadow: none;
-}
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-sub-master,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-sub-master,
-:global(.light) .hcol-sub-master {
-  color: #a05008;
-  text-shadow: none;
-}
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-sub-indiv,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-sub-indiv,
-:global(.light) .hcol-sub-indiv {
-  color: #0a7a40;
-  text-shadow: none;
-}
+/* 제목 — 라이트모드: 진한 색 + 그림자 없음 */
+:global([data-theme='light']) .hcol-title-avg    { color: #7a5000; text-shadow: none; }
+:global([data-theme='light']) .hcol-title-master { color: #7a3200; text-shadow: none; }
+:global([data-theme='light']) .hcol-title-indiv  { color: #0a6030; text-shadow: none; }
 
-/* 라이트모드 pod-name */
-:global(html:not(.dark):not([data-theme='dark'])) .pod-name,
-:global(body:not(.dark):not([data-theme='dark'])) .pod-name,
-:global(.light) .pod-name {
-  color: #1a1a2e;
-}
+/* 서브타이틀 */
+:global([data-theme='light']) .hcol-sub-avg    { color: #9a6500; text-shadow: none; }
+:global([data-theme='light']) .hcol-sub-master { color: #9a4500; text-shadow: none; }
+:global([data-theme='light']) .hcol-sub-indiv  { color: #0a7030; text-shadow: none; }
 
-/* 라이트모드 점수 - 진하게 */
-:global(html:not(.dark):not([data-theme='dark'])) .score-1,
-:global(body:not(.dark):not([data-theme='dark'])) .score-1,
-:global(.light) .score-1 {
-  color: #b8860b;
-  text-shadow: none;
-}
-:global(html:not(.dark):not([data-theme='dark'])) .score-2,
-:global(body:not(.dark):not([data-theme='dark'])) .score-2,
-:global(.light) .score-2 {
-  color: #607080;
-  text-shadow: none;
-}
-:global(html:not(.dark):not([data-theme='dark'])) .score-3,
-:global(body:not(.dark):not([data-theme='dark'])) .score-3,
-:global(.light) .score-3 {
-  color: #a05010;
-  text-shadow: none;
-}
-
-/* 라이트모드 시상대 */
-:global(html:not(.dark):not([data-theme='dark'])) .stage-1,
-:global(body:not(.dark):not([data-theme='dark'])) .stage-1,
-:global(.light) .stage-1 {
-  background: linear-gradient(180deg, rgba(255, 208, 40, 0.15) 0%, rgba(255, 180, 0, 0.02) 100%);
-  box-shadow: 0 -4px 12px rgba(255, 208, 40, 0.18);
-}
-:global(html:not(.dark):not([data-theme='dark'])) .stage-1 .stage-label,
-:global(body:not(.dark):not([data-theme='dark'])) .stage-1 .stage-label,
-:global(.light) .stage-1 .stage-label {
-  color: #a07200;
-  text-shadow: none;
-}
-:global(html:not(.dark):not([data-theme='dark'])) .stage-2 .stage-label,
-:global(body:not(.dark):not([data-theme='dark'])) .stage-2 .stage-label,
-:global(.light) .stage-2 .stage-label {
-  color: #607080;
-  text-shadow: none;
-}
-:global(html:not(.dark):not([data-theme='dark'])) .stage-3 .stage-label,
-:global(body:not(.dark):not([data-theme='dark'])) .stage-3 .stage-label,
-:global(.light) .stage-3 .stage-label {
-  color: #904020;
-  text-shadow: none;
-}
-
-/* 라이트모드 divider */
-:global(html:not(.dark):not([data-theme='dark'])) .rank-divider,
-:global(body:not(.dark):not([data-theme='dark'])) .rank-divider,
-:global(.light) .rank-divider {
-  background: rgba(0,0,0,0.08);
-}
-
-/* 라이트모드 rank-row hover */
-:global(html:not(.dark):not([data-theme='dark'])) .rank-row:hover,
-:global(body:not(.dark):not([data-theme='dark'])) .rank-row:hover,
-:global(.light) .rank-row:hover {
-  background: rgba(0,0,0,0.04);
-}
-
-/* 라이트모드 rank-bar 더 연하게 (배경이 밝아서 진하면 과함) */
-:global(html:not(.dark):not([data-theme='dark'])) .rank-bar-bg,
-:global(body:not(.dark):not([data-theme='dark'])) .rank-bar-bg,
-:global(.light) .rank-bar-bg {
-  opacity: 0.18;
-}
-
-/* 라이트모드 rank-num */
-:global(html:not(.dark):not([data-theme='dark'])) .rank-num,
-:global(body:not(.dark):not([data-theme='dark'])) .rank-num,
-:global(.light) .rank-num {
-  color: #999;
-}
-
-/* 라이트모드 rank-name - 핵심! 어둡게 */
-:global(html:not(.dark):not([data-theme='dark'])) .rank-name,
-:global(body:not(.dark):not([data-theme='dark'])) .rank-name,
-:global(.light) .rank-name {
-  color: #1a1a2e;
-}
-
-/* 라이트모드 rank-val - 핵심! 어둡게 */
-:global(html:not(.dark):not([data-theme='dark'])) .rank-val,
-:global(body:not(.dark):not([data-theme='dark'])) .rank-val,
-:global(.light) .rank-val {
-  color: #333;
-}
-
-/* 라이트모드 아이콘박스 - text-shadow 제거 */
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-icon-avg,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-icon-avg,
-:global(.light) .hcol-icon-avg {
-  box-shadow: 0 0 8px rgba(255, 200, 40, 0.2);
-}
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-icon-master,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-icon-master,
-:global(.light) .hcol-icon-master {
-  box-shadow: 0 0 8px rgba(255, 140, 20, 0.2);
-}
-:global(html:not(.dark):not([data-theme='dark'])) .hcol-icon-indiv,
-:global(body:not(.dark):not([data-theme='dark'])) .hcol-icon-indiv,
-:global(.light) .hcol-icon-indiv {
-  box-shadow: 0 0 8px rgba(60, 210, 110, 0.2);
-}
-
-/* 라이트모드 탭 active */
-:global(html:not(.dark):not([data-theme='dark'])) .hg-tab.active,
-:global(body:not(.dark):not([data-theme='dark'])) .hg-tab.active,
-:global(.light) .hg-tab.active {
-  color: #1a6abf;
+/* 탭 active */
+:global([data-theme='light']) .hg-tab.active {
+  background: rgba(74, 158, 255, 0.10);
+  color: #1055b0;
   box-shadow: 0 0 10px rgba(74, 158, 255, 0.15);
 }
-:global(html:not(.dark):not([data-theme='dark'])) .hg-bora.active,
-:global(body:not(.dark):not([data-theme='dark'])) .hg-bora.active,
-:global(.light) .hg-bora.active {
-  color: #7722aa;
+:global([data-theme='light']) .hg-bora.active {
+  background: rgba(153, 68, 204, 0.10);
+  color: #6a10aa;
   box-shadow: 0 0 10px rgba(153, 68, 204, 0.15);
+}
+
+/* 포디움 이름 */
+:global([data-theme='light']) .pod-name { color: #1a1a2e; }
+
+/* 점수 */
+:global([data-theme='light']) .score-1 { color: #9a6500; text-shadow: none; }
+:global([data-theme='light']) .score-2 { color: #4a6070; text-shadow: none; }
+:global([data-theme='light']) .score-3 { color: #8a3800; text-shadow: none; }
+
+/* 시상대 */
+:global([data-theme='light']) .stage-1 {
+  background: linear-gradient(180deg, rgba(255,208,40,0.12) 0%, rgba(255,180,0,0.01) 100%);
+  box-shadow: 0 -3px 10px rgba(200,160,0,0.15);
+}
+:global([data-theme='light']) .stage-1 .stage-label { color: #9a6500; text-shadow: none; }
+:global([data-theme='light']) .stage-2 .stage-label { color: #4a6070; text-shadow: none; }
+:global([data-theme='light']) .stage-3 .stage-label { color: #8a3800; text-shadow: none; }
+
+/* 구분선 */
+:global([data-theme='light']) .rank-divider { background: rgba(0,0,0,0.08); }
+
+/* 리스트 hover */
+:global([data-theme='light']) .rank-row:hover { background: rgba(0,0,0,0.04); }
+
+/* 바 투명도 낮춤 (밝은 배경에서 과하지 않게) */
+:global([data-theme='light']) .rank-bar-bg { opacity: 0.15; }
+
+/* 순위 번호 */
+:global([data-theme='light']) .rank-num { color: #aaa; }
+
+/* 이름 — 핵심! 어둡게 */
+:global([data-theme='light']) .rank-name { color: #1a1a2e; }
+
+/* 값 — 핵심! 어둡게 */
+:global([data-theme='light']) .rank-val { color: #333; }
+
+/* 로딩 스핀 */
+:global([data-theme='light']) .spin { border-top-color: #9a6500; }
+
+/* honor-crown-icon */
+:global([data-theme='light']) .honor-crown-icon {
+  filter: drop-shadow(0 0 4px rgba(180, 130, 0, 0.5));
 }
 
 /* ═══════════════════════════════════════
