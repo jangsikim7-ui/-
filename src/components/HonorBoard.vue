@@ -491,7 +491,7 @@ function onImgError(e, soopId) {
 }
 
 .pod-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.pod-img-sq { object-fit: contain; background: #ffffff; padding: 4px; }
+.pod-img-sq { object-fit: contain; background: transparent; padding: 4px; }
 .pod-initial {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
@@ -499,7 +499,7 @@ function onImgError(e, soopId) {
 }
 
 .pod-name {
-  font-size: 11px; font-weight: 800; color: #e8e8f0;
+  font-size: 11px; font-weight: 800; color: var(--text);
   text-align: center; max-width: 84px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -568,11 +568,11 @@ function onImgError(e, soopId) {
   position: relative; z-index: 2;
   display: flex; align-items: center; gap: 7px; padding: 6px 10px;
 }
-.rank-num { font-size: 10px; font-weight: 800; color: #888; width: 14px; text-align: center; flex-shrink: 0; }
+.rank-num { font-size: 10px; font-weight: 800; color: var(--text3); width: 14px; text-align: center; flex-shrink: 0; }
 .rank-thumb { flex-shrink: 0; width: 26px; height: 26px; }
 .rank-logo {
   width: 26px; height: 26px; border-radius: 6px;
-  object-fit: contain; display: block; background: #ffffff; padding: 2px;
+  object-fit: contain; display: block; background: transparent; padding: 2px;
 }
 .rank-profile {
   width: 26px; height: 26px; border-radius: 50%;
@@ -584,7 +584,7 @@ function onImgError(e, soopId) {
   font-size: 10px; font-weight: 800;
 }
 .rank-name {
-  flex: 1; font-size: 11px; font-weight: 700; color: #c8c8d8;
+  flex: 1; font-size: 11px; font-weight: 700; color: var(--text2);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .rank-crew-chip-sm {
@@ -592,7 +592,7 @@ function onImgError(e, soopId) {
   font-weight: 800; border: 1px solid; flex-shrink: 0; white-space: nowrap;
 }
 .rank-val {
-  font-size: 10px; font-weight: 800; color: #888;
+  font-size: 10px; font-weight: 800; color: var(--text3);
   flex-shrink: 0; letter-spacing: -0.3px; font-variant-numeric: tabular-nums;
 }
 
@@ -603,7 +603,7 @@ function onImgError(e, soopId) {
 
 /* 카드 배경 */
 :global([data-theme='light']) .hcol {
-  background: linear-gradient(160deg, #ffffff 0%, #f0f4ff 100%);
+  background: linear-gradient(160deg, var(--bg2) 0%, var(--bg3) 100%);
 }
 :global([data-theme='light']) .hcol-avg {
   border-color: rgba(180, 130, 0, 0.35);
@@ -700,14 +700,7 @@ function onImgError(e, soopId) {
 /* 바 투명도 낮춤 (밝은 배경에서 과하지 않게) */
 :global([data-theme='light']) .rank-bar-bg { opacity: 0.15; }
 
-/* 순위 번호 */
-:global([data-theme='light']) .rank-num { color: #aaa; }
-
-/* 이름 — 핵심! 어둡게 */
-:global([data-theme='light']) .rank-name { color: #1a1a2e; }
-
-/* 값 — 핵심! 어둡게 */
-:global([data-theme='light']) .rank-val { color: #333; }
+/* rank-num / rank-name / rank-val 은 var(--text3)/var(--text2)/var(--text3) 변수로 자동처리 */
 
 /* 로딩 스핀 */
 :global([data-theme='light']) .spin { border-top-color: #9a6500; }
