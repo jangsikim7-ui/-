@@ -3,7 +3,7 @@
     <header class="header">
       <div class="hl">
         <div class="logo">⚡ 엑셀크루 시너지표</div>
-        <div class="source">출처: poong.today · 4시간마다 자동 갱신</div>
+        <div class="source">출처: <a href="https://poonggo.com/" target="_blank" style="color:#e53e3e; font-weight:700;">poonggo.com</a> · 4시간마다 자동 갱신</div>
       </div>
 
       <div class="hc">
