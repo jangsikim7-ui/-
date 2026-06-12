@@ -133,23 +133,17 @@ export async function collectAll() {
       fetched_at = datetime('now')
   `)
 
-  const saveTx = db.transaction((targets) => {
-    for (const target of targets) {
-      const sid = target.soop_id
-      const monthly = monthMap[sid] ?? { amt: 0, cview: 0 }
-      const dailyAmt = dayMap[sid] ?? 0
-
-      upsertBalloon.run(sid, year, month, day, monthly.amt, dailyAmt)
-      console.log(`[collect] ${target.name}(${sid}): 풍선 ${monthly.amt.toLocaleString()} (+${dailyAmt.toLocaleString()}) / 뷰어 ${monthly.cview.toLocaleString()}`)
-    }
-    // 뷰어쉽은 멤버만 (수장 제외)
-    for (const member of members) {
-      const sid = member.soop_id
-      const cview = monthMap[sid]?.cview ?? 0
-      upsertViewer.run(sid, year, month, cview)
-    }
-  })
-
-  saveTx(allTargets)
+  for (const target of allTargets) {
+  const sid = target.soop_id
+  const monthly = monthMap[sid] ?? { amt: 0, cview: 0 }
+  const dailyAmt = dayMap[sid] ?? 0
+  upsertBalloon.run(sid, year, month, day, monthly.amt, dailyAmt)
+  console.log(`[collect] ${target.name}(${sid}): 풍선 ${monthly.amt.toLocaleString()} (+${dailyAmt.toLocaleString()}) / 뷰어 ${monthly.cview.toLocaleString()}`)
+}
+for (const member of members) {
+  const sid = member.soop_id
+  const cview = monthMap[sid]?.cview ?? 0
+  upsertViewer.run(sid, year, month, cview)
+}
   console.log('[collect] 완료 (출처: https://poonggo.com)')
 }
