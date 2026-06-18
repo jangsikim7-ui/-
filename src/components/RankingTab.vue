@@ -160,16 +160,16 @@
       </div>
 
       <!-- ══════════════ 31~100위 ══════════════ -->
-      <div class="zone-section zone-green" data-zone="31 ~ 100위" v-if="zoneMembers(31,100).length">
+      <div class="zone-section zone-green" data-zone="31 ~ 70위" v-if="zoneMembers(31,70).length">
         <div class="zone-label-row">
           <div class="zone-label-line"></div>
-          <span class="zone-label-text green">31 ~ 100위</span>
+          <span class="zone-label-text green">31 ~ 70위</span>
           <div class="zone-label-line"></div>
-          <span class="zone-count">{{ zoneMembers(31,100).length }}명</span>
+          <span class="zone-count">{{ zoneMembers(31,70).length }}명</span>
         </div>
         <div class="rank-grid g4">
           <div
-            v-for="row in zoneMembers(31,100)" :key="row.soop_id"
+            v-for="row in zoneMembers(31,70)" :key="row.soop_id"
             class="rcard rcard-sm"
             :class="{hl: row.soop_id===highlightSoop}"
             :ref="el => { if(row.soop_id===highlightSoop && el) hlEl=el }"
@@ -192,16 +192,16 @@
       </div>
 
       <!-- ══════════════ 101위~ ══════════════ -->
-      <div class="zone-section zone-purple" data-zone="101위 ~" v-if="zoneMembers(101,99999).length">
+      <div class="zone-section zone-purple" data-zone="71위 ~" v-if="zoneMembers(71,99999).length">
         <div class="zone-label-row">
           <div class="zone-label-line"></div>
-          <span class="zone-label-text purple">101위 ~</span>
+          <span class="zone-label-text purple">71위 ~</span>
           <div class="zone-label-line"></div>
-          <span class="zone-count">{{ zoneMembers(101,99999).length }}명</span>
+          <span class="zone-count">{{ zoneMembers(71,99999).length }}명</span>
         </div>
         <div class="rank-grid g5">
           <div
-            v-for="row in zoneMembers(101,99999)" :key="row.soop_id"
+            v-for="row in zoneMembers(71,99999)" :key="row.soop_id"
             class="rcard rcard-xs"
             :class="{hl: row.soop_id===highlightSoop}"
             :ref="el => { if(row.soop_id===highlightSoop && el) hlEl=el }"
@@ -338,10 +338,10 @@ const maxRatio = computed(() => {
 
 // 존 통계: 순위 구간별 크루 인원수
 const ZONES = [
-  { label: 'TOP 10',   from: 1,   to: 10 },
-  { label: '11 ~ 30위', from: 11,  to: 30 },
-  { label: '31 ~ 100위',from: 31,  to: 100 },
-  { label: '101위 ~',   from: 101, to: 999999 },
+  { label: 'TOP 10',    from: 1,  to: 10 },
+  { label: '11 ~ 30위', from: 11, to: 30 },
+  { label: '31 ~ 70위', from: 31, to: 70 },
+  { label: '71위 ~',    from: 71, to: 999999 },
 ]
 
 const zoneStats = computed(() => {
@@ -536,8 +536,8 @@ function onImgError(e) { e.target.style.display = 'none' }
 .rank-grid { display: grid; gap: 8px; }
 .top10-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 .g3  { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-.g4  { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
-.g5  { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.g4  { grid-template-columns: repeat(auto-fill, minmax(178px, 1fr)); }
+.g5  { grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); }
 
 .rcard { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s; display: grid; gap: 0; }
 [data-theme="light"] .rcard { background: #ffffff; border-color: rgba(0,0,0,.09); box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
@@ -558,20 +558,20 @@ function onImgError(e) { e.target.style.display = 'none' }
 [data-theme="light"] .rcard-md .rc-balloons { color: #6d28d9; }
 
 /* sm 카드 (31~100위) */
-.rcard-sm { display: flex; flex-direction: column; padding: 12px; gap: 6px; }
-.rcard-sm .rc-top-row { display: flex; align-items: center; gap: 9px; }
-.rcard-sm .rc-rank-sm { font-size: 14px; font-weight: 900; color: var(--text3); min-width: 22px; flex-shrink: 0; }
-.rcard-sm .rc-avatar-sm { width: 40px; height: 40px; border-radius: 50%; border: 2px solid; overflow: hidden; flex-shrink: 0; }
+.rcard-sm { display: flex; flex-direction: column; padding: 9px 10px; gap: 5px; }
+.rcard-sm .rc-top-row { display: flex; align-items: center; gap: 8px; }
+.rcard-sm .rc-rank-sm { font-size: 13px; font-weight: 900; color: var(--text3); min-width: 20px; flex-shrink: 0; }
+.rcard-sm .rc-avatar-sm { width: 34px; height: 34px; border-radius: 50%; border: 2px solid; overflow: hidden; flex-shrink: 0; }
 .rcard-sm .rc-avatar-sm img { width: 100%; height: 100%; object-fit: cover; }
 .rcard-sm .rc-body { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .rcard-sm .rc-balloons-sm { font-size: 12px; font-weight: 900; color: #a78bfa; white-space: nowrap; flex-shrink: 0; }
 [data-theme="light"] .rcard-sm .rc-balloons-sm { color: #6d28d9; }
 
 /* xs 카드 (101위~) */
-.rcard-xs { display: flex; flex-direction: column; padding: 11px; gap: 5px; }
-.rcard-xs .rc-top-row { display: flex; align-items: center; gap: 8px; }
-.rcard-xs .rc-rank-xs { font-size: 13px; font-weight: 900; color: var(--text3); min-width: 22px; flex-shrink: 0; }
-.rcard-xs .rc-avatar-xs { width: 36px; height: 36px; border-radius: 50%; border: 2px solid; overflow: hidden; flex-shrink: 0; }
+.rcard-xs { display: flex; flex-direction: column; padding: 8px 9px; gap: 4px; }
+.rcard-xs .rc-top-row { display: flex; align-items: center; gap: 7px; }
+.rcard-xs .rc-rank-xs { font-size: 12px; font-weight: 900; color: var(--text3); min-width: 20px; flex-shrink: 0; }
+.rcard-xs .rc-avatar-xs { width: 30px; height: 30px; border-radius: 50%; border: 2px solid; overflow: hidden; flex-shrink: 0; }
 .rcard-xs .rc-avatar-xs img { width: 100%; height: 100%; object-fit: cover; }
 .rcard-xs .rc-body { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .rcard-xs .rc-balloons-xs { font-size: 11px; font-weight: 900; color: #a78bfa; white-space: nowrap; flex-shrink: 0; }
