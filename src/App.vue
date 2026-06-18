@@ -64,7 +64,7 @@
         👁️ 뷰어십
       </button>
       <button v-if="honorEnabled" class="mode-tab mode-tab-honor" :class="{ active: mode === 'honor' }" @click="setMode('honor')">
-        🏆 이달의명예
+        🏅 전체랭킹
       </button>
 
       <button v-if="battleEnabled" class="btn-battle-center pc-only" @click="showBattle = true">
@@ -123,7 +123,7 @@
     </div>
 
     <div ref="captureTarget">
-      <HonorBoard v-if="mode === 'honor'" :active-group="activeGroup" :year="year" :month="month" />
+      <RankingTab v-if="mode === 'honor'" :active-group="activeGroup" :year="year" :month="month" />
       <main v-if="!loading && stats.length > 0 && mode !== 'honor'" class="grid">
         <CrewCard
           v-for="(crew, i) in stats"
@@ -174,7 +174,7 @@ import CrewCard from './components/CrewCard.vue'
 import AdminModal from './components/AdminModal.vue'
 import CrewBattleModal from './components/CrewBattleModal.vue'
 import SyncModal from './components/SyncModal.vue'
-import HonorBoard from './components/HonorBoard.vue'
+import RankingTab from './components/RankingTab.vue'
 import WelcomePopup from './components/WelcomePopup.vue'
 import { api, getAdminToken, setAdminToken, clearAdminToken } from './composables/useApi.js'
 
