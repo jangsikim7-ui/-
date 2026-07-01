@@ -347,6 +347,30 @@ router.delete('/members/:id', adminOnly, (req, res) => {
   res.json({ ok: true })
 })
 
+// 🔍 [임시] 특정 soop_id 데이터 생존 확인 (확인 후 삭제)
+router.get('/check-member/:soopId', (req, res) => {
+  const { soopId } = req.params
+  const inMembers = db.prepare('SELECT id, name, is_active FROM members WHERE soop_id=?').get(soopId)
+  const balloons = db.prepare(`
+    SELECT year, month, day, total_balloons, daily_balloons
+    FROM balloon_snapshots WHERE soop_id=?
+    ORDER BY year, month, day
+  `).all(soopId)
+  const viewers = db.prepare(`
+    SELECT year, month, total_viewers
+    FROM viewer_snapshots WHERE soop_id=?
+    ORDER BY year, month
+  `).all(soopId)
+  res.json({
+    soop_id: soopId,
+    members_테이블: inMembers || '❌ 없음 (삭제됨)',
+    balloon_스냅샷_개수: balloons.length,
+    balloon_스냅샷: balloons,
+    viewer_스냅샷_개수: viewers.length,
+    viewer_스냅샷: viewers,
+  })
+})
+
 // ── 통계 ──────────────────────────────────────────────
 router.get('/stats', (req, res) => {
   const now = new Date()
