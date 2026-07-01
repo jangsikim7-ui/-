@@ -348,6 +348,23 @@ router.delete('/members/:id', adminOnly, (req, res) => {
   res.json({ ok: true })
 })
 
+// 🔍 [임시] 멤버 상태/데이터 확인
+router.get('/check-member/:soopId', (req, res) => {
+  const { soopId } = req.params
+  const inMembers = db.prepare('SELECT id, name, crew_id, is_active FROM members WHERE soop_id=?').get(soopId)
+  const june = db.prepare(`
+    SELECT day, total_balloons FROM balloon_snapshots
+    WHERE soop_id=? AND year=2026 AND month=6 ORDER BY day DESC LIMIT 3
+  `).all(soopId)
+  const total = db.prepare('SELECT COUNT(*) c FROM balloon_snapshots WHERE soop_id=?').get(soopId)
+  res.json({
+    soop_id: soopId,
+    members_상태: inMembers || '❌ members에 없음 (하드삭제됨)',
+    balloon_전체개수: total.c,
+    june_최근3: june,
+  })
+})
+
 // ── 통계 ──────────────────────────────────────────────
 router.get('/stats', (req, res) => {
   const now = new Date()
