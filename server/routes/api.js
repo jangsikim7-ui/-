@@ -348,6 +348,26 @@ router.delete('/members/:id', adminOnly, (req, res) => {
   res.json({ ok: true })
 })
 
+// 🔍 [임시] 최근 삭제 추정 (7월 데이터 있는데 members에 없는 = 오늘 지운 애)
+router.get('/check-recent-orphans', (req, res) => {
+  const rows = db.prepare(`
+    SELECT DISTINCT b.soop_id,
+      (SELECT total_balloons FROM balloon_snapshots
+        WHERE soop_id=b.soop_id AND year=2026 AND month=7
+        ORDER BY day DESC LIMIT 1) AS july_balloons,
+      (SELECT total_balloons FROM balloon_snapshots
+        WHERE soop_id=b.soop_id AND year=2026 AND month=6
+        ORDER BY day DESC LIMIT 1) AS june_balloons,
+      (SELECT MAX(day) FROM balloon_snapshots
+        WHERE soop_id=b.soop_id AND year=2026 AND month=7) AS last_july_day
+    FROM balloon_snapshots b
+    WHERE b.soop_id NOT IN (SELECT soop_id FROM members)
+      AND b.year=2026 AND b.month=7
+    ORDER BY june_balloons DESC
+  `).all()
+  res.json({ 최근삭제_추정_인원: rows.length, 목록: rows })
+})
+
 // 🔍 [임시] 삭제됐지만 데이터가 남아있는 soop_id 목록 (복구 대상)
 router.get('/check-orphans', (req, res) => {
   const rows = db.prepare(`
