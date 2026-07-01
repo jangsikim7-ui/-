@@ -321,6 +321,15 @@
             <button class="btn-restore" style="color:#ff4d4d;border-color:#ff4d4d" @click="deleteUnknownCrew(c.id)">삭제</button>
           </div>
 
+          <div class="section-title" style="margin-top:20px">🔄 데이터 재수집</div>
+          <div class="backup-desc">풍고에서 이전달 최신값을 다시 가져와 DB를 덮어씁니다</div>
+          <button class="btn-naksoo" style="width:100%" @click="collectPrev" :disabled="collectingPrev">
+            {{ collectingPrev ? '수집중...' : '📥 이전달 데이터 재수집' }}
+          </button>
+          <div v-if="collectPrevMsg" style="font-size:12px; font-weight:600; margin-top:8px;" :style="{color: collectPrevMsg.ok ? '#4cd964' : '#ff4d4d'}">
+            {{ collectPrevMsg.ok ? '✅ ' : '❌ ' }}{{ collectPrevMsg.text }}
+          </div>
+
           <div class="section-title" style="margin-top:20px">💾 DB 백업 목록</div>
           <div class="backup-desc">낙수동기화 실행 시 자동으로 백업이 생성돼요 (최대 5개 보관)</div>
           <div v-if="backups.length === 0" class="empty">백업 없음</div>
@@ -590,6 +599,24 @@ async function changePassword() {
 const backups = ref([])
 const restoring = ref(null)
 const unknownCrews = ref([])
+const collectingPrev = ref(false)
+const collectPrevMsg = ref(null)
+
+async function collectPrev() {
+  if (!confirm('이전달 데이터를 풍고에서 다시 가져옵니다.\n기존 값이 덮어써집니다. 계속할까요?')) return
+  collectingPrev.value = true
+  collectPrevMsg.value = null
+  try {
+    const token = localStorage.getItem('admin_token') || ''
+    const r = await fetch('/api/collect-prev', { method: 'POST', headers: { 'x-admin-token': token } })
+    const res = await r.json()
+    if (!r.ok) throw new Error(res.error || '수집 실패')
+    collectPrevMsg.value = { ok: true, text: res.message || '완료!' }
+  } catch(e) {
+    collectPrevMsg.value = { ok: false, text: e.message }
+  }
+  collectingPrev.value = false
+}
 
 async function loadBackups() {
   try {
