@@ -348,6 +348,44 @@ router.delete('/members/:id', adminOnly, (req, res) => {
   res.json({ ok: true })
 })
 
+// 🔧 [임시] 최근 삭제된 최가네 3명 복구 (실행 후 삭제)
+router.post('/recover-choganae', adminOnly, async (req, res) => {
+  const targets = ['dudgns7282', 'haneuleee', 'yuna0425']
+  const crew = db.prepare("SELECT id, name FROM crews WHERE name LIKE '%최가네%'").get()
+  if (!crew) return res.status(404).json({ error: '최가네 크루를 찾을 수 없음' })
+
+  const results = []
+  for (const soopId of targets) {
+    // 이미 members에 있으면(재활성화만) skip 처리
+    const existing = db.prepare('SELECT id, is_active FROM members WHERE soop_id=?').get(soopId)
+    if (existing) {
+      db.prepare('UPDATE members SET is_active=1, crew_id=? WHERE id=?').run(crew.id, existing.id)
+      results.push({ soop_id: soopId, status: '재활성화', crew: crew.name })
+      continue
+    }
+    // 닉네임 조회
+    let nick = soopId
+    try {
+      const r = await fetch(`https://poonggo.com/api/monthly?date=2026-07&ids=${soopId}`, { headers: POONG_HEADERS })
+      const text = await r.text()
+      if (text && text.trim()) {
+        const data = JSON.parse(text)
+        const item = Array.isArray(data) ? data[0] : (data.data?.[0])
+        if (item?.nick) nick = item.nick
+      }
+    } catch(e) { /* 닉 조회 실패 시 soop_id 사용 */ }
+
+    const maxOrder = db.prepare('SELECT MAX(sort_order) as m FROM members WHERE crew_id=?').get(crew.id)?.m || 0
+    db.prepare(`
+      INSERT INTO members (soop_id, name, crew_id, sort_order, is_active, is_new, joined_at)
+      VALUES (?, ?, ?, ?, 1, 0, ?)
+    `).run(soopId, nick, crew.id, maxOrder + 1, new Date().toISOString())
+    results.push({ soop_id: soopId, status: '복구완료', nick, crew: crew.name })
+  }
+  clearApiCache()
+  res.json({ ok: true, crew: crew.name, results })
+})
+
 // 🔍 [임시] 최근 삭제 추정 (7월 데이터 있는데 members에 없는 = 오늘 지운 애). 수장 제외.
 router.get('/check-recent-orphans', (req, res) => {
   const rows = db.prepare(`
