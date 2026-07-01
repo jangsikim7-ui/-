@@ -343,8 +343,25 @@ router.put('/members/:id', adminOnly, (req, res) => {
 })
 
 router.delete('/members/:id', adminOnly, (req, res) => {
-  db.prepare('DELETE FROM members WHERE id=?').run(req.params.id)
+  // soft delete: 행을 지우지 않고 비활성화만. snapshots 데이터 보존 + 과거월 표시 유지.
+  db.prepare('UPDATE members SET is_active=0 WHERE id=?').run(req.params.id)
   res.json({ ok: true })
+})
+
+// 🔍 [임시] 삭제됐지만 데이터가 남아있는 soop_id 목록 (복구 대상)
+router.get('/check-orphans', (req, res) => {
+  const rows = db.prepare(`
+    SELECT DISTINCT b.soop_id,
+      (SELECT MAX(nick) FROM (SELECT NULL nick)) AS n,
+      (SELECT total_balloons FROM balloon_snapshots
+        WHERE soop_id=b.soop_id AND year=2026 AND month=6 AND day IN (0,30,29,28)
+        ORDER BY day DESC LIMIT 1) AS june_balloons
+    FROM balloon_snapshots b
+    WHERE b.soop_id NOT IN (SELECT soop_id FROM members)
+      AND b.year=2026 AND b.month=6
+    ORDER BY june_balloons DESC
+  `).all()
+  res.json({ 삭제됐지만_데이터남은_인원: rows.length, 목록: rows })
 })
 
 // 🔍 [임시] 특정 soop_id 데이터 생존 확인 (확인 후 삭제)
