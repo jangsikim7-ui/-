@@ -401,9 +401,17 @@ router.get('/stats', (req, res) => {
       ), 0) as yesterday_balloons
     FROM members m
     JOIN crews c ON m.crew_id = c.id
-    WHERE m.is_active = 1 AND c.group_key = ?
+    WHERE c.group_key = ?
+      AND (
+        m.is_active = 1
+        OR EXISTS (
+          SELECT 1 FROM balloon_snapshots bs
+          WHERE bs.soop_id = m.soop_id AND bs.year = ? AND bs.month = ?
+            AND bs.total_balloons > 0
+        )
+      )
     ORDER BY c.sort_order, balloons DESC
-  `).all(year, month, year, month, prevYear, prevMonth, year, month, group)
+  `).all(year, month, year, month, prevYear, prevMonth, year, month, group, year, month)
   const crewMap = {}
   for (const crew of allCrews) {
     let master_balloons = 0
@@ -481,9 +489,17 @@ router.get('/viewer-stats', (req, res) => {
       ), 0) as yesterday_viewers
     FROM members m
     JOIN crews c ON m.crew_id = c.id
-    WHERE m.is_active = 1 AND c.group_key = ?
+    WHERE c.group_key = ?
+      AND (
+        m.is_active = 1
+        OR EXISTS (
+          SELECT 1 FROM viewer_snapshots vs
+          WHERE vs.soop_id = m.soop_id AND vs.year = ? AND vs.month = ?
+            AND vs.total_viewers > 0
+        )
+      )
     ORDER BY c.sort_order, viewers DESC
-  `).all(year, month, prevYear, prevMonth, year, month, group)
+  `).all(year, month, prevYear, prevMonth, year, month, group, year, month)
   const crewMap = {}
   for (const crew of allCrews) {
     crewMap[crew.id] = {
