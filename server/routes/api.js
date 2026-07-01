@@ -348,23 +348,6 @@ router.delete('/members/:id', adminOnly, (req, res) => {
   res.json({ ok: true })
 })
 
-// 🔍 [임시] 멤버 상태/데이터 확인
-router.get('/check-member/:soopId', (req, res) => {
-  const { soopId } = req.params
-  const inMembers = db.prepare('SELECT id, name, crew_id, is_active FROM members WHERE soop_id=?').get(soopId)
-  const june = db.prepare(`
-    SELECT day, total_balloons FROM balloon_snapshots
-    WHERE soop_id=? AND year=2026 AND month=6 ORDER BY day DESC LIMIT 3
-  `).all(soopId)
-  const total = db.prepare('SELECT COUNT(*) c FROM balloon_snapshots WHERE soop_id=?').get(soopId)
-  res.json({
-    soop_id: soopId,
-    members_상태: inMembers || '❌ members에 없음 (하드삭제됨)',
-    balloon_전체개수: total.c,
-    june_최근3: june,
-  })
-})
-
 // ── 통계 ──────────────────────────────────────────────
 router.get('/stats', (req, res) => {
   const now = new Date()
@@ -373,6 +356,9 @@ router.get('/stats', (req, res) => {
   const group = req.query.group || 'excel'
   const prevYear = month === 1 ? year - 1 : year
   const prevMonth = month === 1 ? 12 : month - 1
+  // KST 기준 현재 연월. 조회 대상이 현재월이면 활성 멤버만, 과거월이면 데이터 있는 비활성도 표시.
+  const kst = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  const isCurrentMonth = (year === kst.getUTCFullYear() && month === kst.getUTCMonth() + 1)
   const allCrews = db.prepare('SELECT * FROM crews WHERE group_key = ? ORDER BY sort_order, id').all(group)
   const rows = db.prepare(`
     SELECT
@@ -404,14 +390,17 @@ router.get('/stats', (req, res) => {
     WHERE c.group_key = ?
       AND (
         m.is_active = 1
-        OR EXISTS (
-          SELECT 1 FROM balloon_snapshots bs
-          WHERE bs.soop_id = m.soop_id AND bs.year = ? AND bs.month = ?
-            AND bs.total_balloons > 0
+        OR (
+          ? = 0
+          AND EXISTS (
+            SELECT 1 FROM balloon_snapshots bs
+            WHERE bs.soop_id = m.soop_id AND bs.year = ? AND bs.month = ?
+              AND bs.total_balloons > 0
+          )
         )
       )
     ORDER BY c.sort_order, balloons DESC
-  `).all(year, month, year, month, prevYear, prevMonth, year, month, group, year, month)
+  `).all(year, month, year, month, prevYear, prevMonth, year, month, group, isCurrentMonth ? 1 : 0, year, month)
   const crewMap = {}
   for (const crew of allCrews) {
     let master_balloons = 0
@@ -466,6 +455,8 @@ router.get('/viewer-stats', (req, res) => {
   const group = req.query.group || 'excel'
   const prevYear = month === 1 ? year - 1 : year
   const prevMonth = month === 1 ? 12 : month - 1
+  const kst = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  const isCurrentMonth = (year === kst.getUTCFullYear() && month === kst.getUTCMonth() + 1)
   const allCrews = db.prepare('SELECT * FROM crews WHERE group_key = ? ORDER BY sort_order, id').all(group)
   const rows = db.prepare(`
     SELECT
@@ -492,14 +483,17 @@ router.get('/viewer-stats', (req, res) => {
     WHERE c.group_key = ?
       AND (
         m.is_active = 1
-        OR EXISTS (
-          SELECT 1 FROM viewer_snapshots vs
-          WHERE vs.soop_id = m.soop_id AND vs.year = ? AND vs.month = ?
-            AND vs.total_viewers > 0
+        OR (
+          ? = 0
+          AND EXISTS (
+            SELECT 1 FROM viewer_snapshots vs
+            WHERE vs.soop_id = m.soop_id AND vs.year = ? AND vs.month = ?
+              AND vs.total_viewers > 0
+          )
         )
       )
     ORDER BY c.sort_order, viewers DESC
-  `).all(year, month, prevYear, prevMonth, year, month, group, year, month)
+  `).all(year, month, prevYear, prevMonth, year, month, group, isCurrentMonth ? 1 : 0, year, month)
   const crewMap = {}
   for (const crew of allCrews) {
     crewMap[crew.id] = {
