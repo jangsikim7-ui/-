@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, copyFileSync, readdirSync, unlinkSync, writeFile
 import { clearApiCache } from '../index.js'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 import db from '../db/connection.js'
-import { collectAll, fetchMonthlyAll } from './collector.js'
+import { collectAll, collectMonth, fetchMonthlyAll } from './collector.js'
 
 const router = Router()
 
@@ -507,26 +507,15 @@ router.post('/collect-prev', adminOnly, async (req, res) => {
   const now = new Date()
   const curMonth = now.getMonth() + 1
   const curYear = now.getFullYear()
-  const prevMonth = curMonth === 1 ? 12 : curMonth - 1
-  const prevYear = curMonth === 1 ? curYear - 1 : curYear
+  // ?year=2026&month=6 으로 원하는 월 지정 가능. 없으면 지난달.
+  const prevMonth = req.query.month ? parseInt(req.query.month) : (curMonth === 1 ? 12 : curMonth - 1)
+  const prevYear = req.query.year ? parseInt(req.query.year) : (curMonth === 1 ? curYear - 1 : curYear)
   res.json({ ok: true, message: `${prevYear}년 ${prevMonth}월 수집 시작` })
   try {
-    const members = db.prepare('SELECT soop_id, name FROM members WHERE is_active = 1').all()
-    const list = await fetchMonthlyAll(prevYear, prevMonth)
-    if (!list) { console.error('[collect-prev] 데이터 실패'); return }
-    const map = {}
-    for (const item of list) { if (item.i) map[item.i] = item.b || 0 }
-    for (const member of members) {
-      const total = map[member.soop_id] ?? 0
-      db.prepare(`
-        INSERT INTO balloon_snapshots (soop_id, year, month, day, total_balloons)
-        VALUES (?, ?, ?, 0, ?)
-        ON CONFLICT(soop_id, year, month, day) DO UPDATE SET
-          total_balloons = excluded.total_balloons,
-          fetched_at = datetime('now')
-      `).run(member.soop_id, prevYear, prevMonth, total)
-    }
-    console.log('[collect-prev] 완료')
+    // 월 총합만 확정 (day=0), 별풍선 + 뷰어 둘 다 저장. 수장 포함.
+    const result = await collectMonth(prevYear, prevMonth, 0, { withDaily: false })
+    console.log(`[collect-prev] 완료: ${result.ok}명`)
+    clearApiCache()
   } catch(e) { console.error('[collect-prev] 오류:', e.message) }
 })
 
